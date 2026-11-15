@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/assets/arlo-logo.png" alt="Arlo logo" width="280" />
+</p>
+
 # Arlo
 
 **Local messaging between independent agent sessions.**
