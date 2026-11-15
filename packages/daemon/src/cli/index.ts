@@ -1,6 +1,8 @@
 import { DaemonClient, ArloError, ArloErrorCode } from '@arlo/sdk';
 import { ArloDaemon } from '../server/index.ts';
 import { runSetupCli } from '../setup/index.ts';
+import { stdin, stdout } from 'node:process';
+import { selectCommand } from './menu.ts';
 
 export interface CliOptions {
   stateDir?: string;
@@ -9,10 +11,11 @@ export interface CliOptions {
 }
 
 export function parseCliArgs(args: string[]): { command: string; options: CliOptions } {
-  const command = args[0] || 'status';
+  const explicitCommand = args[0] && !args[0].startsWith('-');
+  const command = explicitCommand ? args[0] : 'status';
   const options: CliOptions = {};
 
-  for (let i = 1; i < args.length; i++) {
+  for (let i = explicitCommand ? 1 : 0; i < args.length; i++) {
     const arg = args[i];
     if (arg === '--state-dir' && i + 1 < args.length) {
       options.stateDir = args[++i];
@@ -27,6 +30,16 @@ export function parseCliArgs(args: string[]): { command: string; options: CliOpt
 }
 
 export async function runCli(args: string[] = process.argv.slice(2)): Promise<number> {
+  if ((!args[0] || args[0].startsWith('-')) && stdin.isTTY && stdout.isTTY && !args.includes('--json')) {
+    const command = await selectCommand();
+    if (!command) {
+      console.log('Cancelled. No changes applied.');
+      return 0;
+    }
+    if (command === 'setup') console.log('Setup registers an existing compiled Arlo adapter with the selected host. Obtain the compiled components before continuing.');
+    if (command === 'uninstall') console.log('Uninstall removes the owned host registration. Installed components remain managed by their package manager.');
+    args = [command, ...args];
+  }
   if (['setup', 'setup-status', 'uninstall'].includes(args[0])) return runSetupCli(args[0], args.slice(1));
   const { command, options } = parseCliArgs(args);
 
