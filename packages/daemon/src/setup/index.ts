@@ -1,23 +1,19 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { createRequire } from 'node:module';
+import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
-import { createInterface } from 'node:readline/promises';
 import { stdin, stdout } from 'node:process';
 import { assertConfigurationFile, recordedPackageDirectory, setupTransaction } from './transaction.ts';
 import { writePrivateStateFile } from '../storage/index.ts';
 import { assertSafeStatePath, enforceWindowsAcl, verifyWindowsAcl, ArloError } from '@arlo/sdk';
-
-class SetupError extends Error {
-  readonly code: string;
-  readonly nextStep: string;
-  constructor(code: string, nextStep: string) { super(code); this.code = code; this.nextStep = nextStep; }
-}
+import { SetupError, fail, type SetupOperationFailure } from './errors.ts';
+import { preparePiComponents, retainedPiComponents, physicalPackage, piComponentNames, piRelease } from './components.ts';
+import { askSetup, selectPi } from './pi-discovery.ts';
 type Settings = { packages?: unknown[]; extensions?: unknown[]; [key: string]: unknown };
 type Journal = { schemaVersion: 1; target: string; adapter: string; declaration: string; owned: boolean;
-  phase: 'prepared' | 'configured' | 'removing' | 'removed'; createdAt: string };
-const fail = (code: string, nextStep: string): never => { throw new SetupError(code, nextStep); };
+  phase: 'prepared' | 'configured' | 'removing' | 'removed'; createdAt: string;
+  installation?: { id: string; directory: string }; failure?: SetupOperationFailure };
 function readJson(file: string): any { return JSON.parse(fs.readFileSync(file, 'utf8')); }
 function settings(file: string): Settings {
   assertConfigurationFile(file);
@@ -29,14 +25,6 @@ function settings(file: string): Settings {
         (value.extensions !== undefined && !Array.isArray(value.extensions))) throw new Error();
     return value;
   } catch { return fail('CONFIGURATION_UNREADABLE', 'Repair the selected user settings.json before retrying; no settings were replaced.'); }
-}
-function physicalPackage(from: string, name: string): string {
-  const require = createRequire(path.join(from, 'package.json'));
-  for (const directory of require.resolve.paths(name) ?? []) {
-    const file = path.join(directory, name, 'package.json');
-    if (fs.existsSync(file)) return fs.realpathSync(path.dirname(file));
-  }
-  return fail('DEPENDENCY_MISSING', `Install all private sibling tarballs together with npm in the selected host installation; missing ${name}.`);
 }
 function exactDirectory(value: string | undefined, code: string, step: string): string {
   try { if (value && fs.statSync(value).isDirectory()) return fs.realpathSync(value); } catch { /* actionable error below */ }
@@ -61,8 +49,9 @@ function nativePi(target: string, agentDir: string, action: 'install' | 'remove'
     encoding: 'utf8', windowsHide: true, timeout: 60_000, maxBuffer: 1024 * 1024,
   });
   // Native output can contain arbitrary user configuration. Keep it private.
-  if (result.status !== 0 || result.error) fail('HOST_PACKAGE_OPERATION_FAILED',
-    `Pi ${action} failed (exit ${result.status ?? (result.error as NodeJS.ErrnoException | undefined)?.code ?? 'unknown'}). Review the private setup record and selected settings before retrying.`);
+  if (result.status !== 0 || result.error) throw new SetupError('HOST_PACKAGE_OPERATION_FAILED',
+    `Pi ${action} failed (exit ${result.status ?? (result.error as NodeJS.ErrnoException | undefined)?.code ?? 'unknown'}, signal ${result.signal ?? 'none'}). Review the private setup record and selected settings before retrying.`,
+    { code: 'HOST_PACKAGE_OPERATION_FAILED', exit: result.status, signal: result.signal, operation: `native-${action}` });
 }
 
 /** Thin user-level wiring over Pi's own package registration. Package acquisition remains npm's job. */
@@ -70,6 +59,7 @@ export async function runSetupCli(command: string, args: string[]): Promise<numb
   const options: Record<string, string | boolean> = {};
   const output = (report: object) => console.log(JSON.stringify(report, null, 2));
   let release: (() => Promise<void>) | undefined;
+  let components: Awaited<ReturnType<typeof preparePiComponents>> | undefined;
   try {
     for (let i = 0; i < args.length; i++) {
       const key = args[i];
@@ -78,13 +68,16 @@ export async function runSetupCli(command: string, args: string[]): Promise<numb
       else fail('INVALID_ARGUMENT', 'Use setup|setup-status|uninstall --host pi --target PI_PACKAGE_DIR --adapter ADAPTER_PACKAGE_DIR [--agent-dir USER_AGENT_DIR] [--apply].');
     }
     if (!options['--host'] && stdin.isTTY && !options['--json']) {
-      const prompt = createInterface({ input: stdin, output: stdout });
-      try {
-        options['--host'] = (await prompt.question('Host to connect (pi/dsh): ')).trim();
-        options['--target'] ??= (await prompt.question('Exact installed host package directory: ')).trim();
-        options['--adapter'] ??= (await prompt.question('Installed compiled Arlo adapter package directory: ')).trim();
-        if (options['--host'] === 'dsh') options['--profile'] ??= (await prompt.question('Existing DSH profile name: ')).trim();
-      } finally { prompt.close(); }
+      const host = await askSetup('Host to connect (pi/dsh, 0 to cancel): ');
+      if (!host || ['0', 'q', 'cancel'].includes(host)) { output({ phase: 'cancelled', nextStep: 'Cancelled. No changes applied.' }); return 0; }
+      options['--host'] = host;
+      if (host === 'dsh') {
+        const target = await askSetup('Exact installed host package directory: ');
+        const adapter = target ? await askSetup('Installed compiled Arlo adapter package directory: ') : undefined;
+        const profile = adapter ? await askSetup('Existing DSH profile name: ') : undefined;
+        if (!target || !adapter || !profile) { output({ phase: 'cancelled', nextStep: 'Cancelled. No changes applied.' }); return 0; }
+        options['--target'] ??= target; options['--adapter'] ??= adapter; options['--profile'] ??= profile;
+      }
     }
     if (options['--host'] === 'dsh' && !options['--profile']) fail('PROFILE_SELECTION_REQUIRED', 'Select one existing DSH profile explicitly with --profile NAME; no profile is initialized or enabled automatically.');
     if (options['--host'] === 'dsh') {
@@ -92,6 +85,13 @@ export async function runSetupCli(command: string, args: string[]): Promise<numb
       return runDshSetupCli(command, options);
     }
     if (options['--host'] !== 'pi') fail('HOST_SELECTION_REQUIRED', 'Select --host pi and an exact existing --target; DSH requires the prepared-profile setup path.');
+    if (!options['--target']) {
+      if (!stdin.isTTY || options['--json']) fail('HOST_SELECTION_REQUIRED', 'Noninteractive Pi setup requires an explicit --target PI_PACKAGE_DIR; no target was guessed or downloaded.');
+      const agent = path.resolve(options['--agent-dir'] as string ?? process.env.PI_CODING_AGENT_DIR ?? path.join(os.homedir(), '.pi/agent'));
+      const selected = await selectPi(agent, options['--npm-cli'] as string);
+      if (!selected) { output({ phase: 'cancelled', nextStep: 'Cancelled. No changes applied.' }); return 0; }
+      options['--target'] = selected;
+    }
     const target = exactDirectory(options['--target'] as string, 'HOST_NOT_FOUND', 'Install or locate Pi yourself, then pass its exact package directory with --target. No host was downloaded.');
     let host;
     try { host = readJson(path.join(target, 'package.json')); } catch { fail('HOST_UNREADABLE', 'Pass the readable Pi package directory with --target.'); }
@@ -99,23 +99,131 @@ export async function runSetupCli(command: string, args: string[]): Promise<numb
         typeof host.bin?.pi !== 'string' || !fs.existsSync(path.join(target, host.bin.pi))) {
       fail('HOST_UNSUPPORTED', 'Select an existing formally supported Pi 1.1.0, 1.2.0, 1.3.0 or 1.4.0 installation; setup never installs another host.');
     }
-    if (!options['--adapter']) fail('ADAPTER_NOT_FOUND', 'Select the recorded adapter path using --adapter.');
+    const bin = fs.realpathSync(path.join(target, host.bin.pi));
+    const relativeBin = path.relative(target, bin);
+    if (!bin.endsWith('.js') || !fs.statSync(bin).isFile() || relativeBin.startsWith('..') || path.isAbsolute(relativeBin)) fail('HOST_UNSUPPORTED', 'The Pi bin must be a readable compiled file inside that exact package. Locate the actual standard installation before retrying.');
+    const selectedAgentDir = path.resolve(options['--agent-dir'] as string ?? process.env.PI_CODING_AGENT_DIR ?? path.join(os.homedir(), '.pi', 'agent'));
+    const agentDir = fs.existsSync(selectedAgentDir) ? fs.realpathSync(selectedAgentDir) : selectedAgentDir;
+    const file = path.join(agentDir, 'settings.json');
+    const record = path.join(agentDir, 'arlo-setup', 'pi.json');
+    const initial = settings(file);
+    const recordFingerprint = () => fs.existsSync(record) ? createHash('sha256').update(fs.readFileSync(record)).digest('hex') : 'missing';
+    const initialRecordFingerprint = recordFingerprint();
+    let retained: Journal | undefined;
+    if (fs.existsSync(record)) {
+      assertSafeStatePath(path.dirname(record));
+      if (fs.lstatSync(record).isSymbolicLink() || !verifyWindowsAcl(record).valid) fail('UNSAFE_SETUP_RECORD', 'Preserve and review the unsafe setup record before retrying.');
+      try { retained = readJson(record); } catch { fail('SETUP_RECORD_UNREADABLE', 'Preserve and repair the selected setup record before retrying.'); }
+      if (!retained || retained.schemaVersion !== 1 || retained.target !== target || typeof retained.adapter !== 'string'
+        || !path.isAbsolute(retained.adapter) || recordedPackageDirectory(retained.adapter) !== retained.adapter
+        || typeof retained.owned !== 'boolean' || !['prepared', 'configured', 'removing', 'removed'].includes(retained.phase)
+        || typeof retained.declaration !== 'string' || retained.declaration !== (path.relative(agentDir, retained.adapter) || '.')
+        || typeof retained.createdAt !== 'string' || !Number.isFinite(Date.parse(retained.createdAt))
+        || retained.failure !== undefined && (!retained.failure || !['HOST_PACKAGE_OPERATION_FAILED', 'REGISTRATION_INCOMPLETE'].includes(retained.failure.code)
+          || !['native-install', 'native-remove'].includes(retained.failure.operation) || retained.failure.exit !== null && !Number.isInteger(retained.failure.exit)
+          || retained.failure.signal !== null && !/^SIG[A-Z0-9]+$/.test(retained.failure.signal))
+        || retained.installation !== undefined && (!retained.installation || typeof retained.installation !== 'object'
+          || typeof retained.installation.id !== 'string' || !/^[a-f0-9]{64}$/.test(retained.installation.id)
+          || typeof retained.installation.directory !== 'string' || !path.isAbsolute(retained.installation.directory))) {
+        fail('SETUP_OWNERSHIP_CONFLICT', 'The existing record does not prove this exact target, adapter, declaration and completed phase. Preserve and review it before retrying; no component or native changes were applied.');
+      }
+      const retainedMatches = (initial.packages ?? []).filter(entry => {
+        const source = sourceOf(entry);
+        if (!source || source.startsWith('npm:') || source.startsWith('git:')) return false;
+        return recordedPackageDirectory(path.resolve(agentDir, source)) === retained!.adapter;
+      });
+      if (retainedMatches.length > 1) fail('DUPLICATE_ADAPTER_CONFLICT', 'Review duplicate retained Arlo declarations before acquisition. Setup preserved all entries.');
+      if (command !== 'setup-status' && retained.owned && ['configured', 'removing'].includes(retained.phase) && retainedMatches.length && retainedMatches[0] !== retained.declaration) {
+        fail('CONFIGURATION_CHANGED', 'The owned declaration changed after setup. Preserve it and review its native registration before requesting component installation.');
+      }
+      if (command !== 'setup-status' && retained.phase === 'prepared' && retainedMatches.length) fail('RECOVERY_REVIEW_REQUIRED', 'A prior native install was interrupted after a declaration appeared. Intent does not prove who added it. Preserve the declaration and review the private record before retrying; no component changes were applied.');
+      if (command === 'setup' && retained.phase === 'removing') fail('RECOVERY_REVIEW_REQUIRED', 'Finish the pending uninstall on the same exact target before requesting a new component installation.');
+      if (options['--adapter'] && recordedPackageDirectory(options['--adapter'] as string) !== retained.adapter) fail('SETUP_OWNERSHIP_CONFLICT', 'A different adapter was selected from the one in this scope record. Preserve and review it before installation.');
+      options['--adapter'] ??= retained.adapter;
+    }
+    if (!options['--adapter']) {
+      const manual = (initial.packages ?? []).flatMap(entry => {
+        const source = sourceOf(entry);
+        if (!source) return [];
+        if (source.startsWith('npm:') || source.startsWith('git:')) {
+          if (source.includes(piComponentNames.piAdapter)) fail('DUPLICATE_ADAPTER_CONFLICT', 'Review the existing native npm/git Arlo package before acquisition. Setup preserved that declaration.');
+          return [];
+        }
+        try {
+          const candidate = fs.realpathSync(path.resolve(agentDir, source));
+          return readJson(path.join(candidate, 'package.json')).name === piComponentNames.piAdapter ? [candidate] : [];
+        } catch { return []; }
+      });
+      if (manual.length > 1 || (initial.extensions ?? []).some(entry => typeof entry === 'string' && /(?:arlo|adapter-pi)/i.test(entry))) fail('DUPLICATE_ADAPTER_CONFLICT', 'Review existing Arlo declarations before installation. All entries were preserved.');
+      if (manual.length === 1) options['--adapter'] = manual[0];
+    }
+    // Reject competing native declarations before package acquisition. The
+    // registration stage repeats this check after consumption under its lock.
+    const selectedAdapter = options['--adapter'] ? recordedPackageDirectory(options['--adapter'] as string) : undefined;
+    let existingMatches = 0;
+    for (const entry of initial.packages ?? []) {
+      const source = sourceOf(entry);
+      if (!source) continue;
+      if (source.startsWith('npm:') || source.startsWith('git:')) {
+        if (source.includes(piComponentNames.piAdapter)) fail('DUPLICATE_ADAPTER_CONFLICT', 'Review the existing native npm/git Arlo declaration before component acquisition. It was preserved.');
+        continue;
+      }
+      const location = recordedPackageDirectory(path.resolve(agentDir, source));
+      if (location === selectedAdapter) { existingMatches++; continue; }
+      let competing = source.includes(piComponentNames.piAdapter);
+      try { competing ||= readJson(path.join(location, 'package.json')).name === piComponentNames.piAdapter; } catch { /* unrelated unresolved entry */ }
+      if (competing) fail('DUPLICATE_ADAPTER_CONFLICT', 'Review the competing Arlo package declaration before acquisition. Setup preserved all entries.');
+    }
+    if (existingMatches > 1 || (initial.extensions ?? []).some(entry => typeof entry === 'string' && /(?:arlo|adapter-pi)/i.test(entry))) fail('DUPLICATE_ADAPTER_CONFLICT', 'Review duplicate or extension-based Arlo declarations before acquisition. Setup preserved all entries.');
+    if (!options['--adapter'] || retained?.installation) {
+      components = await preparePiComponents(target, agentDir, options['--npm-cli'] as string, command === 'setup' ? 'install' : 'inspect');
+      if (retained?.installation && (retained.installation.id !== components.id || retained.installation.directory !== components.root)) fail('COMPONENT_OWNERSHIP_CONFLICT', 'The setup record points to a different component resource. Preserve both records and review their ownership.');
+      if (command === 'setup') {
+        const alreadyRegistered = retained?.phase === 'configured' && (initial.packages ?? []).includes(retained.declaration);
+        const previewOutput = options['--apply'] ? (value: object) => console.error(JSON.stringify(value, null, 2)) : output;
+        previewOutput({ host: 'pi', target: components.host, scope: 'user', agentDir, adapter: { directory: components.adapter },
+          components: components.state(), phase: 'preview', configured: alreadyRegistered, runtime: 'unobserved', communication: 'unobserved',
+          changes: alreadyRegistered ? ['Verify the existing owned components and native user declaration; do not duplicate registration.'] : [
+            components.state().state === 'installed' ? 'Reuse the verified installed coordinated components.' : 'Consume the exact four registry components in the durable companion through the selected standard package tool.',
+            'Link the three borrowed physical peers; preserve the original host installation.',
+            'Register the durable adapter through selected Pi native user-level pi install.', 'Record owned component entries and this referring setup scope.'],
+          nextStep: 'Verify this target and plan, then repeat with --apply. Start/reload the selected native Pi normally and run /arlo-doctor afterwards.' });
+        if (!options['--apply']) {
+          if (!stdin.isTTY || options['--json']) return 0;
+          const answer = await askSetup('Apply this installation and native user registration? [y/N]: ');
+          if (!answer || !['y', 'yes'].includes(answer.toLowerCase())) { output({ phase: 'cancelled', nextStep: 'Cancelled. No changes applied.' }); return 0; }
+          options['--apply'] = true;
+        }
+      }
+      if (command === 'setup') {
+        await components.acquire();
+        release = await setupTransaction(path.dirname(record));
+        if (JSON.stringify(settings(file)) !== JSON.stringify(initial) || recordFingerprint() !== initialRecordFingerprint) fail('PACKAGE_PLAN_STALE', 'The selected user settings or setup ownership record changed after planning. Preserve the current edits and retry.');
+        await components.consume();
+      }
+      options['--adapter'] = components.adapter;
+    }
     const adapter = command !== 'setup' && !fs.existsSync(options['--adapter'] as string)
       ? recordedPackageDirectory(options['--adapter'] as string)
       : exactDirectory(options['--adapter'] as string, 'ADAPTER_NOT_FOUND', 'Use npm to install all delivered private sibling tarballs, then pass the installed compiled adapter directory with --adapter.');
     let manifest: any = {};
-    if (command === 'setup' || fs.existsSync(adapter) && command === 'setup-status') {
+    if (command === 'setup-status' && components?.state().state === 'missing') {
+      if (fs.existsSync(adapter)) manifest = readJson(path.join(adapter, 'package.json'));
+    } else if (command === 'setup' || fs.existsSync(adapter) && command === 'setup-status') {
     try { manifest = readJson(path.join(adapter, 'package.json')); } catch { fail('ADAPTER_UNREADABLE', 'Select the installed compiled @arlo/adapter-pi package.'); }
-    if (manifest.name !== '@arlo/adapter-pi' || manifest.pi?.extensions?.length !== 1 ||
+    if (manifest.name !== piComponentNames.piAdapter || manifest.pi?.extensions?.length !== 1 ||
         !manifest.pi.extensions.every((file: unknown) => typeof file === 'string' && file.endsWith('.js') && fs.existsSync(path.join(adapter, file)))) {
       fail('COMPILED_ADAPTER_REQUIRED', 'Obtain the private compiled adapter-pi artifact; source TypeScript and extension metadata alone are insufficient.');
+    }
+    if (manifest.version !== piRelease[piComponentNames.piAdapter]) {
+      fail('DEPENDENCY_IDENTITY_MISMATCH', 'The selected compiled adapter has a different version from this coordinated CLI release. Preserve its registration and select the matching release before retrying.');
     }
     if (physicalPackage(adapter, host.name) !== target) fail('HOST_PEER_CONFLICT', 'The adapter resolves a different Pi copy. Use the selected host installation for standard npm package consumption; do not install a second host.');
     for (const name of ['@earendil-works/pi-tui', 'typebox']) {
       if (physicalPackage(adapter, name) !== physicalPackage(target, name)) fail('HOST_PEER_CONFLICT', `The adapter and selected host resolve different ${name} packages. Reconcile package consumption before setup.`);
     }
     for (const [name, version] of Object.entries(manifest.dependencies ?? {})) {
-      if (!name.startsWith('@arlo/')) continue;
+      if (!Object.hasOwn(piRelease, name)) continue;
       const directory = physicalPackage(adapter, name);
       const dependency = readJson(path.join(directory, 'package.json'));
       const entry = dependency.exports?.['.'];
@@ -126,12 +234,7 @@ export async function runSetupCli(command: string, args: string[]): Promise<numb
       }
     }
     }
-    const selectedAgentDir = path.resolve(options['--agent-dir'] as string ?? process.env.PI_CODING_AGENT_DIR ?? path.join(os.homedir(), '.pi', 'agent'));
-    const agentDir = fs.existsSync(selectedAgentDir) ? fs.realpathSync(selectedAgentDir) : selectedAgentDir;
-    const file = path.join(agentDir, 'settings.json');
-    const record = path.join(agentDir, 'arlo-setup', 'pi.json');
-    const initial = settings(file);
-    if (command !== 'setup-status' && options['--apply'] && (fs.existsSync(record) || command === 'setup' && !(initial.packages ?? []).some(entry => {
+    if (!release && command !== 'setup-status' && options['--apply'] && (fs.existsSync(record) || command === 'setup' && !(initial.packages ?? []).some(entry => {
       const source = sourceOf(entry); if (!source) return false;
       try { return fs.realpathSync(path.resolve(agentDir, source)) === adapter; } catch { return false; }
     }))) release = await setupTransaction(path.dirname(record));
@@ -146,8 +249,8 @@ export async function runSetupCli(command: string, args: string[]): Promise<numb
     const other = packages.some(entry => {
       const source = sourceOf(entry);
       if (!source || matching.includes(entry)) return false;
-      if (source.includes('@arlo/adapter-pi')) return true;
-      try { return readJson(path.join(path.resolve(agentDir, source), 'package.json')).name === '@arlo/adapter-pi'; } catch { return false; }
+      if (source.includes(piComponentNames.piAdapter)) return true;
+      try { return readJson(path.join(path.resolve(agentDir, source), 'package.json')).name === piComponentNames.piAdapter; } catch { return false; }
     });
     if (other || matching.length > 1 || (current.extensions ?? []).some(entry => typeof entry === 'string' && /(?:arlo|adapter-pi)/i.test(entry))) {
       fail('DUPLICATE_ADAPTER_CONFLICT', 'Review existing Pi package/extension declarations and keep one intended Arlo entry; setup preserved all entries.');
@@ -169,13 +272,15 @@ export async function runSetupCli(command: string, args: string[]): Promise<numb
       hostRuntime: { state: 'unobserved', nextStep: 'In the selected native Pi TUI run /arlo-doctor to observe its actual executable, loaded adapter, contracts and reception.' },
       daemonRuntime: { state: 'unobserved', nextStep: 'Use arlo status and arlo doctor for the shared Daemon; setup does not start or restart it.' },
       environment: process.versions.node === '24.13.1' ? 'baseline-cli-runtime' : 'unverified-cli-runtime',
-      packages: fs.existsSync(adapter) ? 'installed' : 'missing', configured: matching.length === 1,
+      packages: fs.existsSync(adapter) ? 'installed' : 'missing', ...(components ? { components: components.state() } : {}), configured: matching.length === 1,
       transaction: journal?.phase ?? 'none',
+      ...(journal?.failure ? { failure: journal.failure } : {}),
       ownership: drifted ? 'conflict' : activeOwnership && matching.length ? 'arlo' : matching.length ? 'preexisting' : 'none',
       runtime: 'unobserved', communication: 'unobserved',
     };
     if (command === 'setup-status') {
-      output({ ...report, phase: drifted ? 'configuration-conflict' : journal?.phase === 'prepared' || journal?.phase === 'removing' ? 'recovery-required' : matching.length ? 'pending-start-or-reload' : 'not-configured', nextStep: drifted ? 'The owned declaration changed after setup. Preserve your edits and review its native Pi registration.' : !fs.existsSync(adapter) ? 'The adapter package is missing. Restore the same private compiled component or use uninstall with this exact recorded target to revoke its retained declaration; reload the host normally afterwards.' : matching.length ? report.hostRuntime.nextStep : 'Run setup to preview user-level registration.' });
+      const missingRecordedComponents = components?.state().inventory === 'review-required';
+      output({ ...report, phase: drifted ? 'configuration-conflict' : missingRecordedComponents ? 'components-missing' : components?.state().state === 'partial' || journal?.phase === 'prepared' || journal?.phase === 'removing' ? 'recovery-required' : matching.length ? 'pending-start-or-reload' : 'not-configured', nextStep: drifted ? 'The owned declaration changed after setup. Preserve your edits and review its native Pi registration.' : missingRecordedComponents ? 'Recorded component files are missing. Preserve the native declaration and private records, then review the owned consumer before retrying setup; its remaining inventory cannot authorize an overwrite.' : !fs.existsSync(adapter) ? 'Components are missing or partially installed. Retry setup on this exact target to complete owned consumption, or revoke a retained native declaration with uninstall; reload the host normally afterwards.' : matching.length ? report.hostRuntime.nextStep : 'Run setup to preview user-level registration.' });
       return 0;
     }
     if (drifted) fail('CONFIGURATION_CHANGED', 'The owned declaration changed after setup. Preserve it and remove the desired entry through Pi after reviewing your changes.');
@@ -195,40 +300,63 @@ export async function runSetupCli(command: string, args: string[]): Promise<numb
         output({ ...report, phase: 'preview', changes: ['Remove only the owned Pi user package declaration through pi remove.'], nextStep: 'Repeat with --apply to remove this registration; restart/reload Pi normally afterwards.' });
         return 0;
       }
-      journalWrite(record, { ...journal, phase: 'removing' });
-      nativePi(target, agentDir, 'remove', adapter);
+      journalWrite(record, { ...journal, phase: 'removing', failure: undefined });
+      try { nativePi(target, agentDir, 'remove', adapter); }
+      catch (error) { if (error instanceof SetupError && error.failure) journalWrite(record, { ...journal, phase: 'removing', failure: error.failure }); throw error; }
       const removingDeclaration = journal.declaration;
       if ((settings(file).packages ?? []).some(entry => sourceOf(entry) === removingDeclaration)) {
+        journalWrite(record, { ...journal, phase: 'removing', failure: { code: 'REGISTRATION_INCOMPLETE', exit: 0, signal: null, operation: 'native-remove' } });
         fail('REGISTRATION_INCOMPLETE', 'Pi retained the owned declaration. The removing record is retained; preserve your current settings and retry uninstall.');
       }
-      journalWrite(record, { ...journal, phase: 'removed', owned: false });
+      journalWrite(record, { ...journal, phase: 'removed', owned: false, failure: undefined });
       output({ ...report, configured: false, ownership: 'none', transaction: 'removed', phase: 'removed-pending-reload', nextStep: 'Reload or restart Pi normally. Shared consumed packages, history, root identities, allowances and shared Daemon remain; remove unshared packages separately through npm.' });
       return 0;
     }
     if (journal?.phase === 'removing') fail('RECOVERY_REVIEW_REQUIRED', 'Finish the pending uninstall using the same exact target before requesting a new setup.');
     if (matching.length) {
-      output({ ...report, phase: 'already-configured-pending-reload', nextStep: report.hostRuntime.nextStep });
+      if (!components && options['--apply']) {
+        components = await retainedPiComponents(adapter, target, agentDir, options['--npm-cli'] as string);
+        if (components) {
+          await components.acquire();
+          if (components.state().state !== 'installed') fail('COMPONENT_OWNERSHIP_CONFLICT', 'The shared resource changed before confirmation could be recorded. Preserve the manual declaration and review its components.');
+          components.recheck();
+          if (JSON.stringify(settings(file)) !== JSON.stringify(initial) || recordFingerprint() !== initialRecordFingerprint) fail('PACKAGE_PLAN_STALE', 'The manual native declaration changed before its shared component use could be recorded. Preserve the configuration and retry.');
+          components.registration('configured', activeOwnership ? 'setup-record' : 'preexisting-declaration');
+        }
+      }
+      output({ ...report, ...(components ? { components: components.state() } : {}), phase: 'already-configured-pending-reload', nextStep: report.hostRuntime.nextStep });
       return 0;
     }
     if (!options['--apply']) {
       output({ ...report, phase: 'preview', changes: ['Register the compiled adapter directory using Pi native user-level pi install.', 'Write a private ownership record; preserve other settings and all project declarations.'], nextStep: 'Verify the target and repeat with --apply. Then start/reload Pi normally and run /arlo-doctor.' });
       return 0;
     }
-    const prepared: Journal = { schemaVersion: 1, target, adapter, declaration, owned: false, phase: 'prepared', createdAt: new Date().toISOString() };
+    const prepared: Journal = { schemaVersion: 1, target, adapter, declaration, owned: false, phase: 'prepared', createdAt: new Date().toISOString(),
+      ...(components ? { installation: { id: components.id, directory: components.root } } : {}) };
     journalWrite(record, prepared);
-    nativePi(target, agentDir, 'install', adapter);
+    components?.registration('registration-prepared');
+    try { nativePi(target, agentDir, 'install', adapter); }
+    catch (error) {
+      if (error instanceof SetupError && error.failure) { journalWrite(record, { ...prepared, failure: error.failure }); components?.recordFailure(error.failure); }
+      throw error;
+    }
     const installed = settings(file).packages ?? [];
-    if (!installed.includes(declaration)) fail('REGISTRATION_INCOMPLETE', 'Pi did not persist the expected declaration. The private prepared record is retained; inspect settings and rerun setup.');
+    if (!installed.includes(declaration)) {
+      const failure: SetupOperationFailure = { code: 'REGISTRATION_INCOMPLETE', exit: 0, signal: null, operation: 'native-install' };
+      journalWrite(record, { ...prepared, failure }); components?.recordFailure(failure);
+      throw new SetupError('REGISTRATION_INCOMPLETE', 'Pi did not persist the expected declaration. The private prepared record is retained; inspect settings and rerun setup.', failure);
+    }
     journalWrite(record, { ...prepared, phase: 'configured', owned: true });
-    output({ ...report, configured: true, ownership: 'arlo', transaction: 'configured', phase: 'configured-pending-start-or-reload', nextStep: report.hostRuntime.nextStep });
+    components?.registration('configured');
+    output({ ...report, ...(components ? { components: components.state() } : {}), configured: true, ownership: 'arlo', transaction: 'configured', phase: 'configured-pending-start-or-reload', nextStep: report.hostRuntime.nextStep });
     return 0;
   } catch (error) {
     if (error instanceof ArloError && ['UNSAFE_LOCATION', 'INSECURE_PERMISSIONS', 'INVALID_OWNERSHIP'].includes(error.code)) {
       output({ error: 'UNSAFE_SETUP_RECORD', nextStep: 'Select a private, current-user-owned Pi configuration directory with --agent-dir, or repair that directory through your host preparation process. Setup did not change unrelated directory permissions.' });
       return 1;
     }
-    output({ error: error instanceof SetupError ? error.code : error instanceof Error && ['SETUP_BUSY', 'CONFIGURATION_TARGET_CONFLICT'].includes(error.message) ? error.message : 'SETUP_FAILED',
+    output({ ...(components ? { components: components.state() } : {}), ...(error instanceof SetupError && error.failure ? { failure: error.failure } : {}), error: error instanceof SetupError ? error.code : error instanceof Error && ['SETUP_BUSY', 'CONFIGURATION_TARGET_CONFLICT'].includes(error.message) ? error.message : 'SETUP_FAILED',
       nextStep: error instanceof SetupError ? error.nextStep : 'No success was recorded. Inspect the selected private setup record and settings, then retry; never restore an entire old configuration snapshot.' });
     return 1;
-  } finally { await release?.(); }
+  } finally { await release?.(); await components?.close(); }
 }

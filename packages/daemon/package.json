@@ -32,5 +32,25 @@
     "setup-dsh",
     "README.md"
   ],
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "arlo": {
+    "components": {
+      "sdk": {
+        "name": "@arlo/sdk",
+        "version": "0.1.0"
+      },
+      "adapterSdk": {
+        "name": "@arlo/adapter-sdk",
+        "version": "0.1.0"
+      },
+      "daemon": {
+        "name": "@arlo/daemon",
+        "version": "0.1.0"
+      },
+      "piAdapter": {
+        "name": "@arlo/adapter-pi",
+        "version": "0.1.0"
+      }
+    }
+  }
 }

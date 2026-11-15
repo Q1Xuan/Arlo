@@ -6,7 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const cli = fileURLToPath(new URL('../packages/daemon/bin/arlo.js', import.meta.url));
+const cli = process.env.ARLO_CLI_ENTRY ?? fileURLToPath(new URL('../packages/daemon/bin/arlo.js', import.meta.url));
 const run = args => spawnSync(process.execPath, [cli, ...args, '--json'], { encoding: 'utf8' });
 
 test('CLI setup names a missing exact host and gives a next step without changing user settings', () => {

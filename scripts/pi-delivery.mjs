@@ -7,7 +7,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createPrivateBuildEnvironment, filesIn } from './private-build.mjs';
 import { genericBuildLock, registryResolutions } from './generic-lock.mjs';
-import { piAdapterArtifactSha256 } from '../packages/adapter-pi/src/environment.ts';
+import { piAdapterArtifactSha256 } from '../packages/adapter-pi/src/artifact.ts';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const json = file => JSON.parse(fs.readFileSync(file, 'utf8'));
@@ -34,13 +34,16 @@ let pnpm = option('--pnpm', process.env.npm_execpath ?? path.join(path.dirname(p
 const store = option('--store');
 const cache = option('--offline-cache');
 const hostVersion = option('--host-version', '1.1.0');
+const candidateIndex = args.indexOf('--release-candidate');
+const releaseCandidate = candidateIndex >= 0;
+if (releaseCandidate) args.splice(candidateIndex, 1);
 assert.ok(['1.1.0', '1.2.0', '1.3.0', '1.4.0'].includes(hostVersion), 'No reviewed installation profile for this Pi version');
 const candidateDir = hostVersion === '1.1.0' ? undefined : `pi-acceptance/candidates/${hostVersion}`;
 const hostOverrides = candidateDir ? json(path.join(repo, candidateDir, 'package.json')).pnpm.overrides : {};
 if (candidateDir) sourceLock = fs.readFileSync(path.join(repo, candidateDir, 'pnpm-lock.yaml'), 'utf8').replaceAll('\r\n', '\n');
 for (const name of ['@earendil-works/pi-coding-agent', '@earendil-works/pi-tui']) manifests.at(-1).devDependencies[name] = hostVersion;
 assert.ok(command === 'build' && args.length === 0,
-  'Usage: pi-delivery.mjs build [--host-version 1.1.0|1.2.0|1.3.0|1.4.0] [--out DIR] [--output REPORT] [--pnpm CLI.js] [--store DIR] [--offline-cache DIR]');
+  'Usage: pi-delivery.mjs build [--release-candidate] [--host-version 1.1.0|1.2.0|1.3.0|1.4.0] [--out DIR] [--output REPORT] [--pnpm CLI.js] [--store DIR] [--offline-cache DIR]');
 assert.equal(process.version, `v${root.engines.node}`, 'Use the pinned Node runtime');
 assert.ok(!fs.existsSync(bundle), 'Output exists; choose a new --out directory');
 const pnpmVersion = root.packageManager.split('@')[1];
@@ -173,6 +176,7 @@ function fingerprint() {
 }
 const report = { schemaVersion: 1, issue: 62, status: 'failed', startedAt: new Date().toISOString(),
   resources, owner, bundle, node: process.version, pnpm: pnpmVersion, platform: process.platform, hostVersion, steps: [],
+  distribution: { kind: releaseCandidate ? 'release-candidate' : 'private-validation', publicAvailability: 'unverified', publishPermissions: 'unverified' },
   scope: 'Private build, frozen installation, declarations and import/peer checks. Native Pi acceptance runs separately.',
 };
 try {
@@ -226,6 +230,9 @@ try {
       fs.cpSync(file === 'LICENSE' ? path.join(repo, 'LICENSE') : path.join(build, 'packages', name, file), path.join(target, file), { recursive: true });
     }
     writeJson(path.join(target, 'package.json'), { ...manifest, exports, files: ['src', 'bin', 'README.md', ...resourceFiles], devDependencies: undefined,
+      ...(name === 'daemon' ? { arlo: { components: Object.fromEntries(['sdk', 'adapterSdk', 'daemon', 'piAdapter'].map((role, index) =>
+        [role, { name: manifests[index].name, version: manifests[index].version }])) } } : {}),
+      private: releaseCandidate ? false : manifest.private, ...(releaseCandidate ? { publishConfig: { access: 'public' } } : {}),
       ...(manifest.pi ? { pi: { ...manifest.pi, extensions: manifest.pi.extensions.map(file => file.replace(/\.ts$/, '.js')) } } : {}),
       dependencies: Object.fromEntries(Object.entries(manifest.dependencies).map(([name, version]) => [name,
         version === 'workspace:*' ? manifests.find(pkg => pkg.name === name).version : version])) });
@@ -317,6 +324,7 @@ console.log(JSON.stringify({ adapterEntry, extension, piEntry, piVersion: (await
   report.piSnapshot = expectedPiSnapshot;
   assert.deepEqual(fingerprint(), sourceFiles, 'Sources changed during build');
   writeJson(path.join(bundle, 'manifest.json'), { schemaVersion: 1, private: true, sourceFiles, inventories,
+    distribution: report.distribution, packages: manifests.map(({ name, version }) => ({ name, version })),
     piSnapshot: expectedPiSnapshot, files: Object.fromEntries(filesIn(bundle).map(file => [file, sha(fs.readFileSync(path.join(bundle, file)))])) });
   report.status = 'passed';
 } catch (error) {

@@ -49,15 +49,14 @@ test('menu setup and uninstall describe registration scope and reject a missing 
   const context = createCliProcessFixture('arlo-cli-menu-');
   fs.writeFileSync(path.join(context.directory, 'settings.json'), '{"theme":"dark","packages":["other-plugin"]}');
   try {
-    for (const [action, scope] of [['1', /registers an existing compiled Arlo adapter/], ['4', /removes the owned host registration/]]) {
+    for (const [action, scope] of [['1', /previews coordinated component installation/], ['4', /removes the owned host registration/]]) {
       const result = terminal(context, [], [['Choose an action', `${action}\n`], ['Host to connect', 'pi\n'],
-        ['Exact installed host', `${path.join(context.directory, 'missing')}\n`],
-        ['Installed compiled Arlo adapter', `${path.join(context.directory, 'adapter')}\n`]]);
+        ['Exact installed host', `${path.join(context.directory, 'missing')}\n`]]);
       assert.equal(result.status, 1, result.stderr + result.stdout);
       assert.match(result.stdout, scope);
       assert.match(result.stdout, /HOST_NOT_FOUND/);
     }
-    assert.deepEqual(fs.readdirSync(context.directory), ['settings.json']);
+    assert.deepEqual(fs.readdirSync(context.directory).filter(name => name !== '.npm'), ['settings.json']);
     assert.equal(fs.readFileSync(path.join(context.directory, 'settings.json'), 'utf8'), '{"theme":"dark","packages":["other-plugin"]}');
   } finally { context.close(); }
 });
