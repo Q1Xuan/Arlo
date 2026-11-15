@@ -117,7 +117,7 @@ function auditLock(lock) {
 }
 function sourceFingerprint() {
   const sources = ['package.json', 'pnpm-lock.yaml', 'scripts/generic-delivery.mjs', 'scripts/generic-lock.mjs', 'scripts/private-build.mjs',
-    'tests/cli-menu.test.mjs', 'tests/fixtures/cli-terminal.py',
+    'tests/cli-menu.test.mjs', 'tests/fixtures/cli-terminal.py', 'tests/fixtures/cli-process.mjs',
     'acceptance/preload.mjs', 'probes/isolation.mjs', 'probes/gui-network-guard.mjs',
     ...filesIn(path.join(repo, 'generic-delivery')).map(file => `generic-delivery/${file}`),
     ...names.flatMap(name => filesIn(path.join(repo, `packages/${name}`), { excludeNodeModules: true }).map(file => `packages/${name}/${file}`))];
@@ -185,7 +185,7 @@ try {
     pm(['install', '--lockfile-only', '--ignore-scripts'], consumer, 'consumer-lock');
     auditLock(fs.readFileSync(path.join(consumer, 'pnpm-lock.yaml'), 'utf8'));
     for (const file of [...filesIn(path.join(repo, 'generic-delivery')).map(file => `generic-delivery/${file}`),
-      'tests/cli-menu.test.mjs', 'tests/fixtures/cli-terminal.py',
+      'tests/cli-menu.test.mjs', 'tests/fixtures/cli-terminal.py', 'tests/fixtures/cli-process.mjs',
       'acceptance/preload.mjs', 'probes/isolation.mjs', 'probes/gui-network-guard.mjs']) copy(file, consumer);
     const exports = manifests.flatMap(manifest => Object.keys(manifest.exports).map(key => manifest.name + (key === '.' ? '' : key.slice(1))));
     fs.writeFileSync(path.join(consumer, 'generic-delivery/exports.ts'), exports.map((specifier, index) => `import * as entry${index} from '${specifier}';\nvoid entry${index};`).join('\n') + '\n');
