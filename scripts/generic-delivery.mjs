@@ -32,8 +32,14 @@ const output = path.resolve(option('--output', path.join(repo, `.scratch/generic
 let pnpm = option('--pnpm', process.env.npm_execpath ?? path.join(path.dirname(process.execPath), 'node_modules/corepack/dist/pnpm.js'));
 const store = option('--store');
 const cache = option('--offline-cache');
+const npx = option('--npx', path.join(path.dirname(process.execPath), 'node_modules/npm/bin/npx-cli.js'));
+const candidateIndex = args.indexOf('--release-candidate');
+const releaseCandidate = candidateIndex >= 0;
+if (releaseCandidate) args.splice(candidateIndex, 1);
 assert.ok(['build', 'verify'].includes(command) && args.length === 0,
-  'Usage: generic-delivery.mjs build|verify [--out DIR] [--output REPORT] [--pnpm CLI.js] [--store DIR] [--offline-cache DIR]');
+  'Usage: generic-delivery.mjs build|verify [--release-candidate (build only)] [--out DIR] [--output REPORT] [--pnpm CLI.js] [--npx CLI.js] [--store DIR] [--offline-cache DIR]');
+assert.ok(!releaseCandidate || command === 'build', '--release-candidate selects build output; verify reads the bundle manifest');
+if (command === 'verify') assert.ok(fs.existsSync(npx), 'Pass the installed npm bin/npx-cli.js with --npx');
 assert.equal(process.version, `v${root.engines.node}`, 'Use the pinned Node runtime');
 const pnpmVersion = root.packageManager.split('@')[1];
 function run(argv, cwd, env, log, timeout = 300000) {
@@ -111,12 +117,15 @@ function auditLock(lock) {
 }
 function sourceFingerprint() {
   const sources = ['package.json', 'pnpm-lock.yaml', 'scripts/generic-delivery.mjs', 'scripts/generic-lock.mjs', 'scripts/private-build.mjs',
+    'tests/cli-menu.test.mjs', 'tests/fixtures/cli-terminal.py',
     'acceptance/preload.mjs', 'probes/isolation.mjs', 'probes/gui-network-guard.mjs',
     ...filesIn(path.join(repo, 'generic-delivery')).map(file => `generic-delivery/${file}`),
     ...names.flatMap(name => filesIn(path.join(repo, `packages/${name}`), { excludeNodeModules: true }).map(file => `packages/${name}/${file}`))];
   return Object.fromEntries(sources.sort().map(file => [file, sha(fs.readFileSync(path.join(repo, file), 'utf8').replaceAll('\r\n', '\n'))]));
 }
 const report = { schemaVersion: 1, issue: 51, command, status: 'failed', startedAt: new Date().toISOString(),
+  distribution: { kind: releaseCandidate ? 'release-candidate' : 'private-validation',
+    cliPackage: '@arlo/daemon', bin: 'arlo', publishPermissions: 'unverified', publicAvailability: 'unverified' },
   runtime: { platform: process.platform, arch: process.arch, release: os.release(), version: os.version(), node: process.version, pnpm: pnpmVersion,
     linux: process.platform === 'linux' ? { distribution: fs.readFileSync('/etc/os-release', 'utf8'), uid: process.getuid(), wsl: /microsoft/i.test(os.release()), filesystemType: fs.statfsSync(resources).type } : null },
   resources, owner, steps: [],
@@ -157,6 +166,8 @@ try {
         fs.cpSync(file === 'LICENSE' ? path.join(repo, 'LICENSE') : path.join(build, 'packages', name, file), path.join(target, file), { recursive: true });
       }
       writeJson(path.join(target, 'package.json'), { ...manifest, exports, files: ['src', 'bin', ...resourceFiles], devDependencies: undefined,
+        private: releaseCandidate ? false : manifest.private,
+        ...(releaseCandidate ? { publishConfig: { access: 'public' } } : {}),
         dependencies: Object.fromEntries(Object.entries(manifest.dependencies).map(([name, version]) => [name,
           version === 'workspace:*' ? manifests.find(pkg => pkg.name === name).version : version])) });
       if (name === 'daemon') fs.copyFileSync(path.join(build, 'packages/daemon/src/storage/windows-mutex.ps1'), path.join(target, 'src/storage/windows-mutex.ps1'));
@@ -174,6 +185,7 @@ try {
     pm(['install', '--lockfile-only', '--ignore-scripts'], consumer, 'consumer-lock');
     auditLock(fs.readFileSync(path.join(consumer, 'pnpm-lock.yaml'), 'utf8'));
     for (const file of [...filesIn(path.join(repo, 'generic-delivery')).map(file => `generic-delivery/${file}`),
+      'tests/cli-menu.test.mjs', 'tests/fixtures/cli-terminal.py',
       'acceptance/preload.mjs', 'probes/isolation.mjs', 'probes/gui-network-guard.mjs']) copy(file, consumer);
     const exports = manifests.flatMap(manifest => Object.keys(manifest.exports).map(key => manifest.name + (key === '.' ? '' : key.slice(1))));
     fs.writeFileSync(path.join(consumer, 'generic-delivery/exports.ts'), exports.map((specifier, index) => `import * as entry${index} from '${specifier}';\nvoid entry${index};`).join('\n') + '\n');
@@ -182,13 +194,16 @@ try {
     fs.copyFileSync(path.join(build, 'pnpm-lock.yaml'), path.join(bundle, 'build-pnpm-lock.yaml'));
     assert.deepEqual(sourceFingerprint(), sourceFiles, 'Sources changed during build');
     writeJson(path.join(bundle, 'manifest.json'), { schemaVersion: 1, private: true, sourceFiles, inventories, exports,
+      distribution: report.distribution,
       sourceCommit: spawnSync('git', ['rev-parse', 'HEAD'], { cwd: repo, encoding: 'utf8', windowsHide: true }).stdout?.trim() || null,
       packages: manifests.map(({ name, version }) => ({ name, version })),
       files: Object.fromEntries(filesIn(bundle).map(file => [file, sha(fs.readFileSync(path.join(bundle, file)))])),
       buildDependencies: report.buildDependencies, runtime: report.runtime });
-    report.steps.push('three-private-tarballs-and-frozen-consumer-lock');
+    report.steps.push(releaseCandidate ? 'three-release-candidate-tarballs-and-frozen-consumer-lock'
+      : 'three-private-tarballs-and-frozen-consumer-lock');
   } else {
     const manifest = json(path.join(bundle, 'manifest.json'));
+    report.distribution = manifest.distribution ?? report.distribution;
     report.bundleManifestSha256 = sha(fs.readFileSync(path.join(bundle, 'manifest.json')));
     for (const [file, digest] of Object.entries(manifest.files)) {
       assert.ok(!path.isAbsolute(file) && !file.split(/[\\/]/).includes('..'), 'Invalid bundle path');
@@ -211,10 +226,13 @@ try {
     assert.equal(json(negativeFile).deniedConnections, 1);
     report.steps.push('runtime-network-negative-control');
     const runtimeEnv = { ...env, ARLO_ACCEPTANCE_ROOT: resources, ARLO_ACCEPTANCE_OWNER: owner,
+      ARLO_CLI_ENTRY: path.join(consumer, 'node_modules/@arlo/daemon/bin/arlo.js'),
+      ARLO_CLI_CONSUMER_DIR: consumer, ARLO_NPX_CLI: npx,
       NODE_OPTIONS: `--import=${pathToFileURL(path.join(consumer, 'acceptance/preload.mjs')).href}` };
-    report.testOutput = run(['--test', '--test-concurrency=1', '--test-reporter=tap', 'generic-delivery/packages.test.mjs', 'generic-delivery/contract.test.ts'],
+    report.testOutput = run(['--test', '--test-concurrency=1', '--test-reporter=tap', 'generic-delivery/packages.test.mjs',
+      'generic-delivery/contract.test.ts', 'generic-delivery/cli-entry.test.mjs', 'tests/cli-menu.test.mjs'],
       consumer, runtimeEnv, path.join(dirs.logs, 'contract.log'), 600000);
-    report.steps.push('installed-exports-cli-and-public-host-contract');
+    report.steps.push('installed-exports-npx-menu-cli-and-public-host-contract');
     const processDir = path.join(resources, 'processes');
     const processes = fs.readdirSync(processDir).filter(file => file.endsWith('.process.json')).map(file => json(path.join(processDir, file)));
     for (const record of processes) {

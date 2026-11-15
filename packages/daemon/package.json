@@ -29,7 +29,8 @@
   "files": [
     "src",
     "bin",
-    "setup-dsh"
+    "setup-dsh",
+    "README.md"
   ],
   "license": "Apache-2.0"
 }

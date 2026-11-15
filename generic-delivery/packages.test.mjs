@@ -23,7 +23,8 @@ test('three installed packages expose every compiled export and preserve depende
     const installedFiles = fs.readdirSync(directory, { recursive: true, withFileTypes: true })
       .filter(file => file.isFile()).map(file => path.relative(directory, path.join(file.parentPath, file.name)).replaceAll('\\', '/')).sort();
     assert.deepEqual(installedFiles, [...bundle.inventories[manifest.name]].sort(), 'Tarball installation preserves the complete emitted package inventory');
-    assert.equal(manifest.private, true);
+    assert.equal(manifest.private, bundle.distribution?.kind !== 'release-candidate');
+    if (bundle.distribution?.kind === 'release-candidate') assert.equal(manifest.publishConfig.access, 'public');
     assert.deepEqual(Object.keys(manifest.dependencies).sort(), dependencies);
     for (const [key, target] of Object.entries(manifest.exports)) {
       assert.ok(target.types.endsWith('.d.ts') && fs.existsSync(path.join(directory, target.types)));
