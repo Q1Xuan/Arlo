@@ -3,11 +3,18 @@ import os from 'node:os';
 import path from 'node:path';
 
 export function createCliProcessFixture(prefix) {
-  const directory = fs.mkdtempSync(path.join(process.env.ARLO_ACCEPTANCE_ROOT ?? os.tmpdir(), prefix));
+  const root = process.env.ARLO_ACCEPTANCE_ROOT ?? os.tmpdir();
+  const directory = fs.mkdtempSync(path.join(root, prefix));
+  // Windows PowerShell initializes AppData/Roaming in USERPROFILE even for a
+  // read-only command. Keep that OS profile separate from the command's target.
+  const profile = process.platform === 'win32' ? fs.mkdtempSync(path.join(root, 'arlo-cli-profile-')) : directory;
   const env = Object.fromEntries(['PATH', 'SystemRoot', 'WINDIR', 'ComSpec', 'PATHEXT'].filter(key => process.env[key])
     .map(key => [key, process.env[key]]));
-  Object.assign(env, { HOME: directory, USERPROFILE: directory, APPDATA: directory, LOCALAPPDATA: directory,
-    XDG_CONFIG_HOME: directory, XDG_DATA_HOME: directory, XDG_STATE_HOME: directory,
-    XDG_CACHE_HOME: directory, XDG_RUNTIME_DIR: directory, DSH_HOME: directory, TERM: 'dumb' });
-  return { directory, env, close: () => fs.rmSync(directory, { recursive: true, force: true }) };
+  Object.assign(env, { HOME: profile, USERPROFILE: profile, APPDATA: profile, LOCALAPPDATA: profile,
+    XDG_CONFIG_HOME: profile, XDG_DATA_HOME: profile, XDG_STATE_HOME: profile,
+    XDG_CACHE_HOME: profile, XDG_RUNTIME_DIR: profile, DSH_HOME: profile, TERM: 'dumb' });
+  return { directory, env, close: () => {
+    fs.rmSync(directory, { recursive: true, force: true });
+    if (profile !== directory) fs.rmSync(profile, { recursive: true, force: true });
+  } };
 }
