@@ -1,0 +1,37 @@
+--- a/lib/index.js
++++ b/lib/index.js
+@@ -132,7 +132,7 @@
+ 		platforms: {
+ 			darwin: macApp("Cursor.app"),
+ 			win32: spec(appPaths("Cursor.exe"), installRecord("Cursor"), file(["${LOCALAPPDATA}/Programs/cursor/Cursor.exe"])),
+-			linux: spec(cli("cursor"))
++			linux: desktopSpec("cursor", cli("cursor"))
+ 		}
+ 	},
+ 	{
+@@ -1308,7 +1308,13 @@
+ 			}
+ 			const icon = await iconOf(app, resolved);
+ 			if (icon === null) {
+-				noIcon();
++				// A detected launcher can legitimately have no extractable icon.
++				// Serve a generic open-application glyph without a failed request.
++				// Unknown or unavailable applications retain the 404 above.
++				res.statusCode = 200;
++				res.setHeader("content-type", "image/svg+xml; charset=utf-8");
++				res.setHeader("cache-control", "no-store");
++				res.end('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>Open application</title><path d="M7 17 17 7M7 7h10v10" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+ 				return;
+ 			}
+ 			res.statusCode = 200;
+--- a/lib/types/catalog.js
++++ b/lib/types/catalog.js
+@@ -96,7 +96,7 @@
+         platforms: {
+             darwin: macApp('Cursor.app'),
+             win32: spec(appPaths('Cursor.exe'), installRecord('Cursor'), file(['${LOCALAPPDATA}/Programs/cursor/Cursor.exe'])),
+-            linux: spec(cli('cursor')),
++            linux: desktopSpec('cursor', cli('cursor')),
+         },
+     },
+     {

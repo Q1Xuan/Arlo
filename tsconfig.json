@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "target": "ES2024",
+    "module": "NodeNext",
+    "strict": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "skipLibCheck": false
+  },
+  "include": ["probes/**/*.ts", "packages/**/*.ts", "tests/**/*.ts", "delivery/**/*.ts", "generic-delivery/**/*.ts"],
+  "exclude": ["packages/adapter-pi", "tests/pi-reception.test.ts", "tests/pi-connection-recovery.test.ts", "tests/pi-root-configuration.test.ts", "**/node_modules"]
+}

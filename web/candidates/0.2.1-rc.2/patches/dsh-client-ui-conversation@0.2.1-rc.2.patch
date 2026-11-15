@@ -1,0 +1,380 @@
+--- a/lib/client.js
++++ b/lib/client.js
+@@ -4645,6 +4645,8 @@
+ 				this.blocks = config.blocks;
+ 				this.maxConcurrentFileUploads = config.maxConcurrentFileUploads;
+ 				ctx.effect(() => async () => {
++					for (const { controller } of this.pendingPreparations.values()) controller.abort();
++					for (const registration of this.submitPreparations.values()) registration.lifetime.abort();
+ 					const operations = [...this.fileUploadOperations.values()];
+ 					for (const operation of operations) operation.controller.abort();
+ 					await Promise.allSettled([...this.pendingFileUploads]);
+@@ -4682,61 +4684,115 @@
+ 			* @param signal - optional cancellation for the complete Host admission.
+ 			* @returns the Host admission outcome; local attachment preparation failures reject.
+ 			*/
+-			async sendSession(session, text, attachmentIds, mode, signal) {
+-				const attachments = this.resolveDraftAttachments(attachmentIds);
+-				if (attachments.length !== attachmentIds.length) throw new Error("conversation.sendSession: one or more draft attachments are no longer available");
+-				const uploads = this.fileUploads.getSnapshot();
+-				const uploadFor = (attachment) => {
+-					const upload = uploads[attachment.id];
+-					if (upload === void 0 || upload.status !== "ready") throw new Error("conversation.sendSession: one or more files have not finished uploading");
+-					return upload;
++			submitPreparations = new Map();
++			pendingPreparations = new Map();
++			/** Register a source-owned, cancellable explicit-submit preparation. */
++			registerSubmitPreparation(source, prepare) {
++				if (this.submitPreparations.has(source)) throw new Error(`Duplicate submit preparation: ${source}`);
++				const lifetime = new AbortController();
++				const registration = { prepare, lifetime };
++				this.submitPreparations.set(source, registration);
++				return () => {
++					lifetime.abort();
++					if (this.submitPreparations.get(source) === registration) this.submitPreparations.delete(source);
+ 				};
+-				const pendingAttachments = attachments.map((attachment) => attachment.kind === "image" ? {
+-					type: "image",
+-					value: {
+-						previewUrl: attachment.previewUrl,
+-						...attachment.file.name === "" ? {} : { name: attachment.file.name },
+-						...attachment.width === void 0 ? {} : { width: attachment.width },
+-						...attachment.height === void 0 ? {} : { height: attachment.height }
++			}
++			async sendSession(session, text, attachmentIds, mode, signal, references = []) {
++				let preparation;
++				try {
++					const attachments = this.resolveDraftAttachments(attachmentIds);
++					if (attachments.length !== attachmentIds.length) throw new Error("conversation.sendSession: one or more draft attachments are no longer available");
++					const uploads = this.fileUploads.getSnapshot();
++					const uploadFor = (attachment) => {
++						const upload = uploads[attachment.id];
++						if (upload === void 0 || upload.status !== "ready") throw new Error("conversation.sendSession: one or more files have not finished uploading");
++						return upload;
++					};
++					const pendingAttachments = attachments.map((attachment) => attachment.kind === "image" ? {
++						type: "image",
++						value: {
++							previewUrl: attachment.previewUrl,
++							...attachment.file.name === "" ? {} : { name: attachment.file.name },
++							...attachment.width === void 0 ? {} : { width: attachment.width },
++							...attachment.height === void 0 ? {} : { height: attachment.height }
++						}
++					} : {
++						type: "file",
++						value: uploadFor(attachment).file
++					});
++					const serializeAttachments = () => Promise.all(attachments.map(async (attachment) => attachment.kind === "image" ? {
++						type: "image",
++						...await this.encodeImage(attachment.file)
++					} : {
++						type: "file",
++						receiptId: uploadFor(attachment).receiptId
++					}));
++					let serializedAttachments;
++					if (references.length > 0) {
++						if (this.pendingPreparations.has(session.sessionId)) throw new Error("Submit preparation is already pending");
++						const controller = new AbortController();
++						preparation = { controller, submissionSignal: signal };
++						this.pendingPreparations.set(session.sessionId, preparation);
++						const registrations = [...new Set(references.map(reference => reference.source))].map(source => {
++							const registration = this.submitPreparations.get(source);
++							return { source, registration };
++						});
++						signal = AbortSignal.any([...(signal ? [signal] : []), controller.signal,
++							...registrations.flatMap(({ registration }) => registration ? [registration.lifetime.signal] : [])]);
++						signal.throwIfAborted();
++						serializedAttachments = await serializeAttachments();
++						signal.throwIfAborted();
++						const replacements = new Map();
++						for (const { source, registration } of registrations) {
++							if (!registration) continue;
++							const owned = references.filter(reference => reference.source === source);
++							const values = await registration.prepare(session, owned.map(reference => ({ ref: reference.ref, label: reference.label,
++								text: text.slice(reference.offset, reference.offset + reference.length) })), signal);
++							signal.throwIfAborted();
++							if (values.length !== owned.length || values.some(value => typeof value !== "string")) throw new Error("Submit preparation must preserve reference count and return text");
++							owned.forEach((reference, index) => replacements.set(reference, values[index]));
++						}
++						let prepared = "", cursor = 0;
++						for (const reference of references) {
++							prepared += text.slice(cursor, reference.offset) + (replacements.get(reference) ?? text.slice(reference.offset, reference.offset + reference.length));
++							cursor = reference.offset + reference.length;
++						}
++						text = (prepared + text.slice(cursor)).trim();
+ 					}
+-				} : {
+-					type: "file",
+-					value: uploadFor(attachment).file
+-				});
+-				const serializeAttachments = () => Promise.all(attachments.map(async (attachment) => attachment.kind === "image" ? {
+-					type: "image",
+-					...await this.encodeImage(attachment.file)
+-				} : {
+-					type: "file",
+-					receiptId: uploadFor(attachment).receiptId
+-				}));
+-				let finishRetirement;
+-				const retirement = attachments.length === 0 ? void 0 : new Promise((resolve) => {
+-					finishRetirement = resolve;
+-				});
+-				const submission = session.beginSubmission({
+-					mode,
+-					text,
+-					attachments: pendingAttachments,
+-					onRetire: (settlement) => {
+-						this.settleSubmittedAttachments(session.sessionId, attachments, settlement);
+-						finishRetirement?.(settlement);
++					signal?.throwIfAborted();
++					if (text === "" && attachmentIds.length === 0) return { kind: "success" };
++					let finishRetirement;
++					const retirement = attachments.length === 0 ? void 0 : new Promise((resolve) => {
++						finishRetirement = resolve;
++					});
++					const submission = session.beginSubmission({
++						mode,
++						text,
++						attachments: pendingAttachments,
++						onRetire: (settlement) => {
++							this.settleSubmittedAttachments(session.sessionId, attachments, settlement);
++							finishRetirement?.(settlement);
++						}
++					});
++					let content;
++					try {
++						await nextPaint();
++						content = [...(serializedAttachments ?? await serializeAttachments()), ...text === "" ? [] : [{
++							type: "text",
++							text
++						}]];
++					signal?.throwIfAborted();
++					} catch (error) {
++						submission.abandon();
++						throw error;
+ 					}
+-				});
+-				let content;
+-				try {
+-					await nextPaint();
+-					content = [...await serializeAttachments(), ...text === "" ? [] : [{
+-						type: "text",
+-						text
+-					}]];
+-				} catch (error) {
+-					submission.abandon();
+-					throw error;
+-				}
+-				if (!(await session.prompt(content, mode, signal, submission.requestId)).ok) return { kind: "error" };
+-				if (retirement !== void 0 && (await retirement).reason !== "observed") return { kind: "error" };
+-				return { kind: "success" };
++					if (this.pendingPreparations.get(session.sessionId) === preparation) this.pendingPreparations.delete(session.sessionId);
++					if (!(await session.prompt(content, mode, signal, submission.requestId)).ok) return { kind: "error" };
++					if (retirement !== void 0 && (await retirement).reason !== "observed") return { kind: "error" };
++					return { kind: "success" };
++				} finally {
++					if (preparation && this.pendingPreparations.get(session.sessionId) === preparation) this.pendingPreparations.delete(session.sessionId);
++				}
+ 			}
+ 			/**
+ 			* Create runtime-only draft attachments. Files whose browser MIME is an
+@@ -4938,7 +4994,9 @@
+ 			}
+ 			/** Cancel the scoped session's in-flight turn while preserving Queue (failures land in promptError and reject, as in send). */
+ 			async cancel() {
+-				const result = await this.scopedSession("cancel").cancel();
++				const session = this.scopedSession("cancel");
++				this.pendingPreparations.get(session.sessionId)?.controller.abort();
++				const result = await session.cancel();
+ 				if (!result.ok) throw new Error(`conversation.cancel failed: ${result.error.code}: ${result.error.message}`);
+ 			}
+ 			/** Pull one older history page for the scoped Session. */
+@@ -15375,6 +15433,7 @@
+ 			*/
+ 			dispose() {
+ 				if (this.disposed) return [];
++				this.retainPreparationDrafts();
+ 				const retained = new Set(this.attachmentIds);
+ 				for (const record of this.detachedDrafts.values()) for (const attachmentId of record.attachmentIds) retained.add(attachmentId);
+ 				for (const flight of this.attachmentFlights.values()) {
+@@ -15400,10 +15459,40 @@
+ 			* @param write - semantic draft writer; persistCurrentDraft flushes the initial value.
+ 			* @returns the unbind disposer.
+ 			*/
++			retainPreparationDrafts() {
++				let retained = false;
++				for (const [seq, record] of this.detachedDrafts) {
++					// Once restored, the editor owns subsequent edits even while a codec is pending.
++					if (record.retainedOnRelease) continue;
++					if (record.preparationController && (record.serializing || this.deps.preparing?.(record.signal))) {
++						record.retainedOnRelease = true;
++						if (!this.failedDetached.has(seq)) this.failedDetached.set(seq, record);
++					}
++					else continue;
++					retained = true;
++				}
++				if (retained) {
++					const current = this.draftSnapshot;
++					if (current.text !== "" && this.failedRestoreRev !== this.rev) {
++						const seq = Math.max(...this.failedDetached.keys());
++						const record = this.failedDetached.get(seq);
++						const offset = record.draft.length + 2;
++						this.failedDetached.set(seq, { ...record, draft: record.draft + "\n\n" + current.text,
++							occurrences: [...record.occurrences, ...current.references.map(reference => ({ ...reference, offset: offset + reference.offset }))],
++							attachmentIds: [...record.attachmentIds, ...this.attachmentIds] });
++					}
++					this.restoreFailedDrafts();
++					this.persistCurrentDraft();
++					for (const record of this.detachedDrafts.values()) if (record.retainedOnRelease) record.preparationController.abort();
++				}
++			}
+ 			bindDraftPersistence(write) {
+ 				this.persistDraft = write;
+ 				return () => {
+-					if (this.persistDraft === write) this.persistDraft = void 0;
++					if (this.persistDraft === write) {
++						this.retainPreparationDrafts();
++						this.persistDraft = void 0;
++					}
+ 				};
+ 			}
+ 			/**
+@@ -15488,10 +15577,15 @@
+ 				const attachmentIds = [...this.attachmentIds];
+ 				this.attachmentIds = [];
+ 				const occurrences = this.projection.occurrences;
++				const preparationSignals = occurrences.flatMap(occurrence => {
++					const signal = this.deps.preparationSignal?.(occurrence.source);
++					return signal ? [signal] : [];
++				});
++				const preparationController = preparationSignals.length > 0 ? new AbortController() : void 0;
++				const submissionSignal = preparationController ? AbortSignal.any([attempt.signal, preparationController.signal, ...preparationSignals]) : attempt.signal;
+ 				const record = {
+-					draft,
+-					occurrences,
+-					attachmentIds
++					draft, occurrences, attachmentIds,
++					signal: submissionSignal, preparationController, serializing: occurrences.length > 0
+ 				};
+ 				this.detachedDrafts.set(attempt.seq, record);
+ 				if (this.failedRestoreRev === this.rev) {
+@@ -15506,20 +15600,25 @@
+ 				Promise.all(occurrences.map(async (o) => {
+ 					if (inputTriggers === void 0) throw new Error(`no serializer for reference source "${o.source}"`);
+ 					return {
++						source: o.source, ref: o.ref, label: o.label,
+ 						offset: o.offset,
+ 						length: o.length,
+-						text: await inputTriggers.serializeReference(o.source, o.ref, attempt.signal)
++						text: await inputTriggers.serializeReference(o.source, o.ref, submissionSignal)
+ 					};
+ 				})).then((parts) => {
+ 					if (this.disposed) return;
+ 					let out = "";
++					const references = [];
+ 					let cursor = 0;
+ 					for (const part of parts) {
+-						out += draft.slice(cursor, part.offset) + part.text;
++						out += draft.slice(cursor, part.offset);
++						references.push({ source: part.source, ref: part.ref, label: part.label, offset: out.length, length: part.text.length });
++						out += part.text;
+ 						cursor = part.offset + part.length;
+ 					}
+ 					out += draft.slice(cursor);
+-					this.settleSink(attempt, this.deps.defaultSink(out.trim(), attachmentIds, mode, attempt.signal));
++					record.serializing = false;
++					this.settleSink(attempt, this.deps.defaultSink(out, attachmentIds, mode, submissionSignal, references));
+ 				}, (error) => {
+ 					if (this.dead(attempt)) return;
+ 					const message = error instanceof Error ? error.message : String(error);
+@@ -15558,7 +15657,7 @@
+ 				if (record === void 0) return;
+ 				this.detachedDrafts.delete(attempt.seq);
+ 				this.restoreAttachments(record.attachmentIds);
+-				this.failedDetached.set(attempt.seq, record);
++				if (!record.retainedOnRelease) this.failedDetached.set(attempt.seq, record);
+ 				if (this.projection.clipboardText === "" || this.failedRestoreRev === this.rev) this.restoreFailedDrafts();
+ 				this.dispatchRun({
+ 					type: "sink-settled",
+@@ -15783,7 +15882,9 @@
+ 					inputTriggers: () => this.controller(actx),
+ 					popup: () => this.popup(actx),
+ 					inbox: session.projections.faceOf("inbox"),
+-					defaultSink: (text, attachmentIds, mode, signal) => this.sink(session, text, attachmentIds, mode, signal),
++					preparationSignal: (source) => this.conversation().submitPreparations.get(source)?.lifetime.signal,
++					preparing: (signal) => this.conversation().pendingPreparations.get(session.sessionId)?.submissionSignal === signal,
++					defaultSink: (text, attachmentIds, mode, signal, references) => this.sink(session, text, attachmentIds, mode, signal, references),
+ 					steerQueue: () => {
+ 						this.steerQueue(session, shell);
+ 					},
+@@ -15879,9 +15980,9 @@
+ 			* exactly one path; a failed first prompt is an ordinary prompt failure
+ 			* (banner via promptError, draft restored only while untouched).
+ 			*/
+-			sink(session, text, attachmentIds, mode, signal) {
+-				if (text === "" && attachmentIds.length === 0) return Promise.resolve({ kind: "success" });
+-				return this.conversation().sendSession(session, text, attachmentIds, mode, signal);
++			sink(session, text, attachmentIds, mode, signal, references) {
++				if (text.trim() === "" && attachmentIds.length === 0 && (references?.length ?? 0) === 0) return Promise.resolve({ kind: "success" });
++				return this.conversation().sendSession(session, text, attachmentIds, mode, signal, references);
+ 			}
+ 			/**
+ 			* Submit every still-pending queued message through QueueDock Steer, in FIFO
+--- a/lib/types/client/index.d.ts
++++ b/lib/types/client/index.d.ts
+@@ -25,7 +25,7 @@
+ export type { ConversationGroupRegistry } from './conversation/group-registry.ts';
+ export type { ConversationGroupContext, ConversationGroupData, ConversationGroupDataMap, ConversationGroupDefinition, ConversationGroupedView, ConversationGroupInput, GroupKey, GroupNodePosition, GroupReference, GroupSnapshot, GroupUpdate, NodeChange, NodeKey, NodeReference, RenderEntry, } from './contract/groups.ts';
+ export { ConversationController, UnsupportedImageMediaTypeError } from './service.ts';
+-export type { IConversation } from './service.ts';
++export type { IConversation, SubmitPreparation, SubmitReference } from './service.ts';
+ export type { ConversationContextReader, ConversationLocation, ConversationLocationData, ConversationLocationDataScope, ConversationLocationDataSource, ConversationLocationDataStore, ConversationMatch, ConversationMatchHandler, ConversationMatchResult, ConversationNodeContext, ConversationNodeDefinition, ConversationNodeDefinitionInput, ConversationPreviousContext, ConversationPublication, ConversationStartMatch, ConversationStepDataMap, ConversationTimelineSnapshot, ConversationTurnDataMap, ConversationViewBuilder, ConversationViewDefinition, ConversationViewNode, ConversationViewSnapshotMap, ConversationViewSnapshotStore, StepLocation, TurnLocation, } from './contract/conversation.ts';
+ export { EMPTY_CONVERSATION_SNAPSHOT, conversationPhase } from './contract/snapshot.ts';
+ export type { ConversationPhase, ConversationSnapshot, } from './contract/snapshot.ts';
+--- a/lib/types/client/input/facade.d.ts
++++ b/lib/types/client/input/facade.d.ts
+@@ -43,7 +43,9 @@
+      */
+     steerQueue?: (() => void) | undefined;
+     /** The plain-message sink (send choreography / materialize fork — the hub owns it). */
+-    defaultSink(text: string, attachmentIds: readonly DraftAttachmentId[], mode: InputSubmitMode, signal: AbortSignal): Promise<SubmitOutcome>;
++    preparationSignal?(source: string): AbortSignal | undefined;
++    preparing?(signal: AbortSignal): boolean;
++    defaultSink(text: string, attachmentIds: readonly DraftAttachmentId[], mode: InputSubmitMode, signal: AbortSignal, references?: readonly import('../service.ts').SubmitReference[]): Promise<SubmitOutcome>;
+     /** Command-plane attachment plumbing (the hub owns the conversation face and the copy). */
+     commandAttachments: {
+         /** Resolve ordered draft ids to wire payloads without sending them; rejects when an id no longer resolves. */
+--- a/lib/types/client/service.d.ts
++++ b/lib/types/client/service.d.ts
+@@ -23,9 +23,14 @@
+  * verbs and the input registry other plugins may reach — and exactly what a
+  * test fake must supply.
+  */
++/** A serialized occurrence captured by the native composer, never inferred from text. */
++export interface SubmitReference { readonly source: string; readonly ref: string; readonly label?: string; readonly offset: number; readonly length: number; }
++export type SubmitPreparation = (session: SessionFace, references: readonly { readonly ref: string; readonly label?: string; readonly text: string }[], signal: AbortSignal) => Promise<readonly string[]>;
+ export interface IConversation {
+     /** The per-session input machine registry (SessionInputResolver face). */
+     readonly input: SessionInputResolver;
++    /** Prepare selected source occurrences only at explicit submit; disposal cancels pending work. */
++    registerSubmitPreparation(source: string, prepare: SubmitPreparation): () => void;
+     /**
+      * The per-session composer-block registry: how a plugin the composer
+      * cannot import makes a session's input inert with its own reason.
+@@ -66,6 +71,8 @@
+ export declare class ConversationController extends Service implements IConversation {
+     /** The per-session input machine registry (SessionInputResolver face). */
+     readonly input: SessionInputResolver;
++    /** Prepare selected source occurrences only at explicit submit; disposal cancels pending work. */
++    registerSubmitPreparation(source: string, prepare: SubmitPreparation): () => void;
+     /** The per-session composer-block registry. */
+     readonly blocks: ComposerBlocks;
+     /** Live upload state per file-kind draft; images never appear here. */
+@@ -109,7 +116,7 @@
+      * @param signal - optional cancellation for the complete Host admission.
+      * @returns the Host admission outcome; local attachment preparation failures reject.
+      */
+-    sendSession(session: SessionFace, text: string, attachmentIds: readonly DraftAttachmentId[], mode: InputSubmitMode, signal?: AbortSignal): Promise<SubmitOutcome>;
++    sendSession(session: SessionFace, text: string, attachmentIds: readonly DraftAttachmentId[], mode: InputSubmitMode, signal?: AbortSignal, references?: readonly SubmitReference[]): Promise<SubmitOutcome>;
+     /**
+      * Create runtime-only draft attachments. Files whose browser MIME is an
+      * accepted image type become image drafts (object URL preview, bytes sent

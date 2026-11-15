@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "customConditions": ["node"]
+  },
+  "include": ["packages/adapter-pi/src/**/*.ts", "tests/pi-reception.test.ts", "tests/pi-connection-recovery.test.ts", "tests/pi-root-configuration.test.ts"],
+  "exclude": ["**/node_modules"]
+}

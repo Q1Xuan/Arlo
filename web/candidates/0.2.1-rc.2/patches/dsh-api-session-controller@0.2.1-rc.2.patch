@@ -1,0 +1,218 @@
+--- a/lib/index.js
++++ b/lib/index.js
+@@ -261,7 +261,21 @@
+ 	* @throws RemoteError `agent-preset/not-found` or `agent-preset/invalid` for the requested or default preset.
+ 	* @throws ApiSessionPresetConflict when no roster is composed and the request names a preset for a reused Session.
+ 	*/
+-	async createSession(request) {
++	async createSession(request, options = {}) {
++        options.signal?.throwIfAborted();
++        if (options.fresh) {
++            if (options.modelSelection !== undefined) {
++                const { provider, model } = options.modelSelection;
++                if (!this.ctx.llm.listProviders().some(item => item.id === provider)
++                    || !(await this.ctx.llm.listModels(provider)).some(item => item.id === model)) {
++                    throw new Error('Initial model is unavailable');
++                }
++                await this.ctx.llm.resolveModelInfo(provider, model, options.signal);
++                options.signal?.throwIfAborted();
++            }
++            const composition = await this.composeAgent(request.agentPreset);
++            return this.created(await this.createAgent(request.sessionId ?? brandString(`session-${randomUUID()}`), request.cwd, composition, options));
++        }
+ 		const named = request.sessionId;
+ 		if (named === void 0) return this.created(await this.createMinted(request.cwd, await this.composeAgent(request.agentPreset)));
+ 		return this.inOrder(named, async () => this.created(await this.claim(named, request)));
+@@ -508,7 +522,7 @@
+ 	createMinted(cwd, composition) {
+ 		return this.createAgent(brandString(`session-${randomUUID()}`), cwd, composition);
+ 	}
+-	async createAgent(sessionId, cwd, composition) {
++	async createAgent(sessionId, cwd, composition, options = {}) {
+ 		try {
+ 			await mkdir(cwd, { recursive: true });
+ 		} catch (error) {
+@@ -516,12 +530,17 @@
+ 		}
+ 		return (await this.ctx.agents.create({
+ 			sessionId,
+-			agentOptions: this.agentOptions(),
++			agentOptions: options.modelSelection === void 0 ? this.agentOptions() : agentModelSelection(options.modelSelection),
++			signal: options.signal,
+ 			meta: {
+ 				cwd,
+ 				...composition.agentPreset === void 0 ? {} : { agentPreset: composition.agentPreset }
+ 			},
+-			setup: composition.setup
++			setup: async (agentCtx, agent) => {
++                const commit = await composition.setup(agentCtx, agent);
++                if (options.modelSelection !== undefined) this.selectForNextRequest(agent, agentModelSelection(options.modelSelection));
++                return commit;
++            }
+ 		})).agent;
+ 	}
+ 	agentOptions() {
+@@ -752,7 +771,7 @@
+ 	* @param request - optional blank Session to reuse, location, and Agent preset.
+ 	* @returns the created or reused Session identity and its preset when configured.
+ 	*/
+-	async create(request) {
++	async create(request, options = {}) {
+ 		if (request.workspaceId !== void 0 && request.cwd !== void 0) throw new RemoteError("gateway/bad-request", "session.create accepts workspaceId or cwd, not both", {});
+ 		let workspace;
+ 		if (request.workspaceId !== void 0) {
+@@ -767,7 +786,7 @@
+ 				cwd,
+ 				...request.agentPreset === void 0 ? {} : { agentPreset: request.agentPreset },
+ 				reusable: (sessionId) => !this.ctx.workspaceRegistry.archivedSessionIds.includes(sessionId) && (workspace === void 0 || workspace.sessionIds.includes(sessionId))
+-			});
++			}, options);
+ 		} catch (error) {
+ 			this.rejectCreation(error);
+ 		}
+@@ -3087,8 +3106,8 @@
+ 		* @param request - optional blank Session to reuse, location, and Agent preset.
+ 		* @returns the created or reused Session identity and its preset when configured.
+ 		*/
+-		create(request) {
+-			return this.commands.create(request);
++		create(request, options) {
++			return this.commands.create(request, options);
+ 		}
+ 		/**
+ 		* Select one Session-local model after explicitly resuming the Session; save the default in the background.
+--- a/lib/types/agent.d.ts
++++ b/lib/types/agent.d.ts
+@@ -127,7 +127,7 @@
+      * @throws RemoteError `agent-preset/not-found` or `agent-preset/invalid` for the requested or default preset.
+      * @throws ApiSessionPresetConflict when no roster is composed and the request names a preset for a reused Session.
+      */
+-    createSession(request: ApiSessionCreateRequest): Promise<ApiSessionCreated>;
++    createSession(request: ApiSessionCreateRequest, options?: import('./types.js').SessionCreateOptions): Promise<ApiSessionCreated>;
+     /**
+      * Install or return the Session-local model selection used by prompt assembly.
+      * @param agent - live Agent that owns the selection.
+--- a/lib/types/agent.js
++++ b/lib/types/agent.js
+@@ -265,7 +265,21 @@
+      * @throws RemoteError `agent-preset/not-found` or `agent-preset/invalid` for the requested or default preset.
+      * @throws ApiSessionPresetConflict when no roster is composed and the request names a preset for a reused Session.
+      */
+-    async createSession(request) {
++    async createSession(request, options = {}) {
++        options.signal?.throwIfAborted();
++        if (options.fresh) {
++            if (options.modelSelection !== undefined) {
++                const { provider, model } = options.modelSelection;
++                if (!this.ctx.llm.listProviders().some(item => item.id === provider)
++                    || !(await this.ctx.llm.listModels(provider)).some(item => item.id === model)) {
++                    throw new Error('Initial model is unavailable');
++                }
++                await this.ctx.llm.resolveModelInfo(provider, model, options.signal);
++                options.signal?.throwIfAborted();
++            }
++            const composition = await this.composeAgent(request.agentPreset);
++            return this.created(await this.createAgent(request.sessionId ?? brandString(`session-${randomUUID()}`), request.cwd, composition, options));
++        }
+         const named = request.sessionId;
+         if (named === undefined)
+             return this.created(await this.createMinted(request.cwd, await this.composeAgent(request.agentPreset)));
+@@ -562,7 +576,7 @@
+     createMinted(cwd, composition) {
+         return this.createAgent(brandString(`session-${randomUUID()}`), cwd, composition);
+     }
+-    async createAgent(sessionId, cwd, composition) {
++    async createAgent(sessionId, cwd, composition, options = {}) {
+         try {
+             await mkdir(cwd, { recursive: true });
+         }
+@@ -571,12 +585,17 @@
+         }
+         return (await this.ctx.agents.create({
+             sessionId,
+-            agentOptions: this.agentOptions(),
++            agentOptions: options.modelSelection === undefined ? this.agentOptions() : agentModelSelection(options.modelSelection),
++            signal: options.signal,
+             meta: {
+                 cwd,
+                 ...(composition.agentPreset === undefined ? {} : { agentPreset: composition.agentPreset }),
+             },
+-            setup: composition.setup,
++            setup: async (agentCtx, agent) => {
++                const commit = await composition.setup(agentCtx, agent);
++                if (options.modelSelection !== undefined) this.selectForNextRequest(agent, agentModelSelection(options.modelSelection));
++                return commit;
++            },
+         })).agent;
+     }
+     agentOptions() {
+--- a/lib/types/commands.d.ts
++++ b/lib/types/commands.d.ts
+@@ -29,7 +29,7 @@
+      * @param request - optional blank Session to reuse, location, and Agent preset.
+      * @returns the created or reused Session identity and its preset when configured.
+      */
+-    create(request: SessionCreateRequest): Promise<SessionCreateValue>;
++    create(request: SessionCreateRequest, options?: import('./types.js').SessionCreateOptions): Promise<SessionCreateValue>;
+     /**
+      * Validate and install one Session-local model selection; save the default in the background.
+      * @param request - Session identity and requested model selection.
+--- a/lib/types/commands.js
++++ b/lib/types/commands.js
+@@ -109,7 +109,7 @@
+      * @param request - optional blank Session to reuse, location, and Agent preset.
+      * @returns the created or reused Session identity and its preset when configured.
+      */
+-    async create(request) {
++    async create(request, options = {}) {
+         if (request.workspaceId !== undefined && request.cwd !== undefined) {
+             throw new RemoteError('gateway/bad-request', 'session.create accepts workspaceId or cwd, not both', {});
+         }
+@@ -131,7 +131,7 @@
+                 ...(request.agentPreset === undefined ? {} : { agentPreset: request.agentPreset }),
+                 reusable: sessionId => !this.ctx.workspaceRegistry.archivedSessionIds.includes(sessionId)
+                     && (workspace === undefined || workspace.sessionIds.includes(sessionId)),
+-            });
++            }, options);
+         }
+         catch (error) {
+             this.rejectCreation(error);
+--- a/lib/types/index.d.ts
++++ b/lib/types/index.d.ts
+@@ -98,7 +98,7 @@
+      * @param request - optional blank Session to reuse, location, and Agent preset.
+      * @returns the created or reused Session identity and its preset when configured.
+      */
+-    create(request: SessionCreateRequest): Promise<SessionCreateValue>;
++    create(request: SessionCreateRequest, options?: import('./types.js').SessionCreateOptions): Promise<SessionCreateValue>;
+     /**
+      * Select one Session-local model after explicitly resuming the Session; save the default in the background.
+      * @param request - Session identity and requested model selection.
+--- a/lib/types/index.js
++++ b/lib/types/index.js
+@@ -357,8 +357,8 @@
+          * @param request - optional blank Session to reuse, location, and Agent preset.
+          * @returns the created or reused Session identity and its preset when configured.
+          */
+-        create(request) {
+-            return this.commands.create(request);
++        create(request, options) {
++            return this.commands.create(request, options);
+         }
+         /**
+          * Select one Session-local model after explicitly resuming the Session; save the default in the background.
+--- a/lib/types/types.d.ts
++++ b/lib/types/types.d.ts
+@@ -608,4 +608,11 @@
+ export type SessionProjectionValue = JsonValue;
+ /** Application metadata returned by the serving desktop for one file. */
+ export type SessionWorkspacePathApplication = NativeFileApplication;
++/** Trusted Host-only options; absent from browser RPC. */
++export interface SessionCreateOptions {
++    /** Bypass blank reuse; a colliding explicit identity fails. */
++    readonly fresh?: boolean;
++    readonly modelSelection?: ModelSelection;
++    readonly signal?: AbortSignal;
++}
+ //# sourceMappingURL=types.d.ts.map
+\ No newline at end of file

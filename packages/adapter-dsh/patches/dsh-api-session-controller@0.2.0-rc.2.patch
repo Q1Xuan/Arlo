@@ -1,0 +1,233 @@
+diff --git a/lib/index.js b/lib/index.js
+index 3b8507e..7a9278a 100644
+--- a/lib/index.js
++++ b/lib/index.js
+@@ -250,10 +250,10 @@ var ApiSessionAgentController = class {
+ 	* @param presetId - optional Agent preset the Session must own.
+ 	* @returns the matching live ordinary Agent.
+ 	*/
+-	async ensureSession(sessionId, cwd, checkPersistedIdentity, presetId) {
++	async ensureSession(sessionId, cwd, checkPersistedIdentity, presetId, options = {}) {
+ 		let creation = this.creations.get(sessionId);
+ 		if (creation === void 0) {
+-			creation = this.createOrAdopt(sessionId, cwd, checkPersistedIdentity, presetId).catch((error) => {
++			creation = this.createOrAdopt(sessionId, cwd, checkPersistedIdentity, presetId, options).catch((error) => {
+ 				const live = this.ctx.agents.get(sessionId);
+ 				if (live !== void 0) {
+ 					if (hasApiSessionSubagentOwner(this.ctx, live.session, live)) throw new ApiSessionSubagentOwnership(sessionId);
+@@ -409,7 +409,7 @@ var ApiSessionAgentController = class {
+ 			setup: composition.setup
+ 		})).agent;
+ 	}
+-	async createOrAdopt(sessionId, cwd, checkPersistedIdentity, presetId) {
++	async createOrAdopt(sessionId, cwd, checkPersistedIdentity, presetId, options) {
+ 		const attached = this.ctx.sessions.get(sessionId);
+ 		const live = this.ctx.agents.get(sessionId);
+ 		if (attached !== void 0 && hasApiSessionSubagentOwner(this.ctx, attached, live)) throw new ApiSessionSubagentOwnership(sessionId);
+@@ -449,12 +449,17 @@ var ApiSessionAgentController = class {
+ 		const composition = await this.composeAgent(presetId);
+ 		return (await this.ctx.agents.create({
+ 			sessionId,
+-			agentOptions: this.agentOptions(),
++			agentOptions: options.modelSelection === void 0 ? this.agentOptions() : agentModelSelection(options.modelSelection),
++			signal: options.signal,
+ 			meta: {
+ 				cwd,
+ 				...composition.agentPreset === void 0 ? {} : { agentPreset: composition.agentPreset }
+ 			},
+-			setup: composition.setup
++			setup: async (agentCtx, agent) => {
++				const commit = await composition.setup(agentCtx, agent);
++				if (options.modelSelection !== void 0) this.selectForNextRequest(agent, agentModelSelection(options.modelSelection));
++				return commit;
++			}
+ 		})).agent;
+ 	}
+ 	agentOptions() {
+@@ -683,7 +688,7 @@ var SessionCommandController = class {
+ 	* @param request - requested identity, location, and Agent preset.
+ 	* @returns the Session identity and resolved preset when configured.
+ 	*/
+-	async create(request) {
++	async create(request, options = {}) {
+ 		if (request.workspaceId !== void 0 && request.cwd !== void 0) throw new RemoteError("gateway/bad-request", "session.create accepts workspaceId or cwd, not both", {});
+ 		const sessionId = request.sessionId ?? brandString(`session-${randomUUID()}`);
+ 		let workspace;
+@@ -694,7 +699,7 @@ var SessionCommandController = class {
+ 		const cwd = workspace?.path ?? request.cwd ?? this.defaultCwd;
+ 		let adopted;
+ 		try {
+-			adopted = await this.agents.ensureSession(sessionId, cwd, request.sessionId !== void 0, request.agentPreset);
++			adopted = await this.agents.ensureSession(sessionId, cwd, request.sessionId !== void 0, request.agentPreset, options);
+ 		} catch (error) {
+ 			this.rejectCreation(sessionId, error);
+ 		}
+@@ -2968,8 +2973,8 @@ let SessionController = (() => {
+ 		* @param request - requested identity, location, and Agent preset.
+ 		* @returns the Session identity and resolved preset when configured.
+ 		*/
+-		create(request) {
+-			return this.commands.create(request);
++		create(request, options) {
++			return this.commands.create(request, options);
+ 		}
+ 		/**
+ 		* Select one Session-local model after explicitly resuming the Session; save the default in the background.
+diff --git a/lib/types/agent.js b/lib/types/agent.js
+index 9e3657a..9e66731 100644
+--- a/lib/types/agent.js
++++ b/lib/types/agent.js
+@@ -255,10 +255,10 @@ export class ApiSessionAgentController {
+      * @param presetId - optional Agent preset the Session must own.
+      * @returns the matching live ordinary Agent.
+      */
+-    async ensureSession(sessionId, cwd, checkPersistedIdentity, presetId) {
++    async ensureSession(sessionId, cwd, checkPersistedIdentity, presetId, options = {}) {
+         let creation = this.creations.get(sessionId);
+         if (creation === undefined) {
+-            creation = this.createOrAdopt(sessionId, cwd, checkPersistedIdentity, presetId)
++            creation = this.createOrAdopt(sessionId, cwd, checkPersistedIdentity, presetId, options)
+                 .catch((error) => {
+                 const live = this.ctx.agents.get(sessionId);
+                 if (live !== undefined) {
+@@ -451,7 +451,7 @@ export class ApiSessionAgentController {
+             setup: composition.setup,
+         })).agent;
+     }
+-    async createOrAdopt(sessionId, cwd, checkPersistedIdentity, presetId) {
++    async createOrAdopt(sessionId, cwd, checkPersistedIdentity, presetId, options) {
+         const attached = this.ctx.sessions.get(sessionId);
+         const live = this.ctx.agents.get(sessionId);
+         if (attached !== undefined && hasApiSessionSubagentOwner(this.ctx, attached, live)) {
+@@ -502,12 +502,17 @@ export class ApiSessionAgentController {
+         const composition = await this.composeAgent(presetId);
+         return (await this.ctx.agents.create({
+             sessionId,
+-            agentOptions: this.agentOptions(),
++            agentOptions: options.modelSelection === undefined ? this.agentOptions() : agentModelSelection(options.modelSelection),
++            signal: options.signal,
+             meta: {
+                 cwd,
+                 ...(composition.agentPreset === undefined ? {} : { agentPreset: composition.agentPreset }),
+             },
+-            setup: composition.setup,
++            setup: async (agentCtx, agent) => {
++                const commit = await composition.setup(agentCtx, agent);
++                if (options.modelSelection !== undefined) this.selectForNextRequest(agent, agentModelSelection(options.modelSelection));
++                return commit;
++            },
+         })).agent;
+     }
+     agentOptions() {
+diff --git a/lib/types/commands.js b/lib/types/commands.js
+index cd4e27c..3f1e765 100644
+--- a/lib/types/commands.js
++++ b/lib/types/commands.js
+@@ -104,7 +104,7 @@ export class SessionCommandController {
+      * @param request - requested identity, location, and Agent preset.
+      * @returns the Session identity and resolved preset when configured.
+      */
+-    async create(request) {
++    async create(request, options = {}) {
+         if (request.workspaceId !== undefined && request.cwd !== undefined) {
+             throw new RemoteError('gateway/bad-request', 'session.create accepts workspaceId or cwd, not both', {});
+         }
+@@ -121,7 +121,7 @@ export class SessionCommandController {
+         const cwd = workspace?.path ?? request.cwd ?? this.defaultCwd;
+         let adopted;
+         try {
+-            adopted = await this.agents.ensureSession(sessionId, cwd, request.sessionId !== undefined, request.agentPreset);
++            adopted = await this.agents.ensureSession(sessionId, cwd, request.sessionId !== undefined, request.agentPreset, options);
+         }
+         catch (error) {
+             this.rejectCreation(sessionId, error);
+diff --git a/lib/types/index.js b/lib/types/index.js
+index fa9422e..7b8af74 100644
+--- a/lib/types/index.js
++++ b/lib/types/index.js
+@@ -338,8 +338,8 @@ let SessionController = (() => {
+          * @param request - requested identity, location, and Agent preset.
+          * @returns the Session identity and resolved preset when configured.
+          */
+-        create(request) {
+-            return this.commands.create(request);
++        create(request, options) {
++            return this.commands.create(request, options);
+         }
+         /**
+          * Select one Session-local model after explicitly resuming the Session; save the default in the background.
+diff --git a/lib/types/types.d.ts b/lib/types/types.d.ts
+index 1ce67e4..b38673c 100644
+--- a/lib/types/types.d.ts
++++ b/lib/types/types.d.ts
+@@ -282,6 +282,13 @@ export interface SessionCreateRequest {
+     readonly sessionId?: SessionId;
+     readonly agentPreset?: string;
+ }
++/** Trusted Host-only creation options; absent from the Remote request contract. */
++export interface SessionCreateOptions {
++    /** Initial Session-local selection, without changing the deployment default. */
++    readonly modelSelection?: ModelSelection;
++    /** Factory cancellation ends at publication; an already-created Session is retained. */
++    readonly signal?: AbortSignal;
++}
+ /** Session creation response value. */
+ export interface SessionCreateValue {
+     readonly sessionId: SessionId;
+diff --git a/lib/types/index.d.ts b/lib/types/index.d.ts
+index 58e6dd4..df2f5cc 100644
+--- a/lib/types/index.d.ts
++++ b/lib/types/index.d.ts
+@@ -7,7 +7,7 @@ import type { SessionInspection } from '@deepseek-ai/dsh-session-persistence';
+ import { TypertRemoteService } from '@deepseek-ai/dsh-typert-protocol';
+ import { type ApiSessionAgentResult } from './agent.ts';
+ import { buildModelCatalog } from './catalog.ts';
+-import type { ModelCatalog, SessionWorkspacePathApplication, SessionAttachmentRequest, SessionAttachmentValue, SessionCancelRequest, SessionCancelValue, SessionControlFrame, SessionCreateRequest, SessionCreateValue, SessionFollowFrame, SessionFollowRequest, SessionForkRequest, SessionForkValue, SessionListRequest, SessionListValue, SessionOpenWorkspacePathRequest, SessionOpenWorkspacePathValue, SessionPage, SessionPageRequest, SessionPromptRequest, SessionPromptValue, SessionRenameRequest, SessionRenameValue, SessionSearchRequest, SessionSearchValue, SessionSelectModelRequest, SessionSelectModelValue, SessionProjectionsRequest, SessionProjectionsValue, SessionUpdateQueueRequest, SessionUpdateQueueValue } from './types.ts';
++import type { ModelCatalog, SessionWorkspacePathApplication, SessionAttachmentRequest, SessionAttachmentValue, SessionCancelRequest, SessionCancelValue, SessionControlFrame, SessionCreateRequest, SessionCreateOptions, SessionCreateValue, SessionFollowFrame, SessionFollowRequest, SessionForkRequest, SessionForkValue, SessionListRequest, SessionListValue, SessionOpenWorkspacePathRequest, SessionOpenWorkspacePathValue, SessionPage, SessionPageRequest, SessionPromptRequest, SessionPromptValue, SessionRenameRequest, SessionRenameValue, SessionSearchRequest, SessionSearchValue, SessionSelectModelRequest, SessionSelectModelValue, SessionProjectionsRequest, SessionProjectionsValue, SessionUpdateQueueRequest, SessionUpdateQueueValue } from './types.ts';
+ export type * from './types.ts';
+ export { ApiSessionNotFound } from './agent.ts';
+ export { SessionFileReferences } from './file-references.ts';
+@@ -90,7 +90,7 @@ export declare class SessionController extends TypertRemoteService {
+      * @param request - requested identity, location, and Agent preset.
+      * @returns the Session identity and resolved preset when configured.
+      */
+-    create(request: SessionCreateRequest): Promise<SessionCreateValue>;
++    create(request: SessionCreateRequest, options?: SessionCreateOptions): Promise<SessionCreateValue>;
+     /**
+      * Select one Session-local model after explicitly resuming the Session; save the default in the background.
+      * @param request - Session identity and requested model selection.
+diff --git a/lib/types/commands.d.ts b/lib/types/commands.d.ts
+index fcb93a6..96ba72f 100644
+--- a/lib/types/commands.d.ts
++++ b/lib/types/commands.d.ts
+@@ -1,7 +1,7 @@
+ /** Session commands whose activation policy is explicit at each Remote method. */
+ import type { Context } from '@deepseek-ai/cordis';
+ import { ApiSessionAgentController } from './agent.ts';
+-import type { SessionAttachmentRequest, SessionAttachmentValue, SessionCancelRequest, SessionCancelValue, SessionCreateRequest, SessionCreateValue, SessionForkRequest, SessionForkValue, SessionPromptRequest, SessionPromptValue, SessionRenameRequest, SessionRenameValue, SessionSelectModelRequest, SessionSelectModelValue, SessionUpdateQueueRequest, SessionUpdateQueueValue } from './types.ts';
++import type { SessionAttachmentRequest, SessionAttachmentValue, SessionCancelRequest, SessionCancelValue, SessionCreateRequest, SessionCreateOptions, SessionCreateValue, SessionForkRequest, SessionForkValue, SessionPromptRequest, SessionPromptValue, SessionRenameRequest, SessionRenameValue, SessionSelectModelRequest, SessionSelectModelValue, SessionUpdateQueueRequest, SessionUpdateQueueValue } from './types.ts';
+ /** Implements Session business commands delegated by the Session Controller Remote service. */
+ export declare class SessionCommandController {
+     private readonly ctx;
+@@ -18,7 +18,7 @@ export declare class SessionCommandController {
+      * @param request - requested identity, location, and Agent preset.
+      * @returns the Session identity and resolved preset when configured.
+      */
+-    create(request: SessionCreateRequest): Promise<SessionCreateValue>;
++    create(request: SessionCreateRequest, options?: SessionCreateOptions): Promise<SessionCreateValue>;
+     /**
+      * Validate and install one Session-local model selection; save the default in the background.
+      * @param request - Session identity and requested model selection.
+diff --git a/lib/types/agent.d.ts b/lib/types/agent.d.ts
+index b2b9d2e..33dddf5 100644
+--- a/lib/types/agent.d.ts
++++ b/lib/types/agent.d.ts
+@@ -92,7 +92,7 @@ export declare class ApiSessionAgentController {
+      * @param presetId - optional Agent preset the Session must own.
+      * @returns the matching live ordinary Agent.
+      */
+-    ensureSession(sessionId: SessionId, cwd: string, checkPersistedIdentity: boolean, presetId?: string): Promise<Agent>;
++    ensureSession(sessionId: SessionId, cwd: string, checkPersistedIdentity: boolean, presetId?: string, options?: import('./types.ts').SessionCreateOptions): Promise<Agent>;
+     /**
+      * Install or return the Session-local model selection used by prompt assembly.
+      * @param agent - live Agent that owns the selection.

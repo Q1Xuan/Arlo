@@ -1,0 +1,11 @@
+{
+  "name": "arlo-pi-acceptance",
+  "private": true,
+  "type": "module",
+  "engines": { "node": "24.13.1" },
+  "scripts": { "test": "node --test --test-concurrency=1 *.test.mjs" },
+  "dependencies": {
+    "@earendil-works/pi-coding-agent": "1.1.0",
+    "@lydell/node-pty": "1.2.0-beta.15"
+  }
+}

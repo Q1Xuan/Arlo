@@ -1,0 +1,24 @@
+{
+  "name": "@arlo/sdk",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "22.22.1 || 24.13.1 || 24.15.0 || 24.22.1"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./protocol": "./src/protocol/index.ts",
+    "./discovery": "./src/discovery/index.ts",
+    "./client": "./src/client/index.ts",
+    "./security": "./src/security/index.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/client": "2.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.10.1",
+    "typescript": "5.9.3"
+  },
+  "license": "Apache-2.0"
+}

@@ -1,0 +1,99 @@
+--- a/lib/index.js
++++ b/lib/index.js
+@@ -6684,5 +6684,80 @@
+ /** The wire form a session chip serializes to; label is the display text. */
+ const SESSION_WIRE_RE = /@\[([^\]\n]+)\]\(dsh-session:[^)\s]+\)/gu;
++/** Fold only the exact Arlo contact envelope; arbitrary or malformed text stays visible. */
++const ARLO_CONTACT_RE = /<arlo-contact>(\{[^\n<>]*\})<\/arlo-contact>\n/gu;
++const ARLO_CONTACT_GUIDANCE = "The user selected this exact Arlo contact. Organize the necessary context and use arlo_send_message with to equal to endpoint_id to contact it. " +
++	"This contact tag has not sent any message. If the target is unavailable, do not substitute another endpoint. " +
++	"Preserve accepted/rejected/unknown and reception-status query rules; do not automatically resend business messages.";
++function arloContactRanges(text) {
++	const ranges = [];
++	ARLO_CONTACT_RE.lastIndex = 0;
++	let match;
++	while ((match = ARLO_CONTACT_RE.exec(text)) !== null) {
++		const guidanceStart = match.index + match[0].length;
++		if (!text.startsWith(ARLO_CONTACT_GUIDANCE, guidanceStart)) continue;
++		let end = guidanceStart + ARLO_CONTACT_GUIDANCE.length;
++		if (end < text.length && text[end] !== "\n") continue;
++		if (text[end] === "\n") end++;
++		let contact;
++		try {
++			contact = JSON.parse(match[1]);
++		} catch (_error) {
++			// User-authored examples and malformed tags are ordinary text.
++			continue;
++		}
++		if (contact === null || typeof contact !== "object" || Array.isArray(contact)) continue;
++		if (Object.keys(contact).some(key => key !== "endpoint_id" && key !== "label")) continue;
++		const endpoint = contact.endpoint_id;
++		if (typeof endpoint !== "string" || endpoint.length === 0 || endpoint.length > 1024 || /[\u0000-\u001f\u007f]/u.test(endpoint)) continue;
++		if (contact.label !== void 0 && (typeof contact.label !== "string" || contact.label.trim() === "")) continue;
++		ranges.push({
++			start: match.index,
++			end,
++			label: endpoint,
++			kind: "session",
++			display: contact.label?.replace(/[\u0000-\u001f\u007f]/gu, " ") ?? `Arlo · ${endpoint.slice(0, 8)}`
++		});
++	}
++	return ranges;
++}
++/** Preserve only fully validated contacts before compacting a bounded queue preview. */
++function arloContactPreview(text, limit) {
++	if (!Number.isSafeInteger(limit) || limit < 1) throw new RangeError("Invalid user text preview limit");
++	const ranges = arloContactRanges(text);
++	if (ranges.length === 0) {
++		const flat = text.replace(/\s+/g, " ").trim();
++		const chars = Array.from(flat);
++		return chars.length > limit ? `${chars.slice(0, limit).join("")}…` : flat;
++	}
++	let result = "", cursor = 0, remaining = limit, truncated = false;
++	const appendPlain = (from, to) => {
++		let plain = text.slice(from, to).replace(/\s+/g, " ");
++		if (from === 0) plain = plain.trimStart();
++		if (to === text.length) plain = plain.trimEnd();
++		const chars = Array.from(plain);
++		result += chars.slice(0, remaining).join("");
++		if (chars.length > remaining) { result += "…"; truncated = true; }
++		remaining = Math.max(0, remaining - chars.length);
++	};
++	for (const range of ranges) {
++		appendPlain(cursor, range.start);
++		if (truncated) break;
++		const chars = Array.from(range.display);
++		if (remaining === 0) { result += "…"; truncated = true; break; }
++		if (chars.length <= remaining) result += text.slice(range.start, range.end);
++		else {
++			// Only display metadata is shortened. The full endpoint remains the tooltip target.
++			const data = JSON.stringify({ endpoint_id: range.label, label: `${chars.slice(0, remaining).join("")}…` }).replace(/</g, "\\u003c").replace(/>/g, "\\u003e");
++			result += `<arlo-contact>${data}</arlo-contact>\n${ARLO_CONTACT_GUIDANCE}\n`;
++			truncated = true;
++		}
++		remaining = Math.max(0, remaining - chars.length);
++		cursor = range.end;
++		if (truncated) break;
++	}
++	if (!truncated) appendPlain(cursor, text.length);
++	return result;
++}
+ /** Sentence punctuation a bare `@name` token may carry without being part of the reference. */
+ const TRAILING_PUNCTUATION_RE = /[.,;:!?，。；：！？]+$/u;
+ /**
+@@ -6699,6 +6774,7 @@
+ */
+-function projectUserText(text, sessionLabels, slashNames = [], slashKind = "skill", references) {
++function projectUserText(text, sessionLabels, slashNames = [], slashKind = "skill", references, previewChars) {
++	if (previewChars !== void 0) text = arloContactPreview(text, previewChars);
+-	const ranges = [];
++	const ranges = arloContactRanges(text);
+ 	SESSION_WIRE_RE.lastIndex = 0;
+ 	let wire;
+ 	while ((wire = SESSION_WIRE_RE.exec(text)) !== null) ranges.push({
+--- a/lib/types/user-text.d.ts
++++ b/lib/types/user-text.d.ts
+@@ -35,2 +35,2 @@
+-export declare function projectUserText(text: string, sessionLabels: readonly string[], slashNames?: readonly string[], slashKind?: 'skill' | 'command', references?: UserTextReferences): ReactNode;
++export declare function projectUserText(text: string, sessionLabels: readonly string[], slashNames?: readonly string[], slashKind?: 'skill' | 'command', references?: UserTextReferences, previewChars?: number): ReactNode;
+ //# sourceMappingURL=user-text.d.ts.map

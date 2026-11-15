@@ -1,0 +1,357 @@
+{
+  "timestamp": "2026-10-01T13:24:18.747Z",
+  "sourceSha256": "5ca7981b63efc97a93b4f7c8160885392fa0dc5e1c2b3be856135dc9edd55429",
+  "lockSha256": "26698fea2af17e54dc18fa58aa13bbd670035de7443137d3121a6890f7b29328",
+  "scope": "Installed Desktop Host entry with public Cordis plugin and actual registry agents; local controlled model; MCP HTTPS/SSE via public SDK fetch option.",
+  "desktopExecutable": "E:/software/dsh/DeepSeek Harness.exe",
+  "appAsarSha256": "983ca71114e6dfd353fc79af5a1f9481a250ee64c2a3c757673029b811b23bc2",
+  "harnessVersion": "0.2.0-rc.2",
+  "ready": true,
+  "timeout": false,
+  "processError": null,
+  "exitCode": 0,
+  "results": {
+    "runtime": {
+      "node": "v24.18.1",
+      "electron": "44.0.0",
+      "platform": "win32"
+    },
+    "publicPluginEntry": "cordis.patch.yml",
+    "pass": true,
+    "observations": {
+      "wireRevision": "2025-06-18",
+      "readiness": [
+        false,
+        false,
+        false,
+        false,
+        true
+      ],
+      "rootSessionsDistinct": true,
+      "rootSessionPreserved": true,
+      "authRejections": [
+        "BINDING_MISMATCH",
+        "UNAUTHORIZED",
+        "BINDING_MISMATCH"
+      ],
+      "metadata": [
+        {
+          "standardContainer": true,
+          "separated": true
+        },
+        {
+          "standardContainer": true,
+          "separated": true
+        },
+        {
+          "standardContainer": true,
+          "separated": true
+        }
+      ],
+      "metrics": {
+        "requestCount": 8,
+        "businessDispatchCount": 9,
+        "hostEnqueueCount": 5,
+        "duplicateSuppressedCount": 4,
+        "faultsInjectedCount": 2,
+        "sseReplayRequests": 1,
+        "replayedFrames": 1
+      },
+      "requests": [
+        {
+          "method": "POST",
+          "rpcMethod": "initialize"
+        },
+        {
+          "method": "POST",
+          "rpcMethod": "notifications/initialized",
+          "wireRevision": "2025-06-18"
+        },
+        {
+          "method": "GET",
+          "wireRevision": "2025-06-18"
+        },
+        {
+          "method": "POST",
+          "rpcMethod": "tools/call",
+          "wireRevision": "2025-06-18"
+        },
+        {
+          "method": "POST",
+          "rpcMethod": "tools/call",
+          "wireRevision": "2025-06-18"
+        },
+        {
+          "method": "POST",
+          "rpcMethod": "tools/call",
+          "wireRevision": "2025-06-18"
+        },
+        {
+          "method": "POST",
+          "rpcMethod": "tools/call",
+          "wireRevision": "2025-06-18"
+        },
+        {
+          "method": "GET",
+          "lastEventId": "event-11",
+          "wireRevision": "2025-06-18"
+        }
+      ],
+      "timeline": [
+        {
+          "event": "bootstrap_authenticated",
+          "order": 1
+        },
+        {
+          "event": "http_POST",
+          "order": 2,
+          "result": "initialize"
+        },
+        {
+          "event": "http_POST",
+          "order": 3,
+          "result": "notifications/initialized"
+        },
+        {
+          "event": "handshake_complete",
+          "order": 4,
+          "result": "2025-06-18"
+        },
+        {
+          "event": "http_GET",
+          "order": 5
+        },
+        {
+          "event": "notification_handler_installed",
+          "order": 6
+        },
+        {
+          "event": "root_binding_confirmed",
+          "order": 7
+        },
+        {
+          "event": "capacity_ready",
+          "order": 8
+        },
+        {
+          "event": "host_inbox_inserted",
+          "order": 9
+        },
+        {
+          "event": "notification_receipt",
+          "order": 10,
+          "result": "enqueued"
+        },
+        {
+          "event": "notification_receipt",
+          "order": 11,
+          "result": "duplicate"
+        },
+        {
+          "event": "host_inbox_inserted",
+          "order": 12
+        },
+        {
+          "event": "notification_receipt",
+          "order": 13,
+          "result": "enqueued"
+        },
+        {
+          "event": "notification_receipt",
+          "order": 14,
+          "result": "duplicate"
+        },
+        {
+          "event": "http_POST",
+          "order": 15,
+          "result": "tools/call"
+        },
+        {
+          "event": "tools_call_dispatch",
+          "order": 16
+        },
+        {
+          "event": "host_inbox_inserted",
+          "order": 17
+        },
+        {
+          "event": "http_POST",
+          "order": 18,
+          "result": "tools/call"
+        },
+        {
+          "event": "client_transport_error",
+          "order": 19,
+          "result": "Error POSTing to endpoint: Injected HTTP 500"
+        },
+        {
+          "event": "http_POST",
+          "order": 20,
+          "result": "tools/call"
+        },
+        {
+          "event": "tools_call_dispatch",
+          "order": 21
+        },
+        {
+          "event": "host_inbox_inserted",
+          "order": 22
+        },
+        {
+          "event": "socket_destroyed_after_dispatch",
+          "order": 23
+        },
+        {
+          "event": "client_transport_error",
+          "order": 24,
+          "result": "socket hang up"
+        },
+        {
+          "event": "http_POST",
+          "order": 25,
+          "result": "tools/call"
+        },
+        {
+          "event": "tools_call_dispatch",
+          "order": 26
+        },
+        {
+          "event": "host_inbox_inserted",
+          "order": 27
+        },
+        {
+          "event": "notification_receipt",
+          "order": 28,
+          "result": "enqueued"
+        },
+        {
+          "event": "sse_stream_closed",
+          "order": 29
+        },
+        {
+          "event": "client_transport_error",
+          "order": 30,
+          "result": "Maximum reconnection attempts (0) exceeded."
+        },
+        {
+          "event": "sse_resume_get",
+          "order": 31
+        },
+        {
+          "event": "sse_duplicate_written",
+          "order": 32
+        },
+        {
+          "event": "notification_receipt",
+          "order": 33,
+          "result": "duplicate"
+        }
+      ],
+      "tlsConnections": [
+        {
+          "protocol": "TLSv1.3",
+          "resumed": false
+        },
+        {
+          "protocol": "TLSv1.3",
+          "resumed": false
+        },
+        {
+          "protocol": "TLSv1.3",
+          "resumed": false
+        },
+        {
+          "protocol": "TLSv1.3",
+          "resumed": false
+        },
+        {
+          "protocol": "TLSv1.3",
+          "resumed": false
+        },
+        {
+          "protocol": "TLSv1.3",
+          "resumed": false
+        },
+        {
+          "protocol": "TLSv1.3",
+          "resumed": false
+        },
+        {
+          "protocol": "TLSv1.3",
+          "resumed": false
+        },
+        {
+          "protocol": "TLSv1.3",
+          "resumed": false
+        },
+        {
+          "protocol": "TLSv1.3",
+          "resumed": false
+        },
+        {
+          "protocol": "TLSv1.3",
+          "resumed": false
+        },
+        {
+          "protocol": "TLSv1.3",
+          "resumed": false
+        },
+        {
+          "protocol": "TLSv1.3",
+          "resumed": false
+        },
+        {
+          "protocol": "TLSv1.3",
+          "resumed": false
+        },
+        {
+          "protocol": "TLSv1.3",
+          "resumed": false
+        },
+        {
+          "protocol": "TLSv1.3",
+          "resumed": false
+        },
+        {
+          "protocol": "TLSv1.3",
+          "resumed": false
+        },
+        {
+          "protocol": "TLSv1.3",
+          "resumed": false
+        },
+        {
+          "protocol": "TLSv1.3",
+          "resumed": false
+        },
+        {
+          "protocol": "TLSv1.3",
+          "resumed": false
+        },
+        {
+          "protocol": "TLSv1.3",
+          "resumed": false
+        }
+      ],
+      "imposterConnections": 3,
+      "imposterRequests": 0,
+      "imposterBodyBytes": 0,
+      "isolatedImposter": true,
+      "proxyRequests": 0,
+      "redirectTargetRequests": 0,
+      "pendingAfterClaim": 0
+    },
+    "localModelRequests": 5
+  },
+  "network": {
+    "negativeControlProven": true,
+    "noUserCredentials": true,
+    "unexpectedExternalCallsCount": 0,
+    "unexpectedExternalCalls": [],
+    "lastUpdated": "2026-10-01T13:24:18.715Z"
+  },
+  "lowLevelNetwork": {
+    "deniedConnections": 0
+  },
+  "overallStatus": "PASS"
+}

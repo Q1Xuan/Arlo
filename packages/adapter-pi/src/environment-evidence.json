@@ -1,0 +1,404 @@
+{
+  "schemaVersion": 1,
+  "host": "pi",
+  "adapter": {
+    "name": "@arlo/adapter-pi",
+    "version": "0.1.0"
+  },
+  "scope": "First batch #149 adds measured Linux x64 / Node 24.13.1 native acceptance on final installed artifacts. Historical rows retain their archived artifacts and limits; current artifact binding and required readiness are separate facts. Windows batch #151/#156 records Windows 10 Home 22H2 / OS release 10.0.19045 / full build 19045.6456 / x64 / Node 24.13.1. Final installed artifact and full native applicability are audited in the #156 delivery summary. Historical Windows rows without complete selectors are retained as history and cannot wildcard-match the current OS.",
+  "rows": [
+    {
+      "version": "1.1.0",
+      "platform": "linux",
+      "arch": "x64",
+      "node": "24.13.1",
+      "acceptance": "failed",
+      "testedCapabilities": [
+        "native send/associated reply",
+        "busy reception",
+        "root new/resume/fork",
+        "recovery and persistent allowance",
+        "cancellation and bilateral participation"
+      ],
+      "limitations": [
+        "Known native preflight processing-slot defect remains failed. Original editor observation failures are preserved; initial-allowance and root-configuration reruns pass.",
+        "Current delayed settlement, cancellation and undo scenarios passed; no promise to remove host restrictions."
+      ],
+      "evidence": [
+        "docs/compatibility/final-matrix-122.md",
+        "docs/compatibility/issue-122-evidence/summary.json",
+        "docs/compatibility/issue-121-evidence/summary.json",
+        "docs/compatibility/node-runtime-121.md",
+        "docs/compatibility/pi-experimental-119.md"
+      ],
+      "packages": {
+        "@earendil-works/pi-coding-agent": "1.1.0",
+        "@earendil-works/pi-tui": "1.1.0",
+        "@earendil-works/pi-ai": "1.1.0",
+        "@earendil-works/pi-agent-core": "1.1.0",
+        "@earendil-works/pi-codemode": "1.1.0",
+        "@earendil-works/pi-mcp": "1.1.0",
+        "@earendil-works/pi-telemetry": "1.1.0"
+      }
+    },
+    {
+      "version": "1.1.0",
+      "platform": "linux",
+      "arch": "x64",
+      "node": "22.22.1",
+      "acceptance": "failed",
+      "testedCapabilities": [
+        "native send/associated reply",
+        "busy reception",
+        "root new/resume/fork",
+        "recovery and persistent allowance",
+        "cancellation and bilateral participation"
+      ],
+      "limitations": [
+        "processing slot released during preflight; delayed settlement and contact undo remain known host defects",
+        "Node validation selects 25 checks, not the complete Pi suite; independent rechecks do not rewrite original failures"
+      ],
+      "evidence": [
+        "docs/compatibility/issue-121-evidence/summary.json",
+        "docs/compatibility/node-runtime-121.md",
+        "docs/compatibility/pi-experimental-119.md"
+      ],
+      "packages": {
+        "@earendil-works/pi-coding-agent": "1.1.0",
+        "@earendil-works/pi-tui": "1.1.0",
+        "@earendil-works/pi-ai": "1.1.0",
+        "@earendil-works/pi-agent-core": "1.1.0",
+        "@earendil-works/pi-codemode": "1.1.0",
+        "@earendil-works/pi-mcp": "1.1.0",
+        "@earendil-works/pi-telemetry": "1.1.0"
+      }
+    },
+    {
+      "version": "1.1.0",
+      "platform": "linux",
+      "arch": "x64",
+      "node": "24.15.0",
+      "acceptance": "failed",
+      "testedCapabilities": [
+        "native send/associated reply",
+        "busy reception",
+        "root new/resume/fork",
+        "recovery and persistent allowance",
+        "cancellation and bilateral participation"
+      ],
+      "limitations": [
+        "processing slot released during preflight; delayed settlement and contact undo remain known host defects",
+        "Node validation selects 25 checks, not the complete Pi suite; independent rechecks do not rewrite original failures"
+      ],
+      "evidence": [
+        "docs/compatibility/issue-121-evidence/summary.json",
+        "docs/compatibility/node-runtime-121.md",
+        "docs/compatibility/pi-experimental-119.md"
+      ],
+      "packages": {
+        "@earendil-works/pi-coding-agent": "1.1.0",
+        "@earendil-works/pi-tui": "1.1.0",
+        "@earendil-works/pi-ai": "1.1.0",
+        "@earendil-works/pi-agent-core": "1.1.0",
+        "@earendil-works/pi-codemode": "1.1.0",
+        "@earendil-works/pi-mcp": "1.1.0",
+        "@earendil-works/pi-telemetry": "1.1.0"
+      }
+    },
+    {
+      "version": "1.1.0",
+      "platform": "linux",
+      "arch": "x64",
+      "node": "24.22.1",
+      "acceptance": "failed",
+      "testedCapabilities": [
+        "native send/associated reply",
+        "busy reception",
+        "root new/resume/fork",
+        "recovery and persistent allowance",
+        "cancellation and bilateral participation"
+      ],
+      "limitations": [
+        "processing slot released during preflight; delayed settlement and contact undo remain known host defects",
+        "Node validation selects 25 checks, not the complete Pi suite; independent rechecks do not rewrite original failures"
+      ],
+      "evidence": [
+        "docs/compatibility/issue-121-evidence/summary.json",
+        "docs/compatibility/node-runtime-121.md",
+        "docs/compatibility/pi-experimental-119.md"
+      ],
+      "packages": {
+        "@earendil-works/pi-coding-agent": "1.1.0",
+        "@earendil-works/pi-tui": "1.1.0",
+        "@earendil-works/pi-ai": "1.1.0",
+        "@earendil-works/pi-agent-core": "1.1.0",
+        "@earendil-works/pi-codemode": "1.1.0",
+        "@earendil-works/pi-mcp": "1.1.0",
+        "@earendil-works/pi-telemetry": "1.1.0"
+      }
+    },
+    {
+      "version": "1.2.0",
+      "platform": "linux",
+      "arch": "x64",
+      "node": "24.13.1",
+      "packages": {
+        "@earendil-works/pi-coding-agent": "1.2.0",
+        "@earendil-works/pi-tui": "1.2.0",
+        "@earendil-works/pi-ai": "1.2.0",
+        "@earendil-works/pi-agent-core": "1.2.0",
+        "@earendil-works/pi-codemode": "1.2.0",
+        "@earendil-works/pi-mcp": "1.2.0",
+        "@earendil-works/pi-telemetry": "1.2.0"
+      },
+      "acceptance": "passed",
+      "testedCapabilities": [
+        "Complete installed Pi native suite and doctor diagnostics with default formal admission",
+        "Native @, same-host send, active reception, busy scheduling, claim and associated reply",
+        "Draft editing/cancellation/undo, context/reload/reattachment, trusted identity, permissions and persisted allowance",
+        "Bidirectional native communication with the reviewed DSH rc.5 composition"
+      ],
+      "limitations": [
+        "Only this exact host version, Linux x64 and Node 24.13.1 are newly measured in #149; Windows, other architectures, additional runtimes and unlisted releases retain their separate historical or unverified status.",
+        "Earlier nonzero attempts remain archived; diagnosis readiness does not imply model work completion."
+      ],
+      "evidence": [
+        "docs/compatibility/issue-149-evidence/summary.json"
+      ]
+    },
+    {
+      "version": "1.1.0",
+      "platform": "win32",
+      "arch": "x64",
+      "node": "24.13.1",
+      "acceptance": "failed",
+      "testedCapabilities": [
+        "private frozen installation and installed-entry contract",
+        "complete 14-file native run: 20 passed, 32 failed and one skipped test; root-configuration and settlement files pass"
+      ],
+      "limitations": [
+        "Complete native run has 12 failed files and two passed files; draft/readiness timeouts and claim-count assertions remain failed.",
+        "A later repeated contract run failed the unstable-identity refusal test; baseline cross-host native phase did not start.",
+        "Overlapping suites and limited visible CPU/memory were not controlled by a complete serial rerun. No host-version incompatibility or promotion is inferred."
+      ],
+      "evidence": [
+        "docs/compatibility/final-matrix-122.md",
+        "docs/compatibility/issue-122-evidence/summary.json"
+      ],
+      "packages": {
+        "@earendil-works/pi-coding-agent": "1.1.0",
+        "@earendil-works/pi-tui": "1.1.0",
+        "@earendil-works/pi-ai": "1.1.0",
+        "@earendil-works/pi-agent-core": "1.1.0",
+        "@earendil-works/pi-codemode": "1.1.0",
+        "@earendil-works/pi-mcp": "1.1.0",
+        "@earendil-works/pi-telemetry": "1.1.0"
+      }
+    },
+    {
+      "version": "1.2.0",
+      "platform": "win32",
+      "arch": "x64",
+      "node": "24.13.1",
+      "acceptance": "passed-applicable",
+      "testedCapabilities": [
+        "default verified admission and diagnosis without experimental host flags",
+        "complete installed native suite: all applicable tests passed",
+        "all four baseline/upgraded Pi and DSH pairings: bidirectional native communication, associated reply and status",
+        "frozen installation, public declarations and actual installed JavaScript entries"
+      ],
+      "limitations": [
+        "Only this exact host version, reviewed complete profile and platform/runtime tuple are measured; additional Node versions and platforms remain untested.",
+        "52 applicable native tests passed; one Linux-only suspend-key test is not applicable. Strict raw aggregation remains complete=false, exit2. acceptance=passed-applicable is the explicit platform policy result, not a rewritten raw report."
+      ],
+      "evidence": [
+        "docs/compatibility/final-matrix-122.md",
+        "docs/compatibility/issue-122-evidence/summary.json",
+        "docs/compatibility/formal-support-20261107.json",
+        "docs/compatibility/formal-support-20261107.md"
+      ],
+      "packages": {
+        "@earendil-works/pi-coding-agent": "1.2.0",
+        "@earendil-works/pi-tui": "1.2.0",
+        "@earendil-works/pi-ai": "1.2.0",
+        "@earendil-works/pi-agent-core": "1.2.0",
+        "@earendil-works/pi-codemode": "1.2.0",
+        "@earendil-works/pi-mcp": "1.2.0",
+        "@earendil-works/pi-telemetry": "1.2.0"
+      }
+    },
+    {
+      "version": "1.3.0",
+      "platform": "linux",
+      "arch": "x64",
+      "node": "24.13.1",
+      "packages": {
+        "@earendil-works/pi-coding-agent": "1.3.0",
+        "@earendil-works/pi-tui": "1.3.0",
+        "@earendil-works/pi-ai": "1.3.0",
+        "@earendil-works/pi-agent-core": "1.3.0",
+        "@earendil-works/pi-codemode": "1.3.0",
+        "@earendil-works/pi-mcp": "1.3.0",
+        "@earendil-works/pi-telemetry": "1.3.0"
+      },
+      "acceptance": "passed",
+      "testedCapabilities": [
+        "Complete installed Pi native suite and doctor diagnostics with default formal admission",
+        "Native @, same-host send, active reception, busy scheduling, claim and associated reply",
+        "Draft editing/cancellation/undo, context/reload/reattachment, trusted identity, permissions and persisted allowance",
+        "Bidirectional native communication with the reviewed DSH rc.2 and rc.5 compositions"
+      ],
+      "limitations": [
+        "Only this exact host version, Linux x64 and Node 24.13.1 are newly measured in #149; Windows, other architectures, additional runtimes and unlisted releases retain their separate historical or unverified status.",
+        "Earlier nonzero attempts remain archived; diagnosis readiness does not imply model work completion."
+      ],
+      "evidence": [
+        "docs/compatibility/issue-149-evidence/summary.json"
+      ]
+    },
+    {
+      "version": "1.4.0",
+      "platform": "linux",
+      "arch": "x64",
+      "node": "24.13.1",
+      "packages": {
+        "@earendil-works/pi-coding-agent": "1.4.0",
+        "@earendil-works/pi-tui": "1.4.0",
+        "@earendil-works/pi-ai": "1.4.0",
+        "@earendil-works/pi-agent-core": "1.4.0",
+        "@earendil-works/pi-codemode": "1.4.0",
+        "@earendil-works/pi-mcp": "1.4.0",
+        "@earendil-works/pi-telemetry": "1.4.0"
+      },
+      "acceptance": "passed",
+      "testedCapabilities": [
+        "Complete installed Pi native suite and doctor diagnostics with default formal admission",
+        "Native @, same-host send, active reception, busy scheduling, claim and associated reply",
+        "Draft editing/cancellation/undo, context/reload/reattachment, trusted identity, permissions and persisted allowance",
+        "Bidirectional native communication with the reviewed DSH rc.2 and rc.5 compositions"
+      ],
+      "limitations": [
+        "Only this exact host version, Linux x64 and Node 24.13.1 are newly measured in #149; Windows, other architectures, additional runtimes and unlisted releases retain their separate historical or unverified status.",
+        "Earlier nonzero attempts remain archived; diagnosis readiness does not imply model work completion."
+      ],
+      "evidence": [
+        "docs/compatibility/issue-149-evidence/summary.json"
+      ]
+    },
+    {
+      "version": "1.2.0",
+      "platform": "win32",
+      "arch": "x64",
+      "node": "24.13.1",
+      "packages": {
+        "@earendil-works/pi-coding-agent": "1.2.0",
+        "@earendil-works/pi-tui": "1.2.0",
+        "@earendil-works/pi-ai": "1.2.0",
+        "@earendil-works/pi-agent-core": "1.2.0",
+        "@earendil-works/pi-codemode": "1.2.0",
+        "@earendil-works/pi-mcp": "1.2.0",
+        "@earendil-works/pi-telemetry": "1.2.0"
+      },
+      "acceptance": "passed-applicable",
+      "testedCapabilities": [
+        "Complete applicable installed Pi native suite and native doctor with default formal admission",
+        "Native @, same-host send, active reception, busy scheduling, claim and associated reply",
+        "Draft editing/cancellation/undo, context/reload/reattachment, trusted identity, permissions and persisted allowance",
+        "Bidirectional native communication with the final DSH rc.5 composition"
+      ],
+      "limitations": [
+        "Only this exact host version, Windows 10 Home 22H2, native OS release 10.0.19045, full build 19045.6456, x64 and Node 24.13.1 are measured in #151/#156; other Windows releases, editions, servicing revisions, architectures and additional runtimes remain separately historical or unverified.",
+        "Observed current Windows registry metadata and declared measured Windows selectors are separate. Missing, invalid or unavailable OS metadata affects environment evidence only; formal host policy and existing mandatory readiness remain separate.",
+        "52 applicable native business tests and 5 separate contract tests passed in the measured predecessor. One Linux-only suspend-key scenario is explicitly inapplicable; original raw exit 2 and complete=false are preserved. Final installed revalidation has its own report and identity; readiness does not replace full applicable native acceptance."
+      ],
+      "evidence": [
+        "docs/compatibility/issue-152-evidence/summary.json",
+        "docs/compatibility/issue-156-evidence/summary.json",
+        "docs/compatibility/windows-next-156.md"
+      ],
+      "windows": {
+        "osRelease": "10.0.19045",
+        "productName": "Windows 10 Home",
+        "displayVersion": "22H2",
+        "build": "19045.6456"
+      }
+    },
+    {
+      "version": "1.3.0",
+      "platform": "win32",
+      "arch": "x64",
+      "node": "24.13.1",
+      "packages": {
+        "@earendil-works/pi-coding-agent": "1.3.0",
+        "@earendil-works/pi-tui": "1.3.0",
+        "@earendil-works/pi-ai": "1.3.0",
+        "@earendil-works/pi-agent-core": "1.3.0",
+        "@earendil-works/pi-codemode": "1.3.0",
+        "@earendil-works/pi-mcp": "1.3.0",
+        "@earendil-works/pi-telemetry": "1.3.0"
+      },
+      "acceptance": "passed-applicable",
+      "testedCapabilities": [
+        "Complete applicable installed Pi native suite and native doctor with default formal admission",
+        "Native @, same-host send, active reception, busy scheduling, claim and associated reply",
+        "Draft editing/cancellation/undo, context/reload/reattachment, trusted identity, permissions and persisted allowance",
+        "Bidirectional native communication with the final DSH rc.2 and rc.5 compositions"
+      ],
+      "limitations": [
+        "Only this exact host version, Windows 10 Home 22H2, native OS release 10.0.19045, full build 19045.6456, x64 and Node 24.13.1 are measured in #151/#156; other Windows releases, editions, servicing revisions, architectures and additional runtimes remain separately historical or unverified.",
+        "Observed current Windows registry metadata and declared measured Windows selectors are separate. Missing, invalid or unavailable OS metadata affects environment evidence only; formal host policy and existing mandatory readiness remain separate.",
+        "52 applicable native business tests and 5 separate contract tests passed in the measured predecessor. One Linux-only suspend-key scenario is explicitly inapplicable; original raw exit 2 and complete=false are preserved. Final installed revalidation has its own report and identity; readiness does not replace full applicable native acceptance."
+      ],
+      "evidence": [
+        "docs/compatibility/issue-153-evidence/summary.json",
+        "docs/compatibility/issue-156-evidence/summary.json",
+        "docs/compatibility/windows-next-156.md"
+      ],
+      "windows": {
+        "osRelease": "10.0.19045",
+        "productName": "Windows 10 Home",
+        "displayVersion": "22H2",
+        "build": "19045.6456"
+      }
+    },
+    {
+      "version": "1.4.0",
+      "platform": "win32",
+      "arch": "x64",
+      "node": "24.13.1",
+      "packages": {
+        "@earendil-works/pi-coding-agent": "1.4.0",
+        "@earendil-works/pi-tui": "1.4.0",
+        "@earendil-works/pi-ai": "1.4.0",
+        "@earendil-works/pi-agent-core": "1.4.0",
+        "@earendil-works/pi-codemode": "1.4.0",
+        "@earendil-works/pi-mcp": "1.4.0",
+        "@earendil-works/pi-telemetry": "1.4.0"
+      },
+      "acceptance": "passed-applicable",
+      "testedCapabilities": [
+        "Complete applicable installed Pi native suite and native doctor with default formal admission",
+        "Native @, same-host send, active reception, busy scheduling, claim and associated reply",
+        "Draft editing/cancellation/undo, context/reload/reattachment, trusted identity, permissions and persisted allowance",
+        "Bidirectional native communication with the final DSH rc.2 and rc.5 compositions"
+      ],
+      "limitations": [
+        "Only this exact host version, Windows 10 Home 22H2, native OS release 10.0.19045, full build 19045.6456, x64 and Node 24.13.1 are measured in #151/#156; other Windows releases, editions, servicing revisions, architectures and additional runtimes remain separately historical or unverified.",
+        "Observed current Windows registry metadata and declared measured Windows selectors are separate. Missing, invalid or unavailable OS metadata affects environment evidence only; formal host policy and existing mandatory readiness remain separate.",
+        "52 applicable native business tests and 5 separate contract tests passed in the measured predecessor. One Linux-only suspend-key scenario is explicitly inapplicable; original raw exit 2 and complete=false are preserved. Final installed revalidation has its own report and identity; readiness does not replace full applicable native acceptance."
+      ],
+      "evidence": [
+        "docs/compatibility/issue-154-evidence/summary.json",
+        "docs/compatibility/issue-156-evidence/summary.json",
+        "docs/compatibility/windows-next-156.md"
+      ],
+      "windows": {
+        "osRelease": "10.0.19045",
+        "productName": "Windows 10 Home",
+        "displayVersion": "22H2",
+        "build": "19045.6456"
+      }
+    }
+  ],
+  "validationContext": "Historical pre-rename implementation evidence; the complete Arlo rename has not completed a full regression or native-host acceptance run."
+}

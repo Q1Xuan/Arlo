@@ -1,0 +1,6 @@
+{
+  "name": "arlo-adapter-claudecode",
+  "version": "0.1.0",
+  "description": "Arlo communication adapter mod for Claude Code",
+  "hooks": "./hooks/hooks.json"
+}

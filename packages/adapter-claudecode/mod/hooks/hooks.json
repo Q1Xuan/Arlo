@@ -1,0 +1,4 @@
+{
+  "description": "Arlo adapter hooks for idle handoff into the living Claude Code session",
+  "modules": ["./register.js"]
+}

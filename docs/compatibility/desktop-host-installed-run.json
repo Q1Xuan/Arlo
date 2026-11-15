@@ -1,0 +1,15 @@
+{
+  "verifiedAt": "2026-10-01T12:11:24.286Z",
+  "desktopExecutable": "E:/software/dsh/DeepSeek Harness.exe",
+  "nodeVersion": "v24.18.1",
+  "electronVersion": "44.0.0",
+  "publicPluginEntry": "cordis.patch.yml",
+  "contracts": {
+    "repeatedPluginLoad": true,
+    "rootsAndLifecycle": true,
+    "realToolCallerAndIsolation": true,
+    "nextTurnQueueing": true,
+    "boundedPending": true
+  },
+  "exitCode": 0
+}

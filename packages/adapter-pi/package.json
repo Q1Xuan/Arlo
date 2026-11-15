@@ -1,0 +1,37 @@
+{
+  "name": "@arlo/adapter-pi",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "22.22.1 || 24.13.1 || 24.15.0 || 24.22.1"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "pi": {
+    "extensions": [
+      "./src/extension.ts"
+    ]
+  },
+  "files": [
+    "src"
+  ],
+  "dependencies": {
+    "@arlo/adapter-sdk": "workspace:*",
+    "@arlo/daemon": "workspace:*",
+    "@arlo/sdk": "workspace:*"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*",
+    "@earendil-works/pi-tui": "*",
+    "typebox": "*"
+  },
+  "devDependencies": {
+    "@earendil-works/pi-coding-agent": "1.1.0",
+    "@earendil-works/pi-tui": "1.1.0",
+    "@modelcontextprotocol/sdk": "1.25.2",
+    "typebox": "1.3.27"
+  },
+  "license": "Apache-2.0"
+}

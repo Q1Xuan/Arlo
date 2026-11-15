@@ -1,0 +1,3 @@
+- insert:
+    - id: arlo-contact
+      name: '@arlo/adapter-dsh'

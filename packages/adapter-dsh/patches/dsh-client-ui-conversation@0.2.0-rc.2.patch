@@ -1,0 +1,124 @@
+--- a/lib/client.js
++++ b/lib/client.js
+@@ -3401,7 +3401,14 @@
+ 			* @param signal - optional cancellation for the complete Host admission.
+ 			* @returns the Host admission outcome; local attachment preparation failures reject.
+ 			*/
+-			async sendSession(session, text, attachmentIds, mode, signal) {
++			submitPreparations = new Map();
++			/** Register explicit submit preparation, separate from repeatable reference serialization. */
++			registerSubmitPreparation(source, prepare) {
++				if (this.submitPreparations.has(source)) throw new Error(`Duplicate submit preparation: ${source}`);
++				this.submitPreparations.set(source, prepare);
++				return () => { this.submitPreparations.delete(source); };
++			}
++			async sendSession(session, text, attachmentIds, mode, signal, references = []) {
+ 				const attachments = this.resolveDraftAttachments(attachmentIds);
+ 				if (attachments.length !== attachmentIds.length) throw new Error("conversation.sendSession: one or more draft attachments are no longer available");
+ 				const uploads = this.fileUploads.getSnapshot();
+@@ -3429,6 +3436,23 @@
+ 					type: "file",
+ 					receiptId: uploadFor(attachment).receiptId
+ 				}));
++				const preparationSignal = signal ?? new AbortController().signal;
++				const replacements = new Map();
++				for (const [source, prepare] of this.submitPreparations) {
++					const owned = references.filter(reference => reference.source === source);
++					if (owned.length === 0) continue;
++					preparationSignal.throwIfAborted();
++					const values = await prepare(session, owned.map(reference => ({ ref: reference.ref, label: reference.label, text: text.slice(reference.offset, reference.offset + reference.length) })), preparationSignal);
++					preparationSignal.throwIfAborted();
++					if (values.length !== owned.length) throw new Error("Submit preparation must preserve reference count");
++					owned.forEach((reference, index) => replacements.set(reference, values[index]));
++				}
++				let preparedText = "", cursor = 0;
++				for (const reference of references) {
++					preparedText += text.slice(cursor, reference.offset) + (replacements.get(reference) ?? text.slice(reference.offset, reference.offset + reference.length));
++					cursor = reference.offset + reference.length;
++				}
++				text = preparedText + text.slice(cursor);
+ 				if (session.getSnapshot().subagent !== null) {
+ 					const content = [...await serializeAttachments(), ...text === "" ? [] : [{
+ 						type: "text",
+@@ -13969,6 +13993,7 @@
+ 				Promise.all(occurrences.map(async (o) => {
+ 					if (inputTriggers === void 0) throw new Error(`no serializer for reference source "${o.source}"`);
+ 					return {
++						source: o.source, ref: o.ref, label: o.label,
+ 						offset: o.offset,
+ 						length: o.length,
+ 						text: await inputTriggers.serializeReference(o.source, o.ref, attempt.signal)
+@@ -13976,13 +14001,17 @@
+ 				})).then((parts) => {
+ 					if (this.disposed) return;
+ 					let out = "";
++					const references = [];
+ 					let cursor = 0;
+ 					for (const part of parts) {
+-						out += draft.slice(cursor, part.offset) + part.text;
++						out += draft.slice(cursor, part.offset);
++						references.push({ source: part.source, ref: part.ref, label: part.label, offset: out.length, length: part.text.length });
++						out += part.text;
+ 						cursor = part.offset + part.length;
+ 					}
+ 					out += draft.slice(cursor);
+-					this.settleSink(attempt, this.deps.defaultSink(out.trim(), attachmentIds, mode, attempt.signal));
++					const leading = out.length - out.trimStart().length;
++					this.settleSink(attempt, this.deps.defaultSink(out.trim(), attachmentIds, mode, attempt.signal, references.map(reference => ({ ...reference, offset: reference.offset - leading }))));
+ 				}, (error) => {
+ 					if (this.dead(attempt)) return;
+ 					const message = error instanceof Error ? error.message : String(error);
+@@ -14242,7 +14271,7 @@
+ 					inputTriggers: () => this.controller(actx),
+ 					popup: () => this.popup(actx),
+ 					inbox: session.projections.faceOf("inbox"),
+-					defaultSink: (text, attachmentIds, mode, signal) => this.sink(session, text, attachmentIds, mode, signal),
++					defaultSink: (text, attachmentIds, mode, signal, references) => this.sink(session, text, attachmentIds, mode, signal, references),
+ 					steerQueue: () => {
+ 						this.steerQueue(session, shell);
+ 					},
+@@ -14329,9 +14358,9 @@
+ 			* exactly one path; a failed first prompt is an ordinary prompt failure
+ 			* (banner via promptError, draft restored only while untouched).
+ 			*/
+-			sink(session, text, attachmentIds, mode, signal) {
++			sink(session, text, attachmentIds, mode, signal, references) {
+ 				if (text === "" && attachmentIds.length === 0) return Promise.resolve({ kind: "success" });
+-				return this.conversation().sendSession(session, text, attachmentIds, mode, signal);
++				return this.conversation().sendSession(session, text, attachmentIds, mode, signal, references);
+ 			}
+ 			/**
+ 			* Submit every still-pending queued message through QueueDock Steer, in FIFO
+@@ -15250,5 +15279,4 @@
+-		function previewOf(content) {
+-			const flat = content.filter((block) => block.type !== "image" && block.type !== "file").map((block) => block.type === "text" ? block.text : `[${block.type}]`).join(" ").replace(/\s+/g, " ").trim();
+-			const chars = Array.from(flat);
+-			return chars.length > QUEUE_PREVIEW_CHARS ? `${chars.slice(0, QUEUE_PREVIEW_CHARS).join("")}…` : flat;
++		function projectQueuePreview(content) {
++			const text = content.filter((block) => block.type !== "image" && block.type !== "file").map((block) => block.type === "text" ? block.text : `[${block.type}]`).join(" ");
++			return (0, _deepseek_ai_dsh_client_ui_primitives.projectUserText)(text, [], [], "skill", void 0, QUEUE_PREVIEW_CHARS);
+-		}
++		}
+@@ -15507,1 +15535,1 @@
+-										children: (0, _deepseek_ai_dsh_client_ui_primitives.projectUserText)(previewOf(row.content), [])
++										children: projectQueuePreview(row.content)
+--- a/lib/types/client/service.d.ts
++++ b/lib/types/client/service.d.ts
+@@ -26,6 +26,8 @@
+ export interface IConversation {
+     /** The per-session input machine registry (SessionInputResolver face). */
+     readonly input: SessionInputResolver;
++    /** Prepare only actual references from this source during explicit submit; preserve order and count. */
++    registerSubmitPreparation(source: string, prepare: (session: SessionFace, references: readonly { readonly ref: string; readonly label?: string; readonly text: string }[], signal: AbortSignal) => Promise<readonly string[]>): () => void;
+     /**
+      * The per-session composer-block registry: how a plugin the composer
+      * cannot import makes a session's input inert with its own reason.
+@@ -66,6 +68,8 @@
+ export declare class ConversationController extends Service implements IConversation {
+     /** The per-session input machine registry (SessionInputResolver face). */
+     readonly input: SessionInputResolver;
++    /** Prepare only actual references from this source during explicit submit; preserve order and count. */
++    registerSubmitPreparation(source: string, prepare: (session: SessionFace, references: readonly { readonly ref: string; readonly label?: string; readonly text: string }[], signal: AbortSignal) => Promise<readonly string[]>): () => void;
+     /** The per-session composer-block registry. */
+     readonly blocks: ComposerBlocks;
+     /** Live upload state per file-kind draft; images never appear here. */

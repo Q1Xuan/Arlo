@@ -1,0 +1,14 @@
+diff --git a/lib/types/types.d.ts b/lib/types/types.d.ts
+index 1d8d466..992c71c 100644
+--- a/lib/types/types.d.ts
++++ b/lib/types/types.d.ts
+@@ -7,7 +7,8 @@ export interface SessionFormatJsonObject {
+     readonly [key: string]: SessionFormatJsonValue;
+ }
+ /** Logical Session metadata shared by supported historical and current formats. */
+-export interface SessionFormatHeader extends SessionFormatJsonObject {
++export interface SessionFormatHeader {
++    readonly [key: string]: SessionFormatJsonValue | undefined;
+     readonly version: number;
+     readonly id: string;
+     readonly createdAt: number;

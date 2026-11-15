@@ -1,0 +1,44 @@
+# Keep generated acceptance evidence available without expanding it in PR diffs.
+docs/compatibility/issue-16-evidence/*.json linguist-generated=true
+docs/compatibility/issue-16-evidence/*.log linguist-generated=true
+docs/compatibility/issue-17-evidence/*.json linguist-generated=true
+docs/compatibility/issue-17-evidence/*.log linguist-generated=true
+*.sh text eol=lf
+/docs/compatibility/issue-18-evidence/* text eol=lf
+docs/compatibility/issue-18-evidence/*.json linguist-generated=true
+docs/compatibility/issue-18-evidence/*.yaml linguist-generated=true
+
+# Unified-diff context starts with a space before upstream indentation.
+patches/*.patch text eol=lf -whitespace
+docs/compatibility/issue-37-evidence/*.json linguist-generated=true
+docs/compatibility/issue-37-evidence/*.log linguist-generated=true
+docs/compatibility/issue-38-evidence/*.json linguist-generated=true
+docs/compatibility/issue-38-evidence/*.log linguist-generated=true
+/docs/compatibility/issue-38-evidence/*.json text eol=lf
+/docs/compatibility/issue-38-evidence/*.sha256 text eol=lf
+/docs/compatibility/issue-38-evidence/*.log text eol=lf -whitespace
+docs/compatibility/issue-39-evidence/*.json linguist-generated=true
+docs/compatibility/issue-39-evidence/*.log linguist-generated=true
+/docs/compatibility/issue-39-evidence/*.json text eol=lf
+/docs/compatibility/issue-39-evidence/*.sha256 text eol=lf
+/docs/compatibility/issue-39-evidence/*.log text eol=lf -whitespace
+
+# Preserve #101 evidence bytes and keep generated reports compact in PR diffs.
+/docs/validation/issue101-evidence/** text eol=lf
+/docs/validation/issue101-evidence/*.json linguist-generated=true
+/docs/validation/issue101-evidence/*.tap linguist-generated=true -whitespace
+/docs/validation/issue101-evidence/*.log linguist-generated=true -whitespace
+
+# Preserve native Windows evidence bytes, including CRLF/BOM, for SHA-256 checks.
+/docs/validation/issue104-evidence/** -text
+/docs/validation/issue104-evidence/*.json linguist-generated=true -whitespace
+/docs/validation/issue104-evidence/*.tap linguist-generated=true -whitespace
+/docs/validation/issue104-evidence/*.log linguist-generated=true -whitespace
+/docs/validation/issue104-evidence/*.txt linguist-generated=true -whitespace
+
+# Retain native #108 evidence bytes for the SHA-256 manifest on either platform.
+/docs/validation/issue108-evidence/** -text
+/docs/validation/issue108-evidence/*.json linguist-generated=true -whitespace
+/docs/validation/issue108-evidence/*.jsonl linguist-generated=true -whitespace
+/docs/validation/issue108-evidence/*.tap linguist-generated=true -whitespace
+/docs/validation/issue108-evidence/*.log linguist-generated=true -whitespace

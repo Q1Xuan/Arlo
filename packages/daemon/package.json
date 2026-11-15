@@ -1,0 +1,35 @@
+{
+  "name": "@arlo/daemon",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "arlo": "./bin/arlo.js"
+  },
+  "engines": {
+    "node": "22.22.1 || 24.13.1 || 24.15.0 || 24.22.1"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./server": "./src/server/index.ts",
+    "./shared": "./src/shared/index.ts",
+    "./security": "./src/security/index.ts",
+    "./storage": "./src/storage/index.ts",
+    "./logging": "./src/logging/index.ts",
+    "./cli": "./src/cli/index.ts",
+    "./setup-dsh": "./src/setup/dsh-preparation.ts"
+  },
+  "dependencies": {
+    "@arlo/sdk": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "24.10.1",
+    "typescript": "5.9.3"
+  },
+  "files": [
+    "src",
+    "bin",
+    "setup-dsh"
+  ],
+  "license": "Apache-2.0"
+}

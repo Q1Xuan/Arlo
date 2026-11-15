@@ -1,0 +1,21 @@
+{
+  "name": "arlo-pi-1.2.0-build",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.26.2",
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "@types/node": "24.10.1"
+  },
+  "pnpm": {
+    "overrides": {
+      "@earendil-works/pi-coding-agent": "1.2.0",
+      "@earendil-works/pi-tui": "1.2.0",
+      "@earendil-works/pi-ai": "1.2.0",
+      "@earendil-works/pi-agent-core": "1.2.0",
+      "@earendil-works/pi-codemode": "1.2.0",
+      "@earendil-works/pi-mcp": "1.2.0",
+      "@earendil-works/pi-telemetry": "1.2.0"
+    }
+  }
+}

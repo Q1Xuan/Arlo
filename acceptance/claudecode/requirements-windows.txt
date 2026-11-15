@@ -1,0 +1,4 @@
+pywinpty==2.0.15
+psutil==7.0.0
+pyte==0.8.2
+wcwidth==0.2.13

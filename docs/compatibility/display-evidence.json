@@ -1,0 +1,39 @@
+{
+  "verifiedAt": "2026-10-01T08:44:54.654Z",
+  "desktopExecutable": "E:/software/dsh/DeepSeek Harness.exe",
+  "installedHostVerified": true,
+  "isolation": {
+    "independentTestProfile": true,
+    "controlledLocalModelOnly": true,
+    "noUserCredentialsInherited": true,
+    "externalRequestDeniedProven": true,
+    "phase1HostExternalRequestsCount": 0,
+    "phase2HostExternalRequestsCount": 0,
+    "hostExternalRequestsCount": 0,
+    "phase1RendererRequestsMonitored": 29,
+    "phase1RendererExternalRequestsCount": 0,
+    "phase2RendererRequestsMonitored": 25,
+    "phase2RendererExternalRequestsCount": 0,
+    "rendererExternalRequestsCount": 0,
+    "rendererNetworkMonitored": true,
+    "externalNetworkCoverage": "both_phases_host_and_renderer"
+  },
+  "phase1PluginPresent": {
+    "renderedAsTurnTrigger": true,
+    "turnTriggerHeader": "收到执行请求\n16:44",
+    "notHumanUserBubble": true,
+    "notSystemBubble": true,
+    "screenshot": "desktop-arlo-display.png",
+    "screenshotBytes": 47988
+  },
+  "phase2PluginUninstalled": {
+    "safeHistoryRead": true,
+    "renderedAsTurnTrigger": true,
+    "turnTriggerHeader": "收到执行请求\n16:44",
+    "notHumanUserBubble": true,
+    "notSystemBubble": true,
+    "screenshot": "desktop-arlo-display-uninstalled.png",
+    "screenshotBytes": 47988
+  },
+  "exitCode": 0
+}

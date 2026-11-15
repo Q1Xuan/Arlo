@@ -1,0 +1,960 @@
+{
+  "candidateSource": {
+    "repository": "https://github.com/deepseek-ai/deepseek-harness",
+    "commit": "639ed015397290b3745d163aafe02ffee4aa3f84",
+    "tag": "dsh-v0.2.0-rc.2",
+    "engines": "^22.19.0 || >=24.0.0",
+    "license": "MIT",
+    "note": "Source reference, not an assertion of byte-identical npm provenance. Runtime artifacts are pinned by pnpm-lock.yaml integrity."
+  },
+  "node": "v24.13.1",
+  "pnpm": "10.26.2",
+  "lockSha256": "26698fea2af17e54dc18fa58aa13bbd670035de7443137d3121a6890f7b29328",
+  "mcp": {
+    "client": "2.0.0",
+    "server": "2.0.0",
+    "wireRevision": "2025-06-18",
+    "profile": "arlo/session-messaging",
+    "profileVersion": "0.1",
+    "status": "verified",
+    "evidenceFile": "docs/compatibility/transport-run.json"
+  },
+  "packages": [
+    {
+      "name": "@deepseek-ai/cordis",
+      "version": "4.0.4",
+      "license": "MIT",
+      "engines": null,
+      "exports": {
+        ".": {
+          "types": "./lib/types/index.d.ts",
+          "default": "./lib/index.js"
+        },
+        "./src/*": "./src/*",
+        "./package.json": "./package.json"
+      }
+    },
+    {
+      "name": "@deepseek-ai/cosmokit",
+      "version": "1.8.5",
+      "license": "MIT",
+      "engines": null,
+      "exports": {
+        ".": {
+          "types": "./lib/types/index.d.ts",
+          "default": "./lib/index.js"
+        },
+        "./src/*": "./src/*",
+        "./package.json": "./package.json"
+      }
+    },
+    {
+      "name": "@deepseek-ai/dsh-agent",
+      "version": "0.2.0-rc.2",
+      "license": "MIT",
+      "engines": null,
+      "exports": {
+        ".": {
+          "types": "./lib/types/index.d.ts",
+          "default": "./lib/index.js"
+        },
+        "./invariant": {
+          "types": "./lib/types/invariant.d.ts",
+          "default": "./lib/invariant.js"
+        },
+        "./types": {
+          "types": "./lib/types/types.d.ts",
+          "default": "./lib/types/types.js"
+        },
+        "./src/*": "./src/*",
+        "./package.json": "./package.json"
+      }
+    },
+    {
+      "name": "@deepseek-ai/dsh-agent-loop",
+      "version": "0.2.0-rc.2",
+      "license": "MIT",
+      "engines": null,
+      "exports": {
+        ".": {
+          "types": "./lib/types/index.d.ts",
+          "default": "./lib/index.js"
+        },
+        "./invariant": {
+          "types": "./lib/types/invariant.d.ts",
+          "default": "./lib/invariant.js"
+        },
+        "./package.json": "./package.json"
+      }
+    },
+    {
+      "name": "@deepseek-ai/dsh-attachment",
+      "version": "0.2.0-rc.2",
+      "license": "MIT",
+      "engines": null,
+      "exports": {
+        ".": {
+          "types": "./lib/types/index.d.ts",
+          "default": "./lib/index.js"
+        },
+        "./types": {
+          "types": "./lib/types/types.d.ts",
+          "default": "./lib/types/types.js"
+        },
+        "./src/*": "./src/*",
+        "./package.json": "./package.json"
+      }
+    },
+    {
+      "name": "@deepseek-ai/dsh-brand",
+      "version": "0.2.0-rc.2",
+      "license": "MIT",
+      "engines": null,
+      "exports": {
+        ".": {
+          "types": "./lib/types/index.d.ts",
+          "default": "./lib/index.js"
+        },
+        "./src/*": "./src/*",
+        "./package.json": "./package.json"
+      }
+    },
+    {
+      "name": "@deepseek-ai/dsh-invariants",
+      "version": "0.2.0-rc.2",
+      "license": "MIT",
+      "engines": null,
+      "exports": {
+        ".": {
+          "types": "./lib/types/index.d.ts",
+          "default": "./lib/index.js"
+        },
+        "./src/*": "./src/*",
+        "./package.json": "./package.json"
+      }
+    },
+    {
+      "name": "@deepseek-ai/dsh-llm",
+      "version": "0.2.0-rc.2",
+      "license": "MIT",
+      "engines": null,
+      "exports": {
+        ".": {
+          "types": "./lib/types/index.d.ts",
+          "default": "./lib/index.js"
+        },
+        "./invariant": {
+          "types": "./lib/types/invariant.d.ts",
+          "default": "./lib/invariant.js"
+        },
+        "./types": {
+          "types": "./lib/types/types.d.ts",
+          "default": "./lib/types/types.js"
+        },
+        "./brand": {
+          "types": "./lib/types/brand.d.ts",
+          "default": "./lib/types/brand.js"
+        },
+        "./message": {
+          "types": "./lib/types/message.d.ts",
+          "default": "./lib/types/message.js"
+        },
+        "./assistant-stream": {
+          "types": "./lib/types/assistant-stream.d.ts",
+          "default": "./lib/types/assistant-stream.js"
+        },
+        "./typert": {
+          "types": "./lib/typert.host.d.ts",
+          "default": "./lib/typert.host.js"
+        },
+        "./remote": {
+          "types": "./lib/typert.remote-client.d.ts",
+          "default": "./lib/typert.remote-client.js"
+        },
+        "./src/*": "./src/*",
+        "./package.json": "./package.json"
+      }
+    },
+    {
+      "name": "@deepseek-ai/dsh-ptc-runtime",
+      "version": "0.2.0-rc.2",
+      "license": "MIT",
+      "engines": null,
+      "exports": {
+        ".": {
+          "types": "./lib/types/index.d.ts",
+          "default": "./lib/index.js"
+        },
+        "./src/*": "./src/*",
+        "./package.json": "./package.json"
+      }
+    },
+    {
+      "name": "@deepseek-ai/dsh-sandbox",
+      "version": "0.2.0-rc.2",
+      "license": "MIT",
+      "engines": null,
+      "exports": {
+        ".": {
+          "types": "./lib/types/index.d.ts",
+          "default": "./lib/index.js"
+        },
+        "./src/*": "./src/*",
+        "./package.json": "./package.json"
+      }
+    },
+    {
+      "name": "@deepseek-ai/dsh-sandbox-policy",
+      "version": "0.2.0-rc.2",
+      "license": "MIT",
+      "engines": null,
+      "exports": {
+        ".": {
+          "types": "./lib/types/index.d.ts",
+          "default": "./lib/index.js"
+        },
+        "./invariant": {
+          "types": "./lib/types/invariant.d.ts",
+          "default": "./lib/invariant.js"
+        },
+        "./src/*": "./src/*",
+        "./package.json": "./package.json"
+      }
+    },
+    {
+      "name": "@deepseek-ai/dsh-scope",
+      "version": "0.2.0-rc.2",
+      "license": "MIT",
+      "engines": null,
+      "exports": {
+        ".": {
+          "types": "./lib/types/index.d.ts",
+          "default": "./lib/index.js"
+        },
+        "./invariant": {
+          "types": "./lib/types/invariant.d.ts",
+          "default": "./lib/invariant.js"
+        },
+        "./src/*": "./src/*",
+        "./package.json": "./package.json"
+      }
+    },
+    {
+      "name": "@deepseek-ai/dsh-session",
+      "version": "0.2.0-rc.2",
+      "license": "MIT",
+      "engines": null,
+      "exports": {
+        ".": {
+          "types": "./lib/types/index.d.ts",
+          "default": "./lib/index.js"
+        },
+        "./invariant": {
+          "types": "./lib/types/invariant.d.ts",
+          "default": "./lib/invariant.js"
+        },
+        "./types": {
+          "types": "./lib/types/types.d.ts",
+          "default": "./lib/types/types.js"
+        },
+        "./fork": {
+          "types": "./lib/types/fork.d.ts",
+          "default": "./lib/types/fork.js"
+        },
+        "./src/*": "./src/*",
+        "./package.json": "./package.json",
+        "./surface": {
+          "types": "./lib/types/surface.d.ts",
+          "default": "./lib/types/surface.js"
+        }
+      }
+    },
+    {
+      "name": "@deepseek-ai/dsh-session-persistence",
+      "version": "0.2.0-rc.2",
+      "license": "MIT",
+      "engines": null,
+      "exports": {
+        ".": {
+          "types": "./lib/types/index.d.ts",
+          "default": "./lib/index.js"
+        },
+        "./src/*": "./src/*",
+        "./package.json": "./package.json"
+      }
+    },
+    {
+      "name": "@deepseek-ai/dsh-session-projection",
+      "version": "0.2.0-rc.2",
+      "license": "MIT",
+      "engines": null,
+      "exports": {
+        ".": {
+          "types": "./lib/types/index.d.ts",
+          "default": "./lib/index.js"
+        },
+        "./types": {
+          "types": "./lib/types/types.d.ts",
+          "default": "./lib/types/types.js"
+        },
+        "./src/*": "./src/*",
+        "./package.json": "./package.json"
+      }
+    },
+    {
+      "name": "@deepseek-ai/dsh-system-prompt",
+      "version": "0.2.0-rc.2",
+      "license": "MIT",
+      "engines": null,
+      "exports": {
+        ".": {
+          "types": "./lib/types/index.d.ts",
+          "default": "./lib/index.js"
+        },
+        "./invariant": {
+          "types": "./lib/types/invariant.d.ts",
+          "default": "./lib/invariant.js"
+        },
+        "./src/*": "./src/*",
+        "./package.json": "./package.json"
+      }
+    },
+    {
+      "name": "@deepseek-ai/dsh-timeout",
+      "version": "0.2.0-rc.2",
+      "license": "MIT",
+      "engines": null,
+      "exports": {
+        ".": {
+          "types": "./lib/types/index.d.ts",
+          "default": "./lib/index.js"
+        },
+        "./src/*": "./src/*",
+        "./package.json": "./package.json"
+      }
+    },
+    {
+      "name": "@deepseek-ai/dsh-tools",
+      "version": "0.2.0-rc.2",
+      "license": "MIT",
+      "engines": null,
+      "exports": {
+        ".": {
+          "types": "./lib/types/index.d.ts",
+          "default": "./lib/index.js"
+        },
+        "./invariant": {
+          "types": "./lib/types/invariant.d.ts",
+          "default": "./lib/invariant.js"
+        },
+        "./types": {
+          "types": "./lib/types/types.d.ts",
+          "default": "./lib/types/types.js"
+        },
+        "./presentation": {
+          "types": "./lib/types/presentation.d.ts",
+          "default": "./lib/types/presentation.js"
+        },
+        "./src/*": "./src/*",
+        "./package.json": "./package.json"
+      }
+    },
+    {
+      "name": "@deepseek-ai/dsh-typert-protocol",
+      "version": "0.2.0-rc.2",
+      "license": "MIT",
+      "engines": null,
+      "exports": {
+        ".": {
+          "types": "./lib/types/index.d.ts",
+          "default": "./lib/index.js"
+        },
+        "./types": {
+          "types": "./lib/types/types.d.ts",
+          "default": "./lib/types/types.js"
+        },
+        "./src/*": "./src/*",
+        "./package.json": "./package.json"
+      }
+    },
+    {
+      "name": "@deepseek-ai/dsh-user-approval",
+      "version": "0.2.0-rc.2",
+      "license": "MIT",
+      "engines": null,
+      "exports": {
+        ".": {
+          "types": "./lib/types/index.d.ts",
+          "default": "./lib/index.js"
+        },
+        "./invariant": {
+          "types": "./lib/types/invariant.d.ts",
+          "default": "./lib/invariant.js"
+        },
+        "./types": {
+          "types": "./lib/types/types.d.ts",
+          "default": "./lib/types/types.js"
+        },
+        "./src/*": "./src/*",
+        "./package.json": "./package.json"
+      }
+    },
+    {
+      "name": "@deepseek-ai/dsh-util-crypto",
+      "version": "0.2.0-rc.2",
+      "license": "MIT",
+      "engines": null,
+      "exports": {
+        ".": {
+          "types": "./lib/types/index.d.ts",
+          "default": "./lib/index.js"
+        },
+        "./src/*": "./src/*",
+        "./package.json": "./package.json"
+      }
+    },
+    {
+      "name": "@deepseek-ai/dsh-util-values",
+      "version": "0.2.0-rc.2",
+      "license": "MIT",
+      "engines": null,
+      "exports": {
+        ".": {
+          "types": "./lib/types/index.d.ts",
+          "default": "./lib/index.js"
+        },
+        "./src/*": "./src/*",
+        "./package.json": "./package.json"
+      }
+    },
+    {
+      "name": "@deepseek-ai/schemastery",
+      "version": "3.18.4",
+      "license": "MIT",
+      "engines": null,
+      "exports": {
+        ".": {
+          "types": "./lib/types/index.d.ts",
+          "import": "./lib/index.mjs",
+          "require": "./lib/index.cjs"
+        },
+        "./src/*": "./src/*",
+        "./package.json": "./package.json"
+      }
+    },
+    {
+      "name": "@modelcontextprotocol/client",
+      "version": "2.0.0",
+      "license": "MIT",
+      "engines": {
+        "node": ">=20"
+      },
+      "exports": {
+        ".": {
+          "import": {
+            "types": "./dist/index.d.mts",
+            "default": "./dist/index.mjs"
+          },
+          "require": {
+            "types": "./dist/index.d.cts",
+            "default": "./dist/index.cjs"
+          }
+        },
+        "./stdio": {
+          "import": {
+            "types": "./dist/stdio.d.mts",
+            "default": "./dist/stdio.mjs"
+          },
+          "require": {
+            "types": "./dist/stdio.d.cts",
+            "default": "./dist/stdio.cjs"
+          }
+        },
+        "./validators/ajv": {
+          "import": {
+            "types": "./dist/validators/ajv.d.mts",
+            "default": "./dist/validators/ajv.mjs"
+          },
+          "require": {
+            "types": "./dist/validators/ajv.d.cts",
+            "default": "./dist/validators/ajv.cjs"
+          }
+        },
+        "./validators/cf-worker": {
+          "import": {
+            "types": "./dist/validators/cfWorker.d.mts",
+            "default": "./dist/validators/cfWorker.mjs"
+          },
+          "require": {
+            "types": "./dist/validators/cfWorker.d.cts",
+            "default": "./dist/validators/cfWorker.cjs"
+          }
+        },
+        "./_shims": {
+          "workerd": {
+            "import": {
+              "types": "./dist/shimsWorkerd.d.mts",
+              "default": "./dist/shimsWorkerd.mjs"
+            },
+            "require": {
+              "types": "./dist/shimsWorkerd.d.cts",
+              "default": "./dist/shimsWorkerd.cjs"
+            }
+          },
+          "browser": {
+            "import": {
+              "types": "./dist/shimsBrowser.d.mts",
+              "default": "./dist/shimsBrowser.mjs"
+            },
+            "require": {
+              "types": "./dist/shimsBrowser.d.cts",
+              "default": "./dist/shimsBrowser.cjs"
+            }
+          },
+          "node": {
+            "import": {
+              "types": "./dist/shimsNode.d.mts",
+              "default": "./dist/shimsNode.mjs"
+            },
+            "require": {
+              "types": "./dist/shimsNode.d.cts",
+              "default": "./dist/shimsNode.cjs"
+            }
+          },
+          "default": {
+            "import": {
+              "types": "./dist/shimsNode.d.mts",
+              "default": "./dist/shimsNode.mjs"
+            },
+            "require": {
+              "types": "./dist/shimsNode.d.cts",
+              "default": "./dist/shimsNode.cjs"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "@modelcontextprotocol/core",
+      "version": "2.0.0",
+      "license": "MIT",
+      "engines": {
+        "node": ">=20"
+      },
+      "exports": {
+        ".": {
+          "import": {
+            "types": "./dist/index.d.mts",
+            "default": "./dist/index.mjs"
+          },
+          "require": {
+            "types": "./dist/index.d.cts",
+            "default": "./dist/index.cjs"
+          }
+        },
+        "./internal": {
+          "import": {
+            "types": "./dist/internal.d.mts",
+            "default": "./dist/internal.mjs"
+          },
+          "require": {
+            "types": "./dist/internal.d.cts",
+            "default": "./dist/internal.cjs"
+          }
+        }
+      }
+    },
+    {
+      "name": "@modelcontextprotocol/server",
+      "version": "2.0.0",
+      "license": "MIT",
+      "engines": {
+        "node": ">=20"
+      },
+      "exports": {
+        ".": {
+          "import": {
+            "types": "./dist/index.d.mts",
+            "default": "./dist/index.mjs"
+          },
+          "require": {
+            "types": "./dist/index.d.cts",
+            "default": "./dist/index.cjs"
+          }
+        },
+        "./stdio": {
+          "import": {
+            "types": "./dist/stdio.d.mts",
+            "default": "./dist/stdio.mjs"
+          },
+          "require": {
+            "types": "./dist/stdio.d.cts",
+            "default": "./dist/stdio.cjs"
+          }
+        },
+        "./validators/ajv": {
+          "import": {
+            "types": "./dist/validators/ajv.d.mts",
+            "default": "./dist/validators/ajv.mjs"
+          },
+          "require": {
+            "types": "./dist/validators/ajv.d.cts",
+            "default": "./dist/validators/ajv.cjs"
+          }
+        },
+        "./validators/cf-worker": {
+          "import": {
+            "types": "./dist/validators/cfWorker.d.mts",
+            "default": "./dist/validators/cfWorker.mjs"
+          },
+          "require": {
+            "types": "./dist/validators/cfWorker.d.cts",
+            "default": "./dist/validators/cfWorker.cjs"
+          }
+        },
+        "./_shims": {
+          "workerd": {
+            "import": {
+              "types": "./dist/shimsWorkerd.d.mts",
+              "default": "./dist/shimsWorkerd.mjs"
+            },
+            "require": {
+              "types": "./dist/shimsWorkerd.d.cts",
+              "default": "./dist/shimsWorkerd.cjs"
+            }
+          },
+          "browser": {
+            "import": {
+              "types": "./dist/shimsBrowser.d.mts",
+              "default": "./dist/shimsBrowser.mjs"
+            },
+            "require": {
+              "types": "./dist/shimsBrowser.d.cts",
+              "default": "./dist/shimsBrowser.cjs"
+            }
+          },
+          "node": {
+            "import": {
+              "types": "./dist/shimsNode.d.mts",
+              "default": "./dist/shimsNode.mjs"
+            },
+            "require": {
+              "types": "./dist/shimsNode.d.cts",
+              "default": "./dist/shimsNode.cjs"
+            }
+          },
+          "default": {
+            "import": {
+              "types": "./dist/shimsNode.d.mts",
+              "default": "./dist/shimsNode.mjs"
+            },
+            "require": {
+              "types": "./dist/shimsNode.d.cts",
+              "default": "./dist/shimsNode.cjs"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "@standard-schema/spec",
+      "version": "1.1.0",
+      "license": "MIT",
+      "engines": null,
+      "exports": {
+        ".": {
+          "standard-schema-spec": "./src/index.ts",
+          "import": {
+            "types": "./dist/index.d.ts",
+            "default": "./dist/index.js"
+          },
+          "require": {
+            "types": "./dist/index.d.cts",
+            "default": "./dist/index.cjs"
+          }
+        }
+      }
+    },
+    {
+      "name": "@types/node",
+      "version": "24.10.1",
+      "license": "MIT",
+      "engines": null,
+      "exports": null
+    },
+    {
+      "name": "cross-spawn",
+      "version": "7.0.6",
+      "license": "MIT",
+      "engines": {
+        "node": ">= 8"
+      },
+      "exports": null
+    },
+    {
+      "name": "eventsource",
+      "version": "3.0.7",
+      "license": "MIT",
+      "engines": {
+        "node": ">=18.0.0"
+      },
+      "exports": {
+        ".": {
+          "deno": "./dist/index.js",
+          "bun": "./dist/index.js",
+          "source": "./src/index.ts",
+          "import": "./dist/index.js",
+          "require": "./dist/index.cjs",
+          "default": "./dist/index.js"
+        },
+        "./package.json": "./package.json"
+      }
+    },
+    {
+      "name": "eventsource-parser",
+      "version": "3.1.1",
+      "license": "MIT",
+      "engines": {
+        "node": ">=18.0.0"
+      },
+      "exports": {
+        ".": {
+          "source": "./src/index.ts",
+          "import": "./dist/index.js",
+          "require": "./dist/index.cjs",
+          "default": "./dist/index.js"
+        },
+        "./stream": {
+          "source": "./src/stream.ts",
+          "import": "./dist/stream.js",
+          "require": "./dist/stream.cjs",
+          "default": "./dist/stream.js"
+        },
+        "./package.json": "./package.json"
+      }
+    },
+    {
+      "name": "isexe",
+      "version": "2.0.0",
+      "license": "ISC",
+      "engines": null,
+      "exports": null
+    },
+    {
+      "name": "jose",
+      "version": "6.2.12",
+      "license": "MIT",
+      "engines": null,
+      "exports": {
+        ".": {
+          "types": "./dist/types/index.d.ts",
+          "default": "./dist/webapi/index.js"
+        },
+        "./jwk/*": {
+          "types": "./dist/types/jwk/*.d.ts",
+          "default": "./dist/webapi/jwk/*.js"
+        },
+        "./key/import": {
+          "types": "./dist/types/key/import.d.ts",
+          "default": "./dist/webapi/key/import.js"
+        },
+        "./key/export": {
+          "types": "./dist/types/key/export.d.ts",
+          "default": "./dist/webapi/key/export.js"
+        },
+        "./key/generate/keypair": {
+          "types": "./dist/types/key/generate_key_pair.d.ts",
+          "default": "./dist/webapi/key/generate_key_pair.js"
+        },
+        "./key/generate/secret": {
+          "types": "./dist/types/key/generate_secret.d.ts",
+          "default": "./dist/webapi/key/generate_secret.js"
+        },
+        "./jwks/*": {
+          "types": "./dist/types/jwks/*.d.ts",
+          "default": "./dist/webapi/jwks/*.js"
+        },
+        "./jwt/decode": {
+          "types": "./dist/types/util/decode_jwt.d.ts",
+          "default": "./dist/webapi/util/decode_jwt.js"
+        },
+        "./jwt/*": {
+          "types": "./dist/types/jwt/*.d.ts",
+          "default": "./dist/webapi/jwt/*.js"
+        },
+        "./decode/protected_header": {
+          "types": "./dist/types/util/decode_protected_header.d.ts",
+          "default": "./dist/webapi/util/decode_protected_header.js"
+        },
+        "./jws/*": {
+          "types": "./dist/types/jws/*.d.ts",
+          "default": "./dist/webapi/jws/*.js"
+        },
+        "./jwe/*": {
+          "types": "./dist/types/jwe/*.d.ts",
+          "default": "./dist/webapi/jwe/*.js"
+        },
+        "./errors": {
+          "types": "./dist/types/util/errors.d.ts",
+          "default": "./dist/webapi/util/errors.js"
+        },
+        "./base64url": {
+          "types": "./dist/types/util/base64url.d.ts",
+          "default": "./dist/webapi/util/base64url.js"
+        },
+        "./package.json": "./package.json"
+      }
+    },
+    {
+      "name": "path-key",
+      "version": "3.1.1",
+      "license": "MIT",
+      "engines": {
+        "node": ">=8"
+      },
+      "exports": null
+    },
+    {
+      "name": "pkce-challenge",
+      "version": "5.0.1",
+      "license": "MIT",
+      "engines": {
+        "node": ">=16.20.0"
+      },
+      "exports": {
+        ".": {
+          "types": {
+            "require": "./dist/index.node.d.cts",
+            "import": "./dist/index.node.d.ts"
+          },
+          "browser": {
+            "types": "./dist/index.browser.d.ts",
+            "default": "./dist/index.browser.js"
+          },
+          "node": {
+            "import": "./dist/index.node.js",
+            "require": "./dist/index.node.cjs"
+          }
+        }
+      }
+    },
+    {
+      "name": "shebang-command",
+      "version": "2.0.0",
+      "license": "MIT",
+      "engines": {
+        "node": ">=8"
+      },
+      "exports": null
+    },
+    {
+      "name": "shebang-regex",
+      "version": "3.0.0",
+      "license": "MIT",
+      "engines": {
+        "node": ">=8"
+      },
+      "exports": null
+    },
+    {
+      "name": "typescript",
+      "version": "5.9.3",
+      "license": "Apache-2.0",
+      "engines": {
+        "node": ">=14.17"
+      },
+      "exports": null
+    },
+    {
+      "name": "undici-types",
+      "version": "7.16.0",
+      "license": "MIT",
+      "engines": null,
+      "exports": null
+    },
+    {
+      "name": "which",
+      "version": "2.0.2",
+      "license": "ISC",
+      "engines": {
+        "node": ">= 8"
+      },
+      "exports": null
+    },
+    {
+      "name": "zod",
+      "version": "4.6.5",
+      "license": "MIT",
+      "engines": null,
+      "exports": {
+        "./package.json": "./package.json",
+        ".": {
+          "@zod/source": "./src/index.ts",
+          "types": "./index.d.cts",
+          "import": "./index.js",
+          "require": "./index.cjs"
+        },
+        "./mini": {
+          "@zod/source": "./src/mini/index.ts",
+          "types": "./mini/index.d.cts",
+          "import": "./mini/index.js",
+          "require": "./mini/index.cjs"
+        },
+        "./compile": {
+          "@zod/source": "./src/compile.ts",
+          "types": "./compile.d.cts",
+          "import": "./compile.js",
+          "require": "./compile.cjs"
+        },
+        "./locales": {
+          "@zod/source": "./src/locales/index.ts",
+          "types": "./locales/index.d.cts",
+          "import": "./locales/index.js",
+          "require": "./locales/index.cjs"
+        },
+        "./v3": {
+          "@zod/source": "./src/v3/index.ts",
+          "types": "./v3/index.d.cts",
+          "import": "./v3/index.js",
+          "require": "./v3/index.cjs"
+        },
+        "./v4": {
+          "@zod/source": "./src/v4/index.ts",
+          "types": "./v4/index.d.cts",
+          "import": "./v4/index.js",
+          "require": "./v4/index.cjs"
+        },
+        "./v4-mini": {
+          "@zod/source": "./src/v4-mini/index.ts",
+          "types": "./v4-mini/index.d.cts",
+          "import": "./v4-mini/index.js",
+          "require": "./v4-mini/index.cjs"
+        },
+        "./v4/mini": {
+          "@zod/source": "./src/v4/mini/index.ts",
+          "types": "./v4/mini/index.d.cts",
+          "import": "./v4/mini/index.js",
+          "require": "./v4/mini/index.cjs"
+        },
+        "./v4/core": {
+          "@zod/source": "./src/v4/core/index.ts",
+          "types": "./v4/core/index.d.cts",
+          "import": "./v4/core/index.js",
+          "require": "./v4/core/index.cjs"
+        },
+        "./v4/locales": {
+          "@zod/source": "./src/v4/locales/index.ts",
+          "types": "./v4/locales/index.d.cts",
+          "import": "./v4/locales/index.js",
+          "require": "./v4/locales/index.cjs"
+        },
+        "./v4/locales/*": {
+          "@zod/source": "./src/v4/locales/*",
+          "types": "./v4/locales/*",
+          "import": "./v4/locales/*",
+          "require": "./v4/locales/*"
+        }
+      }
+    }
+  ]
+}

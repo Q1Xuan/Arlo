@@ -1,0 +1,42 @@
+--- a/lib/index.js
++++ b/lib/index.js
+@@ -1,3 +1,4 @@
++import { symbols } from "@deepseek-ai/cordis";
+ import z from "@deepseek-ai/schemastery";
+ import { SessionFormatUnsupportedMigrationError, createSessionFormatCatalogWithChildren, historicalSessionFormatCatalog, sessionFormatCatalog } from "@deepseek-ai/dsh-session-format-catalog";
+ import { readdirSync } from "node:fs";
+@@ -3639,4 +3640,10 @@
+ 	await service.await();
+ }
+ //#endregion
+-export { Config, JsonlCompressionSchema, apply, name };
++/** Host-only JSONL ownership capability; unrelated or spoofed services fail closed. */
++function ownershipOf(service) {
++  if (!service || typeof service !== 'object') return undefined;
++  const original = Reflect.get(service, symbols.original) ?? service;
++  return original instanceof JsonlSessionPersistence ? service : undefined;
++}
++export { Config, JsonlCompressionSchema, apply, name, ownershipOf };
+--- a/lib/types/index.d.ts
++++ b/lib/types/index.d.ts
+@@ -1,3 +1,4 @@
++import type { SessionPersistence } from '@deepseek-ai/dsh-session-persistence';
+ /**
+  * JSONL durable session-persistence backend. It stores a header and contiguous
+  * events in immutable generation files under one directory per session and serves the handle-based
+@@ -43,4 +44,13 @@
+  * @returns resolves when the service is ready.
+  */
+ export declare function apply(ctx: Context, config: Config): Promise<void>;
+-//# sourceMappingURL=index.d.ts.map
+\ No newline at end of file
++//# sourceMappingURL=index.d.ts.map
++/** Host-only capability implemented by this installed JSONL backend. */
++export interface JsonlOwnership extends SessionPersistence {
++    /** Resolve this backend's current-generation artifact without guessing its layout. */
++    resolveCurrentLog(id: import('@deepseek-ai/dsh-session').SessionId, signal?: AbortSignal): Promise<string | undefined>;
++    /** True only for this backend's created-but-unmaterialized session. */
++    hasPendingSession(id: import('@deepseek-ai/dsh-session').SessionId): boolean;
++}
++/** Return the actual JSONL service through Context proxies; reject other backends. */
++export declare function ownershipOf(service: unknown): JsonlOwnership | undefined;

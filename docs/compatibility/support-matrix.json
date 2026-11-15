@@ -1,0 +1,2908 @@
+{
+  "schemaVersion": 1,
+  "checkedOn": "2026-11-10",
+  "mergedBaseline": "78f6258",
+  "scope": "Discrete host policy includes Pi1.1/1.2/1.3/1.4 and exact DSH0.2.0-rc.2/0.2.1-rc.2/0.2.1-rc.5 profiles. Historical #149 native evidence remains Linux x64 / Node24.13.1. The #151/#156 appended Windows batch covers only the five final installed combinations on Windows10 Home22H2 /19045.6456/x64/Node24.13.1; historical rows, failures and platform limits retain their recorded scope.",
+  "toolchain": {
+    "node": "24.13.1",
+    "pnpm": "10.26.2",
+    "typescript": "5.9.3",
+    "purpose": "development, reproducible build and frozen installation; pnpm is not an installed communication requirement"
+  },
+  "runtimeNodes": [
+    "22.22.1",
+    "24.13.1",
+    "24.15.0",
+    "24.22.1"
+  ],
+  "runtimeScope": "Discrete Pi/DSH engines only. Additional runtime evidence is Linux x64 on baseline hosts. No interval, Claude or platform expansion.",
+  "unknown": "Any tuple not listed is untested, including other architectures, macOS, additional Windows Node versions and upgraded-host/Node combinations.",
+  "recipes": {
+    "pi-1.1.0": {
+      "host": "pi",
+      "version": "1.1.0",
+      "packages": {
+        "@earendil-works/pi-coding-agent": "1.1.0",
+        "@earendil-works/pi-tui": "1.1.0",
+        "@earendil-works/pi-ai": "1.1.0",
+        "@earendil-works/pi-agent-core": "1.1.0",
+        "@earendil-works/pi-codemode": "1.1.0",
+        "@earendil-works/pi-mcp": "1.1.0",
+        "@earendil-works/pi-telemetry": "1.1.0"
+      },
+      "lock": "pnpm-lock.yaml",
+      "evidence": [
+        "docs/compatibility/issue-122-evidence/summary.json"
+      ],
+      "install": "node scripts/pi-delivery.mjs build --host-version 1.1.0 --out NEW_DIR --output PI_REPORT --pnpm PNPM_CLI",
+      "diagnose": "Use validate --stage contract --target pi --pi-report PI_REPORT; live root: /arlo-doctor",
+      "observedInstallationManifestSha256": "bbf915ae61f13db27ebe14f9750472f7c79dac357d9ecde09c74cfb5c75b3be0",
+      "identityNote": "Linux #122 exemplar only; each platform/runtime run retains its own successful build report and installed JS hashes in issue-122-evidence/summary.json."
+    },
+    "pi-1.2.0": {
+      "host": "pi",
+      "version": "1.2.0",
+      "packages": {
+        "@earendil-works/pi-coding-agent": "1.2.0",
+        "@earendil-works/pi-tui": "1.2.0",
+        "@earendil-works/pi-ai": "1.2.0",
+        "@earendil-works/pi-agent-core": "1.2.0",
+        "@earendil-works/pi-codemode": "1.2.0",
+        "@earendil-works/pi-mcp": "1.2.0",
+        "@earendil-works/pi-telemetry": "1.2.0"
+      },
+      "lock": "pi-acceptance/candidates/1.2.0/pnpm-lock.yaml",
+      "evidence": [
+        "docs/compatibility/issue-122-evidence/summary.json",
+        "docs/compatibility/formal-support-20261107.json"
+      ],
+      "install": "node scripts/pi-delivery.mjs build --host-version 1.2.0 --out NEW_DIR --output PI_REPORT --pnpm PNPM_CLI",
+      "diagnose": "Use validate --stage contract --target pi --pi-report PI_REPORT; live root: /arlo-doctor",
+      "observedInstallationManifestSha256": "6ca63a2c363671f47fc3f497198665fce250d3645619bc099560dafa93ccc9e5",
+      "identityNote": "Original observed fields retain the historical #122 exemplar. formalPromotion20261107 records final-source builds separately for each measured platform.",
+      "formalPromotion20261107": {
+        "linux": {
+          "path": ".scratch/formal-support-20261107/pi120-r2.json",
+          "sha256": "3fbb8c1fea26d66c9ab00f007660bbf745ce7b90f02ef354a1d9d8849103da36",
+          "hostVersion": "1.2.0",
+          "node": "v24.13.1",
+          "pnpm": "10.26.2",
+          "composition": null
+        },
+        "win32": {
+          "path": ".scratch/formal-support-20261107/windows/pi120-r2.json",
+          "sha256": "433eb2d44ab201b6961189cb583a82675378f18f9ce9a0000267dee5f0fe3c68",
+          "hostVersion": "1.2.0",
+          "node": "v24.13.1",
+          "pnpm": "10.26.2",
+          "composition": null
+        }
+      },
+      "finalBatch149": {
+        "buildReport": "private-evidence/e52259d86a83/pi1.2.0.json",
+        "buildReportSha256": "8f4ac536c71b7e4b597c9a56e47488f1cb707ea07fefb836fa902c65d161f913",
+        "manifest": {
+          "path": "private-evidence/48b037e9983f/manifest.json",
+          "sha256": "fc042d10f631f3d1964b59799813387c515543a3da9fb52a12d7681e80a03e0d"
+        },
+        "nativeReport": "private-evidence/ff44cc76eaef/pi1.2.0-native.json",
+        "nativeReportSha256": "fa9298e94f13b0cde2ff1e0ceb98badd972c6005334a30168e4d98e0d4e1ef16"
+      }
+    },
+    "dsh-0.2.0-rc.2": {
+      "host": "dsh",
+      "version": "0.2.0-rc.2",
+      "packages": {
+        "@deepseek-ai/dsh": "0.2.0-rc.2",
+        "@deepseek-ai/cordis": "4.0.4",
+        "@deepseek-ai/schemastery": "3.18.4",
+        "@deepseek-ai/dsh-agent": "0.2.0-rc.2",
+        "@deepseek-ai/dsh-llm": "0.2.0-rc.2",
+        "@deepseek-ai/dsh-tools": "0.2.0-rc.2",
+        "@deepseek-ai/dsh-session": "0.2.0-rc.2",
+        "@deepseek-ai/dsh-session-projection": "0.2.0-rc.2",
+        "@deepseek-ai/dsh-session-persistence-jsonl": "0.2.0-rc.2",
+        "@deepseek-ai/dsh-agent-default-model": "0.2.0-rc.2",
+        "@deepseek-ai/dsh-workspace": "0.2.0-rc.2",
+        "@deepseek-ai/dsh-typert-protocol": "0.2.0-rc.2",
+        "@deepseek-ai/dsh-typert-registry": "0.2.0-rc.2",
+        "@deepseek-ai/dsh-api-session-controller": "0.2.0-rc.2",
+        "@deepseek-ai/dsh-client-ui-conversation": "0.2.0-rc.2",
+        "@deepseek-ai/dsh-client-ui-primitives": "0.2.0-rc.2",
+        "@deepseek-ai/dsh-session-format": "0.2.0-rc.2",
+        "@deepseek-ai/dsh-host-frontend-static": "0.2.0-rc.2",
+        "@deepseek-ai/dsh-web-frontend": "0.2.0-rc.2",
+        "@deepseek-ai/dsh-client-ui-input-trigger": "0.2.0-rc.2",
+        "@deepseek-ai/dsh-client-modules": "0.2.0-rc.2",
+        "@deepseek-ai/dsh-agent-loop": "0.2.0-rc.2",
+        "@deepseek-ai/dsh-attachment": "0.2.0-rc.2",
+        "@deepseek-ai/dsh-system-prompt": "0.2.0-rc.2",
+        "@deepseek-ai/dsh-api-gateway": "0.2.0-rc.2",
+        "@deepseek-ai/dsh-client-locale": "0.2.0-rc.2",
+        "@deepseek-ai/dsh-client-ui-slots": "0.2.0-rc.2",
+        "@deepseek-ai/dsh-host-open-in-app": "0.2.0-rc.2"
+      },
+      "lock": "web/consumer-lock.yaml",
+      "lockSha256": "3cfa46778179ca9f0fd4d481c68970ee3dc12dd4298c90c4d18719a8c2cead20",
+      "reviewedComposition": "packages/adapter-dsh/delivery/reviewed-composition.json",
+      "reviewedCompositionSha256": "604bb69b4e9b4a9820dc36105a88a9566eea4469e224b502ecf46ce4a35d99b9",
+      "patches": {
+        "dsh-api-session-controller@0.2.0-rc.2.patch": "b2afabd345f0fa26e644d932c416dd758a8966904372cad0cce40ebb71007089",
+        "dsh-client-ui-conversation@0.2.0-rc.2.patch": "0b2b06d44eecc7c2001b1dac5b94361529d3c0955e2de5ab5d577c7580a7f36f",
+        "dsh-client-ui-primitives@0.2.0-rc.2.patch": "700d902c845d6f096b0f918e4c2af6d0c340ef177280dd996fe535fb0e267109",
+        "dsh-session-format@0.2.0-rc.2.patch": "e4f7d8fc367dd6380c533351f9de11b0ea39f50bfc963ec66aabab80eb878941",
+        "dsh-host-open-in-app@0.2.0-rc.2.patch": "789fb6cd9ca7fe0bce4e806f8f1c16fef850cce7bd019034e642ec5f0d67cc3b"
+      },
+      "browser": {
+        "asset": "/assets/index-5SrrfWpU.js",
+        "sha256": "ffce6d612902d01e479c6130fc071b253f9d4bd53940212a4bdbeefe1eed4124"
+      },
+      "browserFileCount": 130,
+      "evidence": [
+        "docs/compatibility/final-matrix-122.md",
+        "docs/compatibility/issue-122-evidence/summary.json"
+      ],
+      "install": "node scripts/delivery.mjs build --out CORE --pnpm PNPM_CLI; node scripts/web-delivery.mjs build --core CORE --out NEW_WEB_DIR --pnpm PNPM_CLI",
+      "diagnose": "node scripts/dsh-compatibility.mjs diagnose --consumer WEB_CONSUMER",
+      "observedCombination": "891dd92f2d405d0fa5c44ca526fb91ac1f0cdaef2f83282b5b97de0408795cd7",
+      "observedInstallationManifestSha256": "2f250e5ab225b1b33cc29cda7d8f8db4843eea17c5c3f80ef82abc8ec5ca8afb",
+      "frontend": {
+        "files": {
+          "assets/fonts/KaTeX_AMS-Regular-BQhdFMY1.woff2": "0cdd387c9590a1a9f9794560022dbb59654a7d86f187aa0c81495ad42d3a7308",
+          "assets/fonts/KaTeX_AMS-Regular-DMm9YOAa.woff": "30da91e84c893f875e252689faebdc590b2871145e8adc7f9a9d4dbd8ce0b251",
+          "assets/fonts/KaTeX_AMS-Regular-DRggAlZN.ttf": "68534840bcfdd2bffb6f0e8deb48684dd01e7f04ea2813267577afb906de1d13",
+          "assets/fonts/KaTeX_Caligraphic-Bold-ATXxdsX0.ttf": "07d8e303ce4fc12b4bb54f1004170dd190a1f3db45d400fe68060df3e0897268",
+          "assets/fonts/KaTeX_Caligraphic-Bold-BEiXGLvX.woff": "1ae6bd7475590e97e7f145a89e09ccde322f7a6bc0b91607b1c8b8ee28290fed",
+          "assets/fonts/KaTeX_Caligraphic-Bold-Dq_IR9rO.woff2": "de7701e42cf1f4cf0b766c03fb27977207eee2f4fd5d76fa82188406da43ea4c",
+          "assets/fonts/KaTeX_Caligraphic-Regular-CTRA-rTL.woff": "3398dd02302557a793f2863f88e02d96ce10df2abffa07c8e9fa90775116e65c",
+          "assets/fonts/KaTeX_Caligraphic-Regular-Di6jR-x-.woff2": "5d53e70ad607c2352162dec9e0923fb54ecdafaccbf604cd8dcf7d00facb989b",
+          "assets/fonts/KaTeX_Caligraphic-Regular-wX97UBjC.ttf": "ed0b74372feefcbb9c0666b2e210da37b7e49fa7fbbf3eeb11db5f693dacfbb7",
+          "assets/fonts/KaTeX_Fraktur-Bold-BdnERNNW.ttf": "9163df9c7122432e6495b4229fa9071cf9ae86a758ae5efc4924ec2e1a6dbce1",
+          "assets/fonts/KaTeX_Fraktur-Bold-BsDP51OF.woff": "9be7ceb88004ab8ad124082246fbfcca4091e36385d4ec6ed1df67375dad50fb",
+          "assets/fonts/KaTeX_Fraktur-Bold-CL6g_b3V.woff2": "74444efd593c005e3f4573b44524704c0af0a937fe911cca9e94068d0d140d3f",
+          "assets/fonts/KaTeX_Fraktur-Regular-CB_wures.ttf": "1e6f9579e90e2cac37f8f60a597c436e075c114385652b7cbeb0dec0421291b3",
+          "assets/fonts/KaTeX_Fraktur-Regular-CTYiF6lA.woff2": "51814d270d06ff0255dba0799994fa4d8c84d11f09951d47595f4abb1f3602dc",
+          "assets/fonts/KaTeX_Fraktur-Regular-Dxdc4cR9.woff": "5e28753be717dac97f559f49bc10be9cf3c124ddcabda6659d11cb68febc6463",
+          "assets/fonts/KaTeX_Main-Bold-Cx986IdX.woff2": "0f60d1b897938ec918c8ce073092411baf9438f6739465693ff18b0f9d20b021",
+          "assets/fonts/KaTeX_Main-Bold-Jm3AIy58.woff": "c76c5d696297d51b9cb1639c7da4334f0e7dec81b42b11213b5e25ef671bb822",
+          "assets/fonts/KaTeX_Main-Bold-waoOVXN0.ttf": "138ac28d1663b3037e9c5f52371fa5c63d8324f4a38d22cd573e6ea3a3fd0cf8",
+          "assets/fonts/KaTeX_Main-BoldItalic-DxDJ3AOS.woff2": "99cd42a3c072d918f2f44984a807cf7aa16e13545fd0875fc07c6c65f99e715b",
+          "assets/fonts/KaTeX_Main-BoldItalic-DzxPMmG6.ttf": "70ee1f64a20f2048c21940ef46d0144fd215baa953ca69afd1e31e98544f708f",
+          "assets/fonts/KaTeX_Main-BoldItalic-SpSLRI95.woff": "a6f7ec0d846ac7ad975adb8959c37ed49b94acbc4ae436db9ce9e20287e4a64c",
+          "assets/fonts/KaTeX_Main-Italic-3WenGoN9.ttf": "0d85ae7cc30f23790a7f1a58c4a112fdca8aae769b6ba11429af1d98b1b6cb3a",
+          "assets/fonts/KaTeX_Main-Italic-BMLOBm91.woff": "f1d6ef86f3b11a528bd5185199bd2443ecb2b0dead96d88674b5a2c12be24bdf",
+          "assets/fonts/KaTeX_Main-Italic-NWA7e6Wa.woff2": "97479ca6cce906abc961ecac96faa5f9ca2e61b8e7670d475826bcdee9a7c267",
+          "assets/fonts/KaTeX_Main-Regular-B22Nviop.woff2": "c2342cd8b869e01752a9321dc17213fc40d4d04c79688c1d43f2cf316abd7866",
+          "assets/fonts/KaTeX_Main-Regular-Dr94JaBh.woff": "c6368d87e8a1a3a5d337623d83d8dc4b868f242a9ad476237d6f8d1e0f168cdc",
+          "assets/fonts/KaTeX_Main-Regular-ypZvNtVU.ttf": "d0332f52868370fd83ae7fa46470f90c8f2eab2fcf12bc4f88080b340c95a830",
+          "assets/fonts/KaTeX_Math-BoldItalic-B3XSjfu4.ttf": "f9377ab0271cda59af24bcffbd46a4d0c8a3572ffafdbb38de2ad5ea7b0d5ee5",
+          "assets/fonts/KaTeX_Math-BoldItalic-CZnvNsCZ.woff2": "dc47344dbb6cb5b655c8460d561f4df5f501b90c804ad3c6cec65fe322351ab1",
+          "assets/fonts/KaTeX_Math-BoldItalic-iY-2wyZ7.woff": "850c0af5c2238497febaf5e461d880bf458c341f42f4f330f1b1ab5698b1998e",
+          "assets/fonts/KaTeX_Math-Italic-DA0__PXp.woff": "8a8d244581371912b8f3f5a23e2437cb2a59cd9bcaebb0346e722c05737a2571",
+          "assets/fonts/KaTeX_Math-Italic-flOr_0UB.ttf": "08ce98e51b04d58945a301e639e02b6998af29fdfd61a7b8afdd07bbfc479d4a",
+          "assets/fonts/KaTeX_Math-Italic-t53AETM-.woff2": "7af58c5ec8f132a2ddde9027c6d7814decce4d3b822a11192a42a20e2e973264",
+          "assets/fonts/KaTeX_SansSerif-Bold-CFMepnvq.ttf": "1ece03f79f95277d57dc7f6b435a74e1379b0d46104a8530286b60ff49369ea0",
+          "assets/fonts/KaTeX_SansSerif-Bold-D1sUS0GD.woff2": "e99ae51144bf1232efcc1bfe5add36262c6866b0faab24fa75740e1b98577a62",
+          "assets/fonts/KaTeX_SansSerif-Bold-DbIhKOiC.woff": "ece03cfd83e22c212cdef66feb8442d25a083beb988db3f1883f3f9738d750ba",
+          "assets/fonts/KaTeX_SansSerif-Italic-C3H0VqGB.woff2": "00b26ac825e2095056396e0553b8ac26d3f8ad158c3826e28b4c45b385c4714a",
+          "assets/fonts/KaTeX_SansSerif-Italic-DN2j7dab.woff": "91ee67500cc0129aa0ace3ac5c61ff1692102f0f31d02b69347fba35dcb75bf2",
+          "assets/fonts/KaTeX_SansSerif-Italic-YYjJ1zSn.ttf": "3931dd81faed86ba021bb2bbdc36f5bed9a38d6b4f4077aca59b265aa1b02083",
+          "assets/fonts/KaTeX_SansSerif-Regular-BNo7hRIc.ttf": "f36ea897e19f4a2e571d1e900e4e3710e438deb05a842486045ba0a3e616a4ad",
+          "assets/fonts/KaTeX_SansSerif-Regular-CS6fqUqJ.woff": "11e4dc8a6471ff6d6ee561d53d10fde8f7489e798257ff449c5d37c197435605",
+          "assets/fonts/KaTeX_SansSerif-Regular-DDBCnlJ7.woff2": "68e8c73ef42afd3ccec58bf0fba302cce448938e7fc020a5e31f8a952eee1342",
+          "assets/fonts/KaTeX_Script-Regular-C5JkGWo-.ttf": "1c67f068fea8bb09bf099c088b1cf64bd27516a6e07f4684344873564bb66a67",
+          "assets/fonts/KaTeX_Script-Regular-D3wIWfF6.woff2": "036d4e95149b69ff9bcc0cd55771efeb25ffa3947293e69acd78d5ac328c684b",
+          "assets/fonts/KaTeX_Script-Regular-D5yQViql.woff": "d96cdf2b3bdd4d64a8fd5f74a4c467f123a8a73931cd435889f08ffaf9bf947a",
+          "assets/fonts/KaTeX_Size1-Regular-C195tn64.woff": "c943cc986384f59e86bea5fd7dc50a9c4dfe567a7c05eb40d6790720dead97c9",
+          "assets/fonts/KaTeX_Size1-Regular-Dbsnue_I.ttf": "95b6d2f1a50173bfedb8c63e1d1c99b10427d0a4df4201cb44513b226951a22b",
+          "assets/fonts/KaTeX_Size1-Regular-mCD8mA8B.woff2": "6b47c40166b6dbe21a5dfca7718413f2147fd2399be1ba605d8ad39cedf25dfe",
+          "assets/fonts/KaTeX_Size2-Regular-B7gKUWhC.ttf": "a6b2099fb555c60e3a0db3a08842ebf1d732c6eb4e4bf44913613bed4fc4e39b",
+          "assets/fonts/KaTeX_Size2-Regular-Dy4dx90m.woff2": "d04c54219f9eaec6d4d4fd42dfb28785975a4794d6b2fc71e566b9cd6db842dd",
+          "assets/fonts/KaTeX_Size2-Regular-oD1tc_U0.woff": "2014c523c3210bcc166648c4d4cc57f05b747df07a24277bf71c51e67dc79e3d",
+          "assets/fonts/KaTeX_Size3-Regular-CTq5MqoE.woff": "6ab6b62e9b62dae2c00dd90f791bd10950be0ecc3490d7d6045f51c2e8fe0949",
+          "assets/fonts/KaTeX_Size3-Regular-DgpXs0kz.ttf": "500e04d54f0d51666332c9d2089aa803be22aa878eca539e59fa53c6e522b082",
+          "assets/fonts/KaTeX_Size4-Regular-BF-4gkZK.woff": "99f9c6750b489c9462bf04900bd3f939df9b829339daaaaa99ef5495cdddea58",
+          "assets/fonts/KaTeX_Size4-Regular-DWFBv043.ttf": "c647367d1dd4e162468717d020e1fc0f1dc5c26ebfdffbe55261713bf88c5877",
+          "assets/fonts/KaTeX_Size4-Regular-Dl5lxZxV.woff2": "a4af7d414440a1c1790825cfb700cf9cf43b0f2c4b04f0ebc523011ad9853ec0",
+          "assets/fonts/KaTeX_Typewriter-Regular-C0xS9mPB.woff": "e14fed02b1aba7ce9f5afd5844b5d0321b22351febc720e0de8b8723527609f7",
+          "assets/fonts/KaTeX_Typewriter-Regular-CO6r4hn1.woff2": "71d517d67827787cfabdf186914cc3358eda539e37931941f2b2fd4a21f68c0b",
+          "assets/fonts/KaTeX_Typewriter-Regular-D3Ib7_Hf.ttf": "f01f3e87d9c6a61c0c081ceb577abd864eb00a612f7ac1620dd6915fad2ef5aa",
+          "assets/fonts/Montserrat-OFL.txt": "861d64229728cd65a98d119612c12769582574d1a092f0b63c8b0fd474e7065f",
+          "assets/fonts/montserrat-light-Cvd2VjE_.woff2": "da25f1327eb1dcc70c193897b5d7e00d31821d9518c0a49e073ff50d97a3f10a",
+          "assets/fonts/montserrat-medium-B4OyO9CN.woff2": "8a81ca6f05cb6831d5487e4b287ce5a625a718c39226b736f155900adc394166",
+          "assets/fonts/montserrat-regular-DYep38cA.woff2": "0f4a15e29a9535af580a64db967929a8d6b202fad9a467be390619a591d2c4c5",
+          "assets/index-5SrrfWpU.js": "ffce6d612902d01e479c6130fc071b253f9d4bd53940212a4bdbeefe1eed4124",
+          "assets/index-BPHePDI_.css": "44a24dd9a31c4e74281562aca1d3d43141aa44c6f38c0fd343f576ce476d405d",
+          "assets/langs/asciidoc-Ve4PFQV2.js": "04799e170b2ee5657d243fdfa45b40bdc22d3e4c113b87c581ad6889125d4458",
+          "assets/langs/bat-BkioyH1T.js": "dcd21493b88786df4ed4628a9ae3d95f8b05a3f2547eb14c71a519849bd97074",
+          "assets/langs/bibtex-CHM0blh-.js": "4af4d61dd9d7297f65b361204af72d53e91fa70a4ede5e85bcaf40b4a63cd4a2",
+          "assets/langs/c-BIGW1oBm.js": "9c06263922b97a0e5890b832e23d44f3c0da54430ac6f971aa0ede8f4c2b8b66",
+          "assets/langs/clojure-P80f7IUj.js": "e70b326f33d37ddb29dd71abcc72321f1b0d900888ef05db9d7821fdf60eab22",
+          "assets/langs/cmake-D1j8_8rp.js": "f87d0ba1478aa4f5eb35b22e1276f0b330f30030b2c2e33cc7400a7b14f96eb2",
+          "assets/langs/cpp-DIPi6g--.js": "e8e90a01d5632251be2784ecea9b061cf05f962db1c8684a8bae6480eba88823",
+          "assets/langs/csharp-DSvCPggb.js": "8443ef70cc6fec2de601c15c548ab1890e9bbc71a21ba9c216de77481c3cb6d6",
+          "assets/langs/css-CLj8gQPS.js": "69ee0204c2c40a92b8368049da700f0d08d40f5274809cfb624fd09e73eb32ee",
+          "assets/langs/csv-fuZLfV_i.js": "dc5872798e0825621bc48f5907e872a0fb34bd3bb2c7a5fd3c6841670675f830",
+          "assets/langs/dart-bE4Kk8sk.js": "8d6d70a18e68e8c4ef0aecf78ed03f9768342b9953dd0e9f8963b070152b1ab5",
+          "assets/langs/diff-D97Zzqfu.js": "710e6506726fe0befb51b8e40fc9aa12cf7fa733ec8f24019359276c4ea653dc",
+          "assets/langs/dotenv-Da5cRb03.js": "c7dc2e241e78b22b2a8015afb7c759b019616267ace3ab7660b3a8aa2fe207d7",
+          "assets/langs/elixir-CvYZzuDY.js": "be08af7448a3bc9de8e6d71e8fc351a09a5d5ba77784a8c4012199a9e3f5f5fe",
+          "assets/langs/erlang-DsQrWhSR.js": "87ef69877dda1297912b0a7a12ee0f3f00de0f675bb6214b0f1adf58629b75fa",
+          "assets/langs/fish-BvzEVeQv.js": "f7881c9158118435c2f1a6d3859ecd84ad7539c845584fd110ab844c69e7972b",
+          "assets/langs/fsharp-CXgrBDvD.js": "7cda55ae2e03fd929e8d18dbde6c9dfbe48d91f02e4c65bbb88e21ef3e38653a",
+          "assets/langs/go-C27-OAKa.js": "a6c3f73f1abb778ef3f5e489db1942542dc88ddac5b111ff55813fa1655dd23c",
+          "assets/langs/graphql-DujV8YkJ.js": "a535b6adbb63621e5434d6f6b4166500ca54f9b40d107f7ec3c7e18ba7a94e4b",
+          "assets/langs/groovy-gcz8RCvz.js": "25aafe383369a4f78a33abdb518404d8836773f3dfb0f199e7d5104acea74832",
+          "assets/langs/haskell-Df6bDoY_.js": "731f9a3ba301c738fbbb6278b596171b0195cb69bd42febdf6edc6da10f87faf",
+          "assets/langs/hcl-BWvSN4gD.js": "2f141d770bcd86b2e056b76b6a65b74c534454f371490d3bdff2dec63ceb9fd8",
+          "assets/langs/html-derivative-DOyKdj44.js": "fa06bb6afb8b726edde9412e7aee065c560fe4afd21fcac4ac9992b783dd8ddb",
+          "assets/langs/html-fwsONPVS.js": "98fab9ca36666a6cd0163a9c54349d9d05b891912056028d6fd1cf0f012c3cdf",
+          "assets/langs/http-DcV90OkR.js": "18da94c1645eab94e76b8310ad8436a8f74e224d3e7415bc0d9ef54eaf74a0c1",
+          "assets/langs/ini-BEwlwnbL.js": "d72bde3de42bb1ef3268bd65afedecf54747c208ac24335f7c6b4456924091c1",
+          "assets/langs/java-CylS5w8V.js": "934a0e63cf4cefb991100f15c42fdc60aaee3c7036a7ba6cb10ce5a6322a7ae9",
+          "assets/langs/javascript-DI5JR1nB.js": "b0952ac6a3182b0c45b005da5d76a764890d6da3df2fe61affe471a59744a169",
+          "assets/langs/julia-BpJ6DjL_.js": "8659134e27cae158c9f9487d40e040a3be6f8cc13f6be5bc83997e7ca2d55e9d",
+          "assets/langs/kotlin-BdnUsdx6.js": "99d81f485d9366a1f3f8c84b0fc5cee69b0d28d6c8f7f1e8dac29e554e80d24f",
+          "assets/langs/latex-B4C7GdlO.js": "42981a8c224a81529576e74b07520f069c30c122ff83d9fbb68cb8946168e202",
+          "assets/langs/less-B1dDrJ26.js": "50c4bace8838379b74e0a22dab369c3cb81b57ba1b5b17ea5af8668f8290e8bf",
+          "assets/langs/log-2UxHyX5q.js": "7b2292970ede37be20c120a51d12bcbff43e82278aef1626816d71c344a07e27",
+          "assets/langs/lua-BaeVxFsk.js": "b218901041a92a152f51a7f3f74f26120e931e258abb1c73bcee551721015f67",
+          "assets/langs/make-CHLpvVh8.js": "9ef9765da0e58e256d97f4f2da8197a72ad4d84e8217b7160728d646c7e5e236",
+          "assets/langs/markdown-Cvjx9yec.js": "d9a83df9f57287a1f3594d5231480ea90a14adf7a8550c7a57930c3cf5b3f47d",
+          "assets/langs/mdx-Cmh6b_Ma.js": "8b88c45af52bcc95513e479bfce5b068d91f60a811acf8bb614bbb071d0e1151",
+          "assets/langs/nix-CwoSXNpI.js": "1af30178686ebb1c86d28d0511450379ac22d55fe0c0a72d5fa323915128afce",
+          "assets/langs/perl-DsWkoyyU.js": "170909d86f068983ff341d2effa52fdf73e870231a2527550c8b3b996faa3c82",
+          "assets/langs/php-LEPfNACG.js": "e9918a195f96a5c13c225637065a64e3a776b184e311df1593cc83547bca6f05",
+          "assets/langs/powershell-Dpen1YoG.js": "c360ba2b7bd49d15499a080752d866530fd20934c82309b4feb5d8e5f1f55400",
+          "assets/langs/proto-C7zT0LnQ.js": "fc5a20a7755c13ecedd65173c09d76e4694d4db44771318d89872607e2559659",
+          "assets/langs/python-B6aJPvgy.js": "1c6725168b498ade965cf0d8723c600fc9bf0de74988b6191106b304b571aaae",
+          "assets/langs/r-Dspwwk_N.js": "2a6a1bc92ace9d72d1232a794f79884bb8ebda1d62a96a94a54fc35945084b14",
+          "assets/langs/rst-BbocfKWr.js": "e8bb098f90b54ffaa5b08ca790d689f868cbe5319dfbd87245b92771a839ff0a",
+          "assets/langs/ruby-R292Iif0.js": "ff0d955ba771790d77836d16df4048ab2fc07e121cd78a02bf834609d501a76d",
+          "assets/langs/rust-B1yitclQ.js": "c02d27696b07c37fa2cac9de826a967a30401a33959cd891ebbf11d5bf245ce3",
+          "assets/langs/scala-C151Ov-r.js": "9ff142f2d4ab345bd5058e81274204cc9ebfe88702e34fe1c9a9810b9bc3ee65",
+          "assets/langs/scss-D5BDwBP9.js": "d873165bb797f0547966aa681ade9af96c06ec17c2b0c12708303d9ace461753",
+          "assets/langs/sql-CRqJ_cUM.js": "60e00dca0f03a580d3717adbb9c730772e750909dc8c78408051091278eda6c0",
+          "assets/langs/svelte-DNMY6jOf.js": "11a52e5801d62411603c7ea3ee2735fb9fed853679a9a694e578c69214c3fef5",
+          "assets/langs/swift-D82vCrfD.js": "db1c1476b58bc8b4ed86fe585ad9191fcb55b7ad851144e7d60af1836f49c26a",
+          "assets/langs/system-verilog-CnnmHF94.js": "af1326c44237f613391eabb4d4408d8bd0af7e11be44a7c0809fa7ba50ca7fc1",
+          "assets/langs/toml-vGWfd6FD.js": "aeb916b96e9eb064aa87c8f765abfded0ab0d53aefa3aa9b90cc1af4d1ad75d2",
+          "assets/langs/vb-D17OF-Vu.js": "620746076a77ea58336f0f75e1de5633f1e7e727997b859eb8aeba2e1e087733",
+          "assets/langs/verilog-BQ8w6xss.js": "75c957de3e188057fb783ea4af23f1922a52390395c3a882a3fc46a5ea524047",
+          "assets/langs/vue-Dq2x6432.js": "72053ae8f0d1a32f971ec40c4b5ff730277422ccd0a92e6b635263c1e923369c",
+          "assets/langs/xml-sdJ4AIDG.js": "d41d94621a62727ad56943d2d7e04e820c2642c3a9c246eb10e7d6e6e89d1fed",
+          "assets/langs/yaml-Buea-lGh.js": "8aad9cddbe3602b06b194e66d021aa63d715df01cf94e8ffcac810e48f0529e3",
+          "assets/vendor-BNsW4eBh.css": "9860041e810431da5a6b83e63f883ab8ff4fc49b4af3fc76681b46f778783a9f",
+          "assets/vendor-CCJJTK99.js": "38f95ea3ff85b49dc4d8f237db208bbaedd2cb8c31611215c246dde41786ff21",
+          "favicon-dark.svg": "dde7db781f41e7aeb4709ff5485af2bdcf7f4b4ea81b4500cfd5df44efdbd817",
+          "favicon.svg": "9e983b4f649c25c6ca0623a50be1a6e705fd8f49f756638b980fa13b40575ab6",
+          "index.html": "2146ac6dd90f5b6f3896d79e6b9a933eaecb6d90525a18f8fabfc364016a5da5",
+          "manifest.webmanifest": "39d993c8e94ab4ce3d2c112fd4eec8c1d91ba32a11b974fdf2fd21d5e596a98b"
+        },
+        "resourceSha256": "56ccf931cc0864cd7a0fb757903b21b93c352587e1ff53a545fb18a60606b959",
+        "asset": "/assets/index-5SrrfWpU.js",
+        "sha256": "ffce6d612902d01e479c6130fc071b253f9d4bd53940212a4bdbeefe1eed4124"
+      }
+    },
+    "dsh-0.2.1-rc.2": {
+      "host": "dsh",
+      "version": "0.2.1-rc.2",
+      "packages": {
+        "@deepseek-ai/dsh": "0.2.1-rc.2",
+        "@deepseek-ai/cordis": "4.0.5",
+        "@deepseek-ai/schemastery": "3.18.5",
+        "@deepseek-ai/dsh-agent": "0.2.1-rc.2",
+        "@deepseek-ai/dsh-llm": "0.2.1-rc.2",
+        "@deepseek-ai/dsh-tools": "0.2.1-rc.2",
+        "@deepseek-ai/dsh-session": "0.2.1-rc.2",
+        "@deepseek-ai/dsh-session-projection": "0.2.1-rc.2",
+        "@deepseek-ai/dsh-session-persistence-jsonl": "0.2.1-rc.2",
+        "@deepseek-ai/dsh-agent-default-model": "0.2.1-rc.2",
+        "@deepseek-ai/dsh-workspace": "0.2.1-rc.2",
+        "@deepseek-ai/dsh-typert-protocol": "0.2.1-rc.2",
+        "@deepseek-ai/dsh-typert-registry": "0.2.1-rc.2",
+        "@deepseek-ai/dsh-api-session-controller": "0.2.1-rc.2",
+        "@deepseek-ai/dsh-client-ui-conversation": "0.2.1-rc.2",
+        "@deepseek-ai/dsh-client-ui-primitives": "0.2.1-rc.2",
+        "@deepseek-ai/dsh-session-format": "0.2.1-rc.2",
+        "@deepseek-ai/dsh-host-frontend-static": "0.2.1-rc.2",
+        "@deepseek-ai/dsh-web-frontend": "0.2.1-rc.2",
+        "@deepseek-ai/dsh-client-ui-input-trigger": "0.2.1-rc.2",
+        "@deepseek-ai/dsh-client-modules": "0.2.1-rc.2",
+        "@deepseek-ai/dsh-agent-loop": "0.2.1-rc.2",
+        "@deepseek-ai/dsh-attachment": "0.2.1-rc.2",
+        "@deepseek-ai/dsh-system-prompt": "0.2.1-rc.2",
+        "@deepseek-ai/dsh-api-gateway": "0.2.1-rc.2",
+        "@deepseek-ai/dsh-client-locale": "0.2.1-rc.2",
+        "@deepseek-ai/dsh-client-ui-slots": "0.2.1-rc.2",
+        "@deepseek-ai/dsh-client-ui-renderer": "0.2.1-rc.2",
+        "@deepseek-ai/dsh-host-open-in-app": "0.2.1-rc.2"
+      },
+      "lock": "web/candidates/0.2.1-rc.2/complete-lock.yaml",
+      "lockSha256": "a2dd224665946f3af5412836412f33f2c90a63c98206f77d058f0bbf6c31f0bb",
+      "observedCombination": "cc22d2e2abc2e8516e05c727c39266d522a9ab5e1db6ab441f89491b8d497cd5",
+      "patches": {
+        "dsh-api-session-controller@0.2.1-rc.2.patch": "49a04d7b28bb6a58fd0d4aeef439e6ac4d2877946221d2dda1cfcaf25f10c550",
+        "dsh-client-ui-conversation@0.2.1-rc.2.patch": "250a899648f6048668b3c812c2630bd865194fa973e3e8d5622fa8b1997b2a10",
+        "dsh-session-format@0.2.1-rc.2.patch": "e4f7d8fc367dd6380c533351f9de11b0ea39f50bfc963ec66aabab80eb878941",
+        "dsh-session-persistence-jsonl@0.2.1-rc.2.patch": "4ed1fbca422883052b4046a8e99a690064ed3c87ea6443df4a41d791152b6c47",
+        "dsh-host-open-in-app@0.2.1-rc.2.patch": "789fb6cd9ca7fe0bce4e806f8f1c16fef850cce7bd019034e642ec5f0d67cc3b"
+      },
+      "evidence": [
+        "docs/compatibility/final-matrix-122.md",
+        "docs/compatibility/issue-122-evidence/summary.json",
+        "docs/compatibility/formal-support-20261107.json"
+      ],
+      "install": "node scripts/web-delivery.mjs build --host-version 0.2.1-rc.2 --out NEW_DIR --pnpm PNPM_CLI",
+      "diagnose": "validate --stage contract --target dsh --consumer COMPLETE_BUNDLE/consumer; default verified entry checks the complete composition",
+      "observedInstallationManifestSha256": "55cf867bdd741ec1de1cd5081a82a06c2994acd3b53b91044c67e1755d5d6dca",
+      "frontend": {
+        "files": {
+          "assets/fonts/KaTeX_AMS-Regular-BQhdFMY1.woff2": "0cdd387c9590a1a9f9794560022dbb59654a7d86f187aa0c81495ad42d3a7308",
+          "assets/fonts/KaTeX_Caligraphic-Bold-Dq_IR9rO.woff2": "de7701e42cf1f4cf0b766c03fb27977207eee2f4fd5d76fa82188406da43ea4c",
+          "assets/fonts/KaTeX_Caligraphic-Regular-Di6jR-x-.woff2": "5d53e70ad607c2352162dec9e0923fb54ecdafaccbf604cd8dcf7d00facb989b",
+          "assets/fonts/KaTeX_Fraktur-Bold-CL6g_b3V.woff2": "74444efd593c005e3f4573b44524704c0af0a937fe911cca9e94068d0d140d3f",
+          "assets/fonts/KaTeX_Fraktur-Regular-CTYiF6lA.woff2": "51814d270d06ff0255dba0799994fa4d8c84d11f09951d47595f4abb1f3602dc",
+          "assets/fonts/KaTeX_Main-Bold-Cx986IdX.woff2": "0f60d1b897938ec918c8ce073092411baf9438f6739465693ff18b0f9d20b021",
+          "assets/fonts/KaTeX_Main-BoldItalic-DxDJ3AOS.woff2": "99cd42a3c072d918f2f44984a807cf7aa16e13545fd0875fc07c6c65f99e715b",
+          "assets/fonts/KaTeX_Main-Italic-NWA7e6Wa.woff2": "97479ca6cce906abc961ecac96faa5f9ca2e61b8e7670d475826bcdee9a7c267",
+          "assets/fonts/KaTeX_Main-Regular-B22Nviop.woff2": "c2342cd8b869e01752a9321dc17213fc40d4d04c79688c1d43f2cf316abd7866",
+          "assets/fonts/KaTeX_Math-BoldItalic-CZnvNsCZ.woff2": "dc47344dbb6cb5b655c8460d561f4df5f501b90c804ad3c6cec65fe322351ab1",
+          "assets/fonts/KaTeX_Math-Italic-t53AETM-.woff2": "7af58c5ec8f132a2ddde9027c6d7814decce4d3b822a11192a42a20e2e973264",
+          "assets/fonts/KaTeX_SansSerif-Bold-D1sUS0GD.woff2": "e99ae51144bf1232efcc1bfe5add36262c6866b0faab24fa75740e1b98577a62",
+          "assets/fonts/KaTeX_SansSerif-Italic-C3H0VqGB.woff2": "00b26ac825e2095056396e0553b8ac26d3f8ad158c3826e28b4c45b385c4714a",
+          "assets/fonts/KaTeX_SansSerif-Regular-DDBCnlJ7.woff2": "68e8c73ef42afd3ccec58bf0fba302cce448938e7fc020a5e31f8a952eee1342",
+          "assets/fonts/KaTeX_Script-Regular-D3wIWfF6.woff2": "036d4e95149b69ff9bcc0cd55771efeb25ffa3947293e69acd78d5ac328c684b",
+          "assets/fonts/KaTeX_Size1-Regular-mCD8mA8B.woff2": "6b47c40166b6dbe21a5dfca7718413f2147fd2399be1ba605d8ad39cedf25dfe",
+          "assets/fonts/KaTeX_Size2-Regular-Dy4dx90m.woff2": "d04c54219f9eaec6d4d4fd42dfb28785975a4794d6b2fc71e566b9cd6db842dd",
+          "assets/fonts/KaTeX_Size4-Regular-Dl5lxZxV.woff2": "a4af7d414440a1c1790825cfb700cf9cf43b0f2c4b04f0ebc523011ad9853ec0",
+          "assets/fonts/KaTeX_Typewriter-Regular-CO6r4hn1.woff2": "71d517d67827787cfabdf186914cc3358eda539e37931941f2b2fd4a21f68c0b",
+          "assets/fonts/Montserrat-OFL.txt": "861d64229728cd65a98d119612c12769582574d1a092f0b63c8b0fd474e7065f",
+          "assets/fonts/montserrat-light-Cvd2VjE_.woff2": "da25f1327eb1dcc70c193897b5d7e00d31821d9518c0a49e073ff50d97a3f10a",
+          "assets/fonts/montserrat-medium-B4OyO9CN.woff2": "8a81ca6f05cb6831d5487e4b287ce5a625a718c39226b736f155900adc394166",
+          "assets/fonts/montserrat-regular-DYep38cA.woff2": "0f4a15e29a9535af580a64db967929a8d6b202fad9a467be390619a591d2c4c5",
+          "assets/index-BxpfOGf3.css": "2412389d14707cc10df9b3fa83893af96c5f2568da78029e1ba64123fb0c2b82",
+          "assets/index-CN7NIWNw.js": "4bc914bfbb6adbdd63953a29f63835eb7127defd2a973149d64cdab489f1a9a5",
+          "assets/langs/asciidoc-CSVQ5wI8.js": "ccbe3ab4515748773c185140855a976f2f3723a4e482f8423c36cf9ee6954b12",
+          "assets/langs/bat-CickPsom.js": "443aa1c3678e319e553f3ae7aef4ef7e6f068e2c83172ced17247d5ba850d6a3",
+          "assets/langs/bibtex-CHM0blh-.js": "4af4d61dd9d7297f65b361204af72d53e91fa70a4ede5e85bcaf40b4a63cd4a2",
+          "assets/langs/c-BIGW1oBm.js": "9c06263922b97a0e5890b832e23d44f3c0da54430ac6f971aa0ede8f4c2b8b66",
+          "assets/langs/clojure-P80f7IUj.js": "e70b326f33d37ddb29dd71abcc72321f1b0d900888ef05db9d7821fdf60eab22",
+          "assets/langs/cmake-D1j8_8rp.js": "f87d0ba1478aa4f5eb35b22e1276f0b330f30030b2c2e33cc7400a7b14f96eb2",
+          "assets/langs/cpp-DddhVWhK.js": "532fe55f0cf99df5f27e5396453ffae2d2afa7da82cdb19abaf245004c67da1b",
+          "assets/langs/csharp-DSvCPggb.js": "8443ef70cc6fec2de601c15c548ab1890e9bbc71a21ba9c216de77481c3cb6d6",
+          "assets/langs/css-CLj8gQPS.js": "69ee0204c2c40a92b8368049da700f0d08d40f5274809cfb624fd09e73eb32ee",
+          "assets/langs/csv-fuZLfV_i.js": "dc5872798e0825621bc48f5907e872a0fb34bd3bb2c7a5fd3c6841670675f830",
+          "assets/langs/dart-bE4Kk8sk.js": "8d6d70a18e68e8c4ef0aecf78ed03f9768342b9953dd0e9f8963b070152b1ab5",
+          "assets/langs/diff-D97Zzqfu.js": "710e6506726fe0befb51b8e40fc9aa12cf7fa733ec8f24019359276c4ea653dc",
+          "assets/langs/dotenv-Da5cRb03.js": "c7dc2e241e78b22b2a8015afb7c759b019616267ace3ab7660b3a8aa2fe207d7",
+          "assets/langs/elixir-CvYZzuDY.js": "be08af7448a3bc9de8e6d71e8fc351a09a5d5ba77784a8c4012199a9e3f5f5fe",
+          "assets/langs/erlang-DsQrWhSR.js": "87ef69877dda1297912b0a7a12ee0f3f00de0f675bb6214b0f1adf58629b75fa",
+          "assets/langs/fish-BvzEVeQv.js": "f7881c9158118435c2f1a6d3859ecd84ad7539c845584fd110ab844c69e7972b",
+          "assets/langs/fsharp-CXgrBDvD.js": "7cda55ae2e03fd929e8d18dbde6c9dfbe48d91f02e4c65bbb88e21ef3e38653a",
+          "assets/langs/go-C27-OAKa.js": "a6c3f73f1abb778ef3f5e489db1942542dc88ddac5b111ff55813fa1655dd23c",
+          "assets/langs/graphql-VhKNCVsv.js": "83bdded4a36def36699c50c60a98a136f92eb61d3c4a131b32e5e20c31e06da1",
+          "assets/langs/groovy-gcz8RCvz.js": "25aafe383369a4f78a33abdb518404d8836773f3dfb0f199e7d5104acea74832",
+          "assets/langs/haskell-Df6bDoY_.js": "731f9a3ba301c738fbbb6278b596171b0195cb69bd42febdf6edc6da10f87faf",
+          "assets/langs/hcl-BWvSN4gD.js": "2f141d770bcd86b2e056b76b6a65b74c534454f371490d3bdff2dec63ceb9fd8",
+          "assets/langs/html-derivative-DOyKdj44.js": "fa06bb6afb8b726edde9412e7aee065c560fe4afd21fcac4ac9992b783dd8ddb",
+          "assets/langs/html-fwsONPVS.js": "98fab9ca36666a6cd0163a9c54349d9d05b891912056028d6fd1cf0f012c3cdf",
+          "assets/langs/http-br_RHStI.js": "f3b5329f396ac17c57cadc8bf21e42fb34072e70b60a2fc5ac91684ad78c52e9",
+          "assets/langs/ini-BEwlwnbL.js": "d72bde3de42bb1ef3268bd65afedecf54747c208ac24335f7c6b4456924091c1",
+          "assets/langs/java-CylS5w8V.js": "934a0e63cf4cefb991100f15c42fdc60aaee3c7036a7ba6cb10ce5a6322a7ae9",
+          "assets/langs/javascript-DI5JR1nB.js": "b0952ac6a3182b0c45b005da5d76a764890d6da3df2fe61affe471a59744a169",
+          "assets/langs/julia-BfSmLjIk.js": "6523a4247b0a4a5c1d933134baa96cc12c9685a1b06237f0fce5ab6ed2059730",
+          "assets/langs/kotlin-BdnUsdx6.js": "99d81f485d9366a1f3f8c84b0fc5cee69b0d28d6c8f7f1e8dac29e554e80d24f",
+          "assets/langs/latex-B2nUCzCX.js": "265d43c3cae080cc97ac1f40a569aca48758cc680aad6a9f940dbdb584d55fc1",
+          "assets/langs/less-B1dDrJ26.js": "50c4bace8838379b74e0a22dab369c3cb81b57ba1b5b17ea5af8668f8290e8bf",
+          "assets/langs/log-2UxHyX5q.js": "7b2292970ede37be20c120a51d12bcbff43e82278aef1626816d71c344a07e27",
+          "assets/langs/lua-BaeVxFsk.js": "b218901041a92a152f51a7f3f74f26120e931e258abb1c73bcee551721015f67",
+          "assets/langs/make-CHLpvVh8.js": "9ef9765da0e58e256d97f4f2da8197a72ad4d84e8217b7160728d646c7e5e236",
+          "assets/langs/markdown-Cvjx9yec.js": "d9a83df9f57287a1f3594d5231480ea90a14adf7a8550c7a57930c3cf5b3f47d",
+          "assets/langs/mdx-Cmh6b_Ma.js": "8b88c45af52bcc95513e479bfce5b068d91f60a811acf8bb614bbb071d0e1151",
+          "assets/langs/nix-CwoSXNpI.js": "1af30178686ebb1c86d28d0511450379ac22d55fe0c0a72d5fa323915128afce",
+          "assets/langs/perl-DsWkoyyU.js": "170909d86f068983ff341d2effa52fdf73e870231a2527550c8b3b996faa3c82",
+          "assets/langs/php-hBQ2F09C.js": "c429abf50b4a2871565fe88911b63746e56d1e3a4be5762df0f3a4d352f6f8f1",
+          "assets/langs/powershell-BmBUJMz7.js": "8c4b6d7c57d7624ac4fcb6882377a78db37b617fc3974831961fe837c364f52c",
+          "assets/langs/proto-C7zT0LnQ.js": "fc5a20a7755c13ecedd65173c09d76e4694d4db44771318d89872607e2559659",
+          "assets/langs/python-B6aJPvgy.js": "1c6725168b498ade965cf0d8723c600fc9bf0de74988b6191106b304b571aaae",
+          "assets/langs/r-Cf5RLm7j.js": "8b6463b604a4c77d19e14aef404c920e66f2f04585e258280f543e93ce52f3bd",
+          "assets/langs/rst-CyvSi_BO.js": "e8ac815b49cd838a02f5dce139709b7a1e6c12c3b8cef9624c479232d569ea25",
+          "assets/langs/ruby-CO7l6YCm.js": "a287afcf431e64565e4d82e619af89aa1a6b0eef24e0526edb42951f3231210b",
+          "assets/langs/rust-B1yitclQ.js": "c02d27696b07c37fa2cac9de826a967a30401a33959cd891ebbf11d5bf245ce3",
+          "assets/langs/scala-CqE71os6.js": "5068f9ad81fc447782644ebe267a492032aee9580cfff6c96fb44984f71055ae",
+          "assets/langs/scss-D5BDwBP9.js": "d873165bb797f0547966aa681ade9af96c06ec17c2b0c12708303d9ace461753",
+          "assets/langs/sql-CRqJ_cUM.js": "60e00dca0f03a580d3717adbb9c730772e750909dc8c78408051091278eda6c0",
+          "assets/langs/svelte-BYadmKUw.js": "f136485a32bd2c2a37772ccd6cf13dcedf6af989dbd32e9b5283513e94a3d5bd",
+          "assets/langs/swift-C2oV4EkX.js": "f77b5e491884859198e703e3e981a46e218c05a5b82ec33984c05ec851a8d3b3",
+          "assets/langs/system-verilog-0hqHdDBg.js": "c9b9df256a28ddc9d5b60dcd0bd43137f3b3cdeb8ca472a4e8921f42232897b4",
+          "assets/langs/toml-vGWfd6FD.js": "aeb916b96e9eb064aa87c8f765abfded0ab0d53aefa3aa9b90cc1af4d1ad75d2",
+          "assets/langs/vb-Cu-pLBUe.js": "f5806bce4864a69a019a73599bf174bbdb32539ec19e8d6dc3ac0254262b8410",
+          "assets/langs/verilog-nZwndyjY.js": "9f43d6af8cbbd2b38473fb28ca9f59043129433e021f2d9c308c85bf11333900",
+          "assets/langs/vue-B0l-UZcs.js": "5b537a0c8fb2ebde0d85e1abdfccb663ffee8c7b4504f345cb15444ec15ae0df",
+          "assets/langs/xml-sdJ4AIDG.js": "d41d94621a62727ad56943d2d7e04e820c2642c3a9c246eb10e7d6e6e89d1fed",
+          "assets/langs/yaml-Buea-lGh.js": "8aad9cddbe3602b06b194e66d021aa63d715df01cf94e8ffcac810e48f0529e3",
+          "assets/vendor-DV2921Zo.css": "4cea59483551208ce61ff27251da83d5f7a0893ef34cfe4b808d61be6e13ebc7",
+          "assets/vendor-DcuzkuQH.js": "c14ba1089d78f48b8959a7bc42c9013b4a57aa4122e053d54f74c0a4d1d156a7",
+          "favicon-dark.svg": "dde7db781f41e7aeb4709ff5485af2bdcf7f4b4ea81b4500cfd5df44efdbd817",
+          "favicon.svg": "9e983b4f649c25c6ca0623a50be1a6e705fd8f49f756638b980fa13b40575ab6",
+          "index.html": "3a402b94efa1253d80666438e60ed89d0b5cf1fd07d24a2f59731623e9bd8a49",
+          "manifest.webmanifest": "39d993c8e94ab4ce3d2c112fd4eec8c1d91ba32a11b974fdf2fd21d5e596a98b"
+        },
+        "resourceSha256": "7fa86a3d69052a18d1d359fb203f5d72dc6823ac1cd439d42a9ac1fce49bd476",
+        "asset": "/assets/index-CN7NIWNw.js",
+        "sha256": "4bc914bfbb6adbdd63953a29f63835eb7127defd2a973149d64cdab489f1a9a5"
+      },
+      "identityNote": "Original observed fields retain the historical #122 exemplar. formalPromotion20261107 records final-source builds separately for each measured platform.",
+      "formalPromotion20261107": {
+        "linux": {
+          "path": ".scratch/formal-support-20261107/dsh021-r5/manifest.json",
+          "sha256": "a56d09f6c147da1a9dd157ca36a89cd39f5cfa65ee615bd82d82a24b60552511",
+          "hostVersion": "0.2.1-rc.2",
+          "node": "v24.13.1",
+          "pnpm": "10.26.2",
+          "composition": {
+            "mode": "verified",
+            "hostVersion": "0.2.1-rc.2",
+            "status": "verified",
+            "ready": true,
+            "formallySupported": true,
+            "combination": "ed6407cb50320798dbf85be8f353d85786dcc09eaaf237f765387a795ace6f7f",
+            "lockSha256": "5b1cd1c7e73d7b95b857cde99a1523c8f4a3d6d1daa09d0883ed324447162cbf",
+            "packages": {
+              "@deepseek-ai/dsh": "0.2.1-rc.2",
+              "@deepseek-ai/cordis": "4.0.5",
+              "@deepseek-ai/schemastery": "3.18.5",
+              "@deepseek-ai/dsh-agent": "0.2.1-rc.2",
+              "@deepseek-ai/dsh-llm": "0.2.1-rc.2",
+              "@deepseek-ai/dsh-tools": "0.2.1-rc.2",
+              "@deepseek-ai/dsh-session": "0.2.1-rc.2",
+              "@deepseek-ai/dsh-session-projection": "0.2.1-rc.2",
+              "@deepseek-ai/dsh-session-persistence-jsonl": "0.2.1-rc.2",
+              "@deepseek-ai/dsh-agent-default-model": "0.2.1-rc.2",
+              "@deepseek-ai/dsh-workspace": "0.2.1-rc.2",
+              "@deepseek-ai/dsh-typert-protocol": "0.2.1-rc.2",
+              "@deepseek-ai/dsh-typert-registry": "0.2.1-rc.2",
+              "@deepseek-ai/dsh-api-session-controller": "0.2.1-rc.2",
+              "@deepseek-ai/dsh-client-ui-conversation": "0.2.1-rc.2",
+              "@deepseek-ai/dsh-client-ui-primitives": "0.2.1-rc.2",
+              "@deepseek-ai/dsh-session-format": "0.2.1-rc.2",
+              "@deepseek-ai/dsh-host-frontend-static": "0.2.1-rc.2",
+              "@deepseek-ai/dsh-web-frontend": "0.2.1-rc.2",
+              "@deepseek-ai/dsh-client-ui-input-trigger": "0.2.1-rc.2",
+              "@deepseek-ai/dsh-client-modules": "0.2.1-rc.2",
+              "@deepseek-ai/dsh-agent-loop": "0.2.1-rc.2",
+              "@deepseek-ai/dsh-attachment": "0.2.1-rc.2",
+              "@deepseek-ai/dsh-system-prompt": "0.2.1-rc.2",
+              "@deepseek-ai/dsh-api-gateway": "0.2.1-rc.2",
+              "@deepseek-ai/dsh-client-locale": "0.2.1-rc.2",
+              "@deepseek-ai/dsh-client-ui-slots": "0.2.1-rc.2",
+              "@deepseek-ai/dsh-client-ui-renderer": "0.2.1-rc.2",
+              "@deepseek-ai/dsh-host-open-in-app": "0.2.1-rc.2"
+            },
+            "patches": {
+              "dsh-api-session-controller@0.2.1-rc.2.patch": "49a04d7b28bb6a58fd0d4aeef439e6ac4d2877946221d2dda1cfcaf25f10c550",
+              "dsh-client-ui-conversation@0.2.1-rc.2.patch": "250a899648f6048668b3c812c2630bd865194fa973e3e8d5622fa8b1997b2a10",
+              "dsh-session-format@0.2.1-rc.2.patch": "e4f7d8fc367dd6380c533351f9de11b0ea39f50bfc963ec66aabab80eb878941",
+              "dsh-session-persistence-jsonl@0.2.1-rc.2.patch": "4ed1fbca422883052b4046a8e99a690064ed3c87ea6443df4a41d791152b6c47",
+              "dsh-host-open-in-app@0.2.1-rc.2.patch": "789fb6cd9ca7fe0bce4e806f8f1c16fef850cce7bd019034e642ec5f0d67cc3b"
+            },
+            "reason": "DSH_REVIEWED_COMBINATION",
+            "checkCount": 679,
+            "failures": [],
+            "frontend": {
+              "asset": "/assets/index-CN7NIWNw.js",
+              "sha256": "4bc914bfbb6adbdd63953a29f63835eb7127defd2a973149d64cdab489f1a9a5",
+              "resourceSha256": "7fa86a3d69052a18d1d359fb203f5d72dc6823ac1cd439d42a9ac1fce49bd476"
+            }
+          }
+        },
+        "win32": {
+          "path": ".scratch/formal-support-20261107/windows/dsh021/manifest.json",
+          "sha256": "8c6f28d68a6b22b4a1a2b1f345b4542f4a5176f064eb989bffc3d3ee5c9e30c1",
+          "hostVersion": "0.2.1-rc.2",
+          "node": "v24.13.1",
+          "pnpm": "10.26.2",
+          "composition": {
+            "mode": "verified",
+            "hostVersion": "0.2.1-rc.2",
+            "status": "verified",
+            "ready": true,
+            "formallySupported": true,
+            "combination": "d3d582707f94f2428c53d6eb9dd9133a2fc2bb00852cf484fd2fb75288a0f87c",
+            "lockSha256": "161e4d3bc1cf37e8e679f2a031c18b922679f3dc79362ffc3357b4d3699fbaa6",
+            "packages": {
+              "@deepseek-ai/dsh": "0.2.1-rc.2",
+              "@deepseek-ai/cordis": "4.0.5",
+              "@deepseek-ai/schemastery": "3.18.5",
+              "@deepseek-ai/dsh-agent": "0.2.1-rc.2",
+              "@deepseek-ai/dsh-llm": "0.2.1-rc.2",
+              "@deepseek-ai/dsh-tools": "0.2.1-rc.2",
+              "@deepseek-ai/dsh-session": "0.2.1-rc.2",
+              "@deepseek-ai/dsh-session-projection": "0.2.1-rc.2",
+              "@deepseek-ai/dsh-session-persistence-jsonl": "0.2.1-rc.2",
+              "@deepseek-ai/dsh-agent-default-model": "0.2.1-rc.2",
+              "@deepseek-ai/dsh-workspace": "0.2.1-rc.2",
+              "@deepseek-ai/dsh-typert-protocol": "0.2.1-rc.2",
+              "@deepseek-ai/dsh-typert-registry": "0.2.1-rc.2",
+              "@deepseek-ai/dsh-api-session-controller": "0.2.1-rc.2",
+              "@deepseek-ai/dsh-client-ui-conversation": "0.2.1-rc.2",
+              "@deepseek-ai/dsh-client-ui-primitives": "0.2.1-rc.2",
+              "@deepseek-ai/dsh-session-format": "0.2.1-rc.2",
+              "@deepseek-ai/dsh-host-frontend-static": "0.2.1-rc.2",
+              "@deepseek-ai/dsh-web-frontend": "0.2.1-rc.2",
+              "@deepseek-ai/dsh-client-ui-input-trigger": "0.2.1-rc.2",
+              "@deepseek-ai/dsh-client-modules": "0.2.1-rc.2",
+              "@deepseek-ai/dsh-agent-loop": "0.2.1-rc.2",
+              "@deepseek-ai/dsh-attachment": "0.2.1-rc.2",
+              "@deepseek-ai/dsh-system-prompt": "0.2.1-rc.2",
+              "@deepseek-ai/dsh-api-gateway": "0.2.1-rc.2",
+              "@deepseek-ai/dsh-client-locale": "0.2.1-rc.2",
+              "@deepseek-ai/dsh-client-ui-slots": "0.2.1-rc.2",
+              "@deepseek-ai/dsh-client-ui-renderer": "0.2.1-rc.2",
+              "@deepseek-ai/dsh-host-open-in-app": "0.2.1-rc.2"
+            },
+            "patches": {
+              "dsh-api-session-controller@0.2.1-rc.2.patch": "49a04d7b28bb6a58fd0d4aeef439e6ac4d2877946221d2dda1cfcaf25f10c550",
+              "dsh-client-ui-conversation@0.2.1-rc.2.patch": "250a899648f6048668b3c812c2630bd865194fa973e3e8d5622fa8b1997b2a10",
+              "dsh-session-format@0.2.1-rc.2.patch": "e4f7d8fc367dd6380c533351f9de11b0ea39f50bfc963ec66aabab80eb878941",
+              "dsh-session-persistence-jsonl@0.2.1-rc.2.patch": "4ed1fbca422883052b4046a8e99a690064ed3c87ea6443df4a41d791152b6c47",
+              "dsh-host-open-in-app@0.2.1-rc.2.patch": "789fb6cd9ca7fe0bce4e806f8f1c16fef850cce7bd019034e642ec5f0d67cc3b"
+            },
+            "reason": "DSH_REVIEWED_COMBINATION",
+            "checkCount": 679,
+            "failures": [],
+            "frontend": {
+              "asset": "/assets/index-CN7NIWNw.js",
+              "sha256": "4bc914bfbb6adbdd63953a29f63835eb7127defd2a973149d64cdab489f1a9a5",
+              "resourceSha256": "7fa86a3d69052a18d1d359fb203f5d72dc6823ac1cd439d42a9ac1fce49bd476"
+            }
+          }
+        }
+      },
+      "finalBatch149": {
+        "manifest": {
+          "path": "private-evidence/9889ce1c098a/manifest.json",
+          "sha256": "ce95ecf40ce75218be43e8962aed48f35088748160f157d5acf20d7e62d856aa"
+        },
+        "nativeReport": "private-evidence/4aa7f750df61/dshrc2-native.json",
+        "nativeReportSha256": "d8c1f5b3b2e7ec139cc8b68e7f192e049eb58aa804d95a0e17832c4b141fdcb6",
+        "observedCombination": "0976e126a2349f99d60472e837f9a15b0375f6a51ab5bf62efcb96d7a91709a2",
+        "observedInstallationLockSha256": "68eda68218fd16eb7bd9a44e22c15c8dbcb0f65929df73ef9ecfe39eba9660d0",
+        "completeRuntimeDependencyClosure": {
+          "lockSha256": "7fccd7560ef4e77f8d76d51acf14738e5adac57164967a3a8354d0bff191c64e",
+          "installedIdentitySha256": "a11def6b2f122f780e84499d0117a5efd252130d7462371cdf37e9067b200ed2",
+          "installedPackages": 569,
+          "optionalNotInstalled": [
+            "@deepseek-ai/libreoffice-kit-darwin-arm64@0.1.5",
+            "@deepseek-ai/libreoffice-kit-darwin-x64@0.1.5",
+            "@deepseek-ai/libreoffice-kit-win32-arm64@0.1.5",
+            "@deepseek-ai/libreoffice-kit-win32-x64@0.1.5",
+            "@deepseek-ai/node-addon-system-darwin-arm64@0.1.2",
+            "@deepseek-ai/node-addon-system-darwin-x64@0.1.2",
+            "@deepseek-ai/node-addon-system-linux-arm64@0.1.2",
+            "@img/sharp-darwin-arm64@0.35.5",
+            "@img/sharp-darwin-x64@0.35.5",
+            "@img/sharp-freebsd-wasm32@0.35.5",
+            "@img/sharp-libvips-darwin-arm64@1.3.4",
+            "@img/sharp-libvips-darwin-x64@1.3.4",
+            "@img/sharp-libvips-linux-arm64@1.3.4",
+            "@img/sharp-libvips-linux-arm@1.3.4",
+            "@img/sharp-libvips-linux-ppc64@1.3.4",
+            "@img/sharp-libvips-linux-riscv64@1.3.4",
+            "@img/sharp-libvips-linux-s390x@1.3.4",
+            "@img/sharp-libvips-linuxmusl-arm64@1.3.4",
+            "@img/sharp-linux-arm64@0.35.5",
+            "@img/sharp-linux-arm@0.35.5",
+            "@img/sharp-linux-ppc64@0.35.5",
+            "@img/sharp-linux-riscv64@0.35.5",
+            "@img/sharp-linux-s390x@0.35.5",
+            "@img/sharp-linuxmusl-arm64@0.35.5",
+            "@img/sharp-webcontainers-wasm32@0.35.5",
+            "@img/sharp-win32-arm64@0.35.5",
+            "@img/sharp-win32-ia32@0.35.5",
+            "@img/sharp-win32-x64@0.35.5",
+            "@koromix/koffi-darwin-arm64@3.1.1",
+            "@koromix/koffi-darwin-x64@3.1.1",
+            "@koromix/koffi-freebsd-arm64@3.1.1",
+            "@koromix/koffi-freebsd-ia32@3.1.1",
+            "@koromix/koffi-freebsd-x64@3.1.1",
+            "@koromix/koffi-linux-arm64@3.1.1",
+            "@koromix/koffi-linux-ia32@3.1.1",
+            "@koromix/koffi-linux-loong64@3.1.1",
+            "@koromix/koffi-linux-riscv64@3.1.1",
+            "@koromix/koffi-openbsd-ia32@3.1.1",
+            "@koromix/koffi-openbsd-x64@3.1.1",
+            "@koromix/koffi-win32-arm64@3.1.1",
+            "@koromix/koffi-win32-ia32@3.1.1",
+            "@koromix/koffi-win32-x64@3.1.1",
+            "@vscode/ripgrep-darwin-arm64@1.18.0",
+            "@vscode/ripgrep-darwin-x64@1.18.0",
+            "@vscode/ripgrep-linux-arm64@1.18.0",
+            "@vscode/ripgrep-linux-arm@1.18.0",
+            "@vscode/ripgrep-linux-ia32@1.18.0",
+            "@vscode/ripgrep-linux-ppc64@1.18.0",
+            "@vscode/ripgrep-linux-riscv64@1.18.0",
+            "@vscode/ripgrep-linux-s390x@1.18.0",
+            "@vscode/ripgrep-win32-arm64@1.18.0",
+            "@vscode/ripgrep-win32-ia32@1.18.0",
+            "@vscode/ripgrep-win32-x64@1.18.0",
+            "node-addon-require-builtin-darwin-arm64@0.1.9",
+            "node-addon-require-builtin-darwin-x64@0.1.9",
+            "node-addon-require-builtin-linux-arm64-gnu@0.1.9",
+            "node-addon-require-builtin-linux-arm64-musl@0.1.9",
+            "node-addon-require-builtin-win32-arm64-msvc@0.1.9",
+            "node-addon-require-builtin-win32-ia32-msvc@0.1.9",
+            "node-addon-require-builtin-win32-x64-msvc@0.1.9",
+            "sherpa-onnx-darwin-arm64@1.13.8",
+            "sherpa-onnx-darwin-x64@1.13.8",
+            "sherpa-onnx-linux-arm64@1.13.8",
+            "sherpa-onnx-win-ia32@1.13.8",
+            "sherpa-onnx-win-x64@1.13.8"
+          ]
+        }
+      },
+      "beforeReview144": {
+        "host": "dsh",
+        "version": "0.2.1-rc.2",
+        "packages": {
+          "@deepseek-ai/dsh": "0.2.1-rc.2",
+          "@deepseek-ai/cordis": "4.0.5",
+          "@deepseek-ai/schemastery": "3.18.5",
+          "@deepseek-ai/dsh-agent": "0.2.1-rc.2",
+          "@deepseek-ai/dsh-llm": "0.2.1-rc.2",
+          "@deepseek-ai/dsh-tools": "0.2.1-rc.2",
+          "@deepseek-ai/dsh-session": "0.2.1-rc.2",
+          "@deepseek-ai/dsh-session-projection": "0.2.1-rc.2",
+          "@deepseek-ai/dsh-session-persistence-jsonl": "0.2.1-rc.2",
+          "@deepseek-ai/dsh-agent-default-model": "0.2.1-rc.2",
+          "@deepseek-ai/dsh-workspace": "0.2.1-rc.2",
+          "@deepseek-ai/dsh-typert-protocol": "0.2.1-rc.2",
+          "@deepseek-ai/dsh-typert-registry": "0.2.1-rc.2",
+          "@deepseek-ai/dsh-api-session-controller": "0.2.1-rc.2",
+          "@deepseek-ai/dsh-client-ui-conversation": "0.2.1-rc.2",
+          "@deepseek-ai/dsh-client-ui-primitives": "0.2.1-rc.2",
+          "@deepseek-ai/dsh-session-format": "0.2.1-rc.2",
+          "@deepseek-ai/dsh-host-frontend-static": "0.2.1-rc.2",
+          "@deepseek-ai/dsh-web-frontend": "0.2.1-rc.2",
+          "@deepseek-ai/dsh-client-ui-input-trigger": "0.2.1-rc.2",
+          "@deepseek-ai/dsh-client-modules": "0.2.1-rc.2",
+          "@deepseek-ai/dsh-agent-loop": "0.2.1-rc.2",
+          "@deepseek-ai/dsh-attachment": "0.2.1-rc.2",
+          "@deepseek-ai/dsh-system-prompt": "0.2.1-rc.2",
+          "@deepseek-ai/dsh-api-gateway": "0.2.1-rc.2",
+          "@deepseek-ai/dsh-client-locale": "0.2.1-rc.2",
+          "@deepseek-ai/dsh-client-ui-slots": "0.2.1-rc.2",
+          "@deepseek-ai/dsh-client-ui-renderer": "0.2.1-rc.2",
+          "@deepseek-ai/dsh-host-open-in-app": "0.2.1-rc.2"
+        },
+        "lock": "web/candidates/0.2.1-rc.2/complete-lock.yaml",
+        "lockSha256": "a2dd224665946f3af5412836412f33f2c90a63c98206f77d058f0bbf6c31f0bb",
+        "observedCombination": "cc22d2e2abc2e8516e05c727c39266d522a9ab5e1db6ab441f89491b8d497cd5",
+        "patches": {
+          "dsh-api-session-controller@0.2.1-rc.2.patch": "49a04d7b28bb6a58fd0d4aeef439e6ac4d2877946221d2dda1cfcaf25f10c550",
+          "dsh-client-ui-conversation@0.2.1-rc.2.patch": "250a899648f6048668b3c812c2630bd865194fa973e3e8d5622fa8b1997b2a10",
+          "dsh-session-format@0.2.1-rc.2.patch": "e4f7d8fc367dd6380c533351f9de11b0ea39f50bfc963ec66aabab80eb878941",
+          "dsh-session-persistence-jsonl@0.2.1-rc.2.patch": "4ed1fbca422883052b4046a8e99a690064ed3c87ea6443df4a41d791152b6c47",
+          "dsh-host-open-in-app@0.2.1-rc.2.patch": "789fb6cd9ca7fe0bce4e806f8f1c16fef850cce7bd019034e642ec5f0d67cc3b"
+        },
+        "evidence": [
+          "docs/compatibility/final-matrix-122.md",
+          "docs/compatibility/issue-122-evidence/summary.json",
+          "docs/compatibility/formal-support-20261107.json"
+        ],
+        "install": "node scripts/web-delivery.mjs build --host-version 0.2.1-rc.2 --out NEW_DIR --pnpm PNPM_CLI",
+        "diagnose": "validate --stage contract --target dsh --consumer COMPLETE_BUNDLE/consumer; default verified entry checks the complete composition",
+        "observedInstallationManifestSha256": "55cf867bdd741ec1de1cd5081a82a06c2994acd3b53b91044c67e1755d5d6dca",
+        "frontend": {
+          "files": {
+            "assets/fonts/KaTeX_AMS-Regular-BQhdFMY1.woff2": "0cdd387c9590a1a9f9794560022dbb59654a7d86f187aa0c81495ad42d3a7308",
+            "assets/fonts/KaTeX_Caligraphic-Bold-Dq_IR9rO.woff2": "de7701e42cf1f4cf0b766c03fb27977207eee2f4fd5d76fa82188406da43ea4c",
+            "assets/fonts/KaTeX_Caligraphic-Regular-Di6jR-x-.woff2": "5d53e70ad607c2352162dec9e0923fb54ecdafaccbf604cd8dcf7d00facb989b",
+            "assets/fonts/KaTeX_Fraktur-Bold-CL6g_b3V.woff2": "74444efd593c005e3f4573b44524704c0af0a937fe911cca9e94068d0d140d3f",
+            "assets/fonts/KaTeX_Fraktur-Regular-CTYiF6lA.woff2": "51814d270d06ff0255dba0799994fa4d8c84d11f09951d47595f4abb1f3602dc",
+            "assets/fonts/KaTeX_Main-Bold-Cx986IdX.woff2": "0f60d1b897938ec918c8ce073092411baf9438f6739465693ff18b0f9d20b021",
+            "assets/fonts/KaTeX_Main-BoldItalic-DxDJ3AOS.woff2": "99cd42a3c072d918f2f44984a807cf7aa16e13545fd0875fc07c6c65f99e715b",
+            "assets/fonts/KaTeX_Main-Italic-NWA7e6Wa.woff2": "97479ca6cce906abc961ecac96faa5f9ca2e61b8e7670d475826bcdee9a7c267",
+            "assets/fonts/KaTeX_Main-Regular-B22Nviop.woff2": "c2342cd8b869e01752a9321dc17213fc40d4d04c79688c1d43f2cf316abd7866",
+            "assets/fonts/KaTeX_Math-BoldItalic-CZnvNsCZ.woff2": "dc47344dbb6cb5b655c8460d561f4df5f501b90c804ad3c6cec65fe322351ab1",
+            "assets/fonts/KaTeX_Math-Italic-t53AETM-.woff2": "7af58c5ec8f132a2ddde9027c6d7814decce4d3b822a11192a42a20e2e973264",
+            "assets/fonts/KaTeX_SansSerif-Bold-D1sUS0GD.woff2": "e99ae51144bf1232efcc1bfe5add36262c6866b0faab24fa75740e1b98577a62",
+            "assets/fonts/KaTeX_SansSerif-Italic-C3H0VqGB.woff2": "00b26ac825e2095056396e0553b8ac26d3f8ad158c3826e28b4c45b385c4714a",
+            "assets/fonts/KaTeX_SansSerif-Regular-DDBCnlJ7.woff2": "68e8c73ef42afd3ccec58bf0fba302cce448938e7fc020a5e31f8a952eee1342",
+            "assets/fonts/KaTeX_Script-Regular-D3wIWfF6.woff2": "036d4e95149b69ff9bcc0cd55771efeb25ffa3947293e69acd78d5ac328c684b",
+            "assets/fonts/KaTeX_Size1-Regular-mCD8mA8B.woff2": "6b47c40166b6dbe21a5dfca7718413f2147fd2399be1ba605d8ad39cedf25dfe",
+            "assets/fonts/KaTeX_Size2-Regular-Dy4dx90m.woff2": "d04c54219f9eaec6d4d4fd42dfb28785975a4794d6b2fc71e566b9cd6db842dd",
+            "assets/fonts/KaTeX_Size4-Regular-Dl5lxZxV.woff2": "a4af7d414440a1c1790825cfb700cf9cf43b0f2c4b04f0ebc523011ad9853ec0",
+            "assets/fonts/KaTeX_Typewriter-Regular-CO6r4hn1.woff2": "71d517d67827787cfabdf186914cc3358eda539e37931941f2b2fd4a21f68c0b",
+            "assets/fonts/Montserrat-OFL.txt": "861d64229728cd65a98d119612c12769582574d1a092f0b63c8b0fd474e7065f",
+            "assets/fonts/montserrat-light-Cvd2VjE_.woff2": "da25f1327eb1dcc70c193897b5d7e00d31821d9518c0a49e073ff50d97a3f10a",
+            "assets/fonts/montserrat-medium-B4OyO9CN.woff2": "8a81ca6f05cb6831d5487e4b287ce5a625a718c39226b736f155900adc394166",
+            "assets/fonts/montserrat-regular-DYep38cA.woff2": "0f4a15e29a9535af580a64db967929a8d6b202fad9a467be390619a591d2c4c5",
+            "assets/index-BxpfOGf3.css": "2412389d14707cc10df9b3fa83893af96c5f2568da78029e1ba64123fb0c2b82",
+            "assets/index-CN7NIWNw.js": "4bc914bfbb6adbdd63953a29f63835eb7127defd2a973149d64cdab489f1a9a5",
+            "assets/langs/asciidoc-CSVQ5wI8.js": "ccbe3ab4515748773c185140855a976f2f3723a4e482f8423c36cf9ee6954b12",
+            "assets/langs/bat-CickPsom.js": "443aa1c3678e319e553f3ae7aef4ef7e6f068e2c83172ced17247d5ba850d6a3",
+            "assets/langs/bibtex-CHM0blh-.js": "4af4d61dd9d7297f65b361204af72d53e91fa70a4ede5e85bcaf40b4a63cd4a2",
+            "assets/langs/c-BIGW1oBm.js": "9c06263922b97a0e5890b832e23d44f3c0da54430ac6f971aa0ede8f4c2b8b66",
+            "assets/langs/clojure-P80f7IUj.js": "e70b326f33d37ddb29dd71abcc72321f1b0d900888ef05db9d7821fdf60eab22",
+            "assets/langs/cmake-D1j8_8rp.js": "f87d0ba1478aa4f5eb35b22e1276f0b330f30030b2c2e33cc7400a7b14f96eb2",
+            "assets/langs/cpp-DddhVWhK.js": "532fe55f0cf99df5f27e5396453ffae2d2afa7da82cdb19abaf245004c67da1b",
+            "assets/langs/csharp-DSvCPggb.js": "8443ef70cc6fec2de601c15c548ab1890e9bbc71a21ba9c216de77481c3cb6d6",
+            "assets/langs/css-CLj8gQPS.js": "69ee0204c2c40a92b8368049da700f0d08d40f5274809cfb624fd09e73eb32ee",
+            "assets/langs/csv-fuZLfV_i.js": "dc5872798e0825621bc48f5907e872a0fb34bd3bb2c7a5fd3c6841670675f830",
+            "assets/langs/dart-bE4Kk8sk.js": "8d6d70a18e68e8c4ef0aecf78ed03f9768342b9953dd0e9f8963b070152b1ab5",
+            "assets/langs/diff-D97Zzqfu.js": "710e6506726fe0befb51b8e40fc9aa12cf7fa733ec8f24019359276c4ea653dc",
+            "assets/langs/dotenv-Da5cRb03.js": "c7dc2e241e78b22b2a8015afb7c759b019616267ace3ab7660b3a8aa2fe207d7",
+            "assets/langs/elixir-CvYZzuDY.js": "be08af7448a3bc9de8e6d71e8fc351a09a5d5ba77784a8c4012199a9e3f5f5fe",
+            "assets/langs/erlang-DsQrWhSR.js": "87ef69877dda1297912b0a7a12ee0f3f00de0f675bb6214b0f1adf58629b75fa",
+            "assets/langs/fish-BvzEVeQv.js": "f7881c9158118435c2f1a6d3859ecd84ad7539c845584fd110ab844c69e7972b",
+            "assets/langs/fsharp-CXgrBDvD.js": "7cda55ae2e03fd929e8d18dbde6c9dfbe48d91f02e4c65bbb88e21ef3e38653a",
+            "assets/langs/go-C27-OAKa.js": "a6c3f73f1abb778ef3f5e489db1942542dc88ddac5b111ff55813fa1655dd23c",
+            "assets/langs/graphql-VhKNCVsv.js": "83bdded4a36def36699c50c60a98a136f92eb61d3c4a131b32e5e20c31e06da1",
+            "assets/langs/groovy-gcz8RCvz.js": "25aafe383369a4f78a33abdb518404d8836773f3dfb0f199e7d5104acea74832",
+            "assets/langs/haskell-Df6bDoY_.js": "731f9a3ba301c738fbbb6278b596171b0195cb69bd42febdf6edc6da10f87faf",
+            "assets/langs/hcl-BWvSN4gD.js": "2f141d770bcd86b2e056b76b6a65b74c534454f371490d3bdff2dec63ceb9fd8",
+            "assets/langs/html-derivative-DOyKdj44.js": "fa06bb6afb8b726edde9412e7aee065c560fe4afd21fcac4ac9992b783dd8ddb",
+            "assets/langs/html-fwsONPVS.js": "98fab9ca36666a6cd0163a9c54349d9d05b891912056028d6fd1cf0f012c3cdf",
+            "assets/langs/http-br_RHStI.js": "f3b5329f396ac17c57cadc8bf21e42fb34072e70b60a2fc5ac91684ad78c52e9",
+            "assets/langs/ini-BEwlwnbL.js": "d72bde3de42bb1ef3268bd65afedecf54747c208ac24335f7c6b4456924091c1",
+            "assets/langs/java-CylS5w8V.js": "934a0e63cf4cefb991100f15c42fdc60aaee3c7036a7ba6cb10ce5a6322a7ae9",
+            "assets/langs/javascript-DI5JR1nB.js": "b0952ac6a3182b0c45b005da5d76a764890d6da3df2fe61affe471a59744a169",
+            "assets/langs/julia-BfSmLjIk.js": "6523a4247b0a4a5c1d933134baa96cc12c9685a1b06237f0fce5ab6ed2059730",
+            "assets/langs/kotlin-BdnUsdx6.js": "99d81f485d9366a1f3f8c84b0fc5cee69b0d28d6c8f7f1e8dac29e554e80d24f",
+            "assets/langs/latex-B2nUCzCX.js": "265d43c3cae080cc97ac1f40a569aca48758cc680aad6a9f940dbdb584d55fc1",
+            "assets/langs/less-B1dDrJ26.js": "50c4bace8838379b74e0a22dab369c3cb81b57ba1b5b17ea5af8668f8290e8bf",
+            "assets/langs/log-2UxHyX5q.js": "7b2292970ede37be20c120a51d12bcbff43e82278aef1626816d71c344a07e27",
+            "assets/langs/lua-BaeVxFsk.js": "b218901041a92a152f51a7f3f74f26120e931e258abb1c73bcee551721015f67",
+            "assets/langs/make-CHLpvVh8.js": "9ef9765da0e58e256d97f4f2da8197a72ad4d84e8217b7160728d646c7e5e236",
+            "assets/langs/markdown-Cvjx9yec.js": "d9a83df9f57287a1f3594d5231480ea90a14adf7a8550c7a57930c3cf5b3f47d",
+            "assets/langs/mdx-Cmh6b_Ma.js": "8b88c45af52bcc95513e479bfce5b068d91f60a811acf8bb614bbb071d0e1151",
+            "assets/langs/nix-CwoSXNpI.js": "1af30178686ebb1c86d28d0511450379ac22d55fe0c0a72d5fa323915128afce",
+            "assets/langs/perl-DsWkoyyU.js": "170909d86f068983ff341d2effa52fdf73e870231a2527550c8b3b996faa3c82",
+            "assets/langs/php-hBQ2F09C.js": "c429abf50b4a2871565fe88911b63746e56d1e3a4be5762df0f3a4d352f6f8f1",
+            "assets/langs/powershell-BmBUJMz7.js": "8c4b6d7c57d7624ac4fcb6882377a78db37b617fc3974831961fe837c364f52c",
+            "assets/langs/proto-C7zT0LnQ.js": "fc5a20a7755c13ecedd65173c09d76e4694d4db44771318d89872607e2559659",
+            "assets/langs/python-B6aJPvgy.js": "1c6725168b498ade965cf0d8723c600fc9bf0de74988b6191106b304b571aaae",
+            "assets/langs/r-Cf5RLm7j.js": "8b6463b604a4c77d19e14aef404c920e66f2f04585e258280f543e93ce52f3bd",
+            "assets/langs/rst-CyvSi_BO.js": "e8ac815b49cd838a02f5dce139709b7a1e6c12c3b8cef9624c479232d569ea25",
+            "assets/langs/ruby-CO7l6YCm.js": "a287afcf431e64565e4d82e619af89aa1a6b0eef24e0526edb42951f3231210b",
+            "assets/langs/rust-B1yitclQ.js": "c02d27696b07c37fa2cac9de826a967a30401a33959cd891ebbf11d5bf245ce3",
+            "assets/langs/scala-CqE71os6.js": "5068f9ad81fc447782644ebe267a492032aee9580cfff6c96fb44984f71055ae",
+            "assets/langs/scss-D5BDwBP9.js": "d873165bb797f0547966aa681ade9af96c06ec17c2b0c12708303d9ace461753",
+            "assets/langs/sql-CRqJ_cUM.js": "60e00dca0f03a580d3717adbb9c730772e750909dc8c78408051091278eda6c0",
+            "assets/langs/svelte-BYadmKUw.js": "f136485a32bd2c2a37772ccd6cf13dcedf6af989dbd32e9b5283513e94a3d5bd",
+            "assets/langs/swift-C2oV4EkX.js": "f77b5e491884859198e703e3e981a46e218c05a5b82ec33984c05ec851a8d3b3",
+            "assets/langs/system-verilog-0hqHdDBg.js": "c9b9df256a28ddc9d5b60dcd0bd43137f3b3cdeb8ca472a4e8921f42232897b4",
+            "assets/langs/toml-vGWfd6FD.js": "aeb916b96e9eb064aa87c8f765abfded0ab0d53aefa3aa9b90cc1af4d1ad75d2",
+            "assets/langs/vb-Cu-pLBUe.js": "f5806bce4864a69a019a73599bf174bbdb32539ec19e8d6dc3ac0254262b8410",
+            "assets/langs/verilog-nZwndyjY.js": "9f43d6af8cbbd2b38473fb28ca9f59043129433e021f2d9c308c85bf11333900",
+            "assets/langs/vue-B0l-UZcs.js": "5b537a0c8fb2ebde0d85e1abdfccb663ffee8c7b4504f345cb15444ec15ae0df",
+            "assets/langs/xml-sdJ4AIDG.js": "d41d94621a62727ad56943d2d7e04e820c2642c3a9c246eb10e7d6e6e89d1fed",
+            "assets/langs/yaml-Buea-lGh.js": "8aad9cddbe3602b06b194e66d021aa63d715df01cf94e8ffcac810e48f0529e3",
+            "assets/vendor-DV2921Zo.css": "4cea59483551208ce61ff27251da83d5f7a0893ef34cfe4b808d61be6e13ebc7",
+            "assets/vendor-DcuzkuQH.js": "c14ba1089d78f48b8959a7bc42c9013b4a57aa4122e053d54f74c0a4d1d156a7",
+            "favicon-dark.svg": "dde7db781f41e7aeb4709ff5485af2bdcf7f4b4ea81b4500cfd5df44efdbd817",
+            "favicon.svg": "9e983b4f649c25c6ca0623a50be1a6e705fd8f49f756638b980fa13b40575ab6",
+            "index.html": "3a402b94efa1253d80666438e60ed89d0b5cf1fd07d24a2f59731623e9bd8a49",
+            "manifest.webmanifest": "39d993c8e94ab4ce3d2c112fd4eec8c1d91ba32a11b974fdf2fd21d5e596a98b"
+          },
+          "resourceSha256": "7fa86a3d69052a18d1d359fb203f5d72dc6823ac1cd439d42a9ac1fce49bd476",
+          "asset": "/assets/index-CN7NIWNw.js",
+          "sha256": "4bc914bfbb6adbdd63953a29f63835eb7127defd2a973149d64cdab489f1a9a5"
+        },
+        "identityNote": "Original observed fields retain the historical #122 exemplar. formalPromotion20261107 records final-source builds separately for each measured platform.",
+        "formalPromotion20261107": {
+          "linux": {
+            "path": ".scratch/formal-support-20261107/dsh021-r5/manifest.json",
+            "sha256": "a56d09f6c147da1a9dd157ca36a89cd39f5cfa65ee615bd82d82a24b60552511",
+            "hostVersion": "0.2.1-rc.2",
+            "node": "v24.13.1",
+            "pnpm": "10.26.2",
+            "composition": {
+              "mode": "verified",
+              "hostVersion": "0.2.1-rc.2",
+              "status": "verified",
+              "ready": true,
+              "formallySupported": true,
+              "combination": "ed6407cb50320798dbf85be8f353d85786dcc09eaaf237f765387a795ace6f7f",
+              "lockSha256": "5b1cd1c7e73d7b95b857cde99a1523c8f4a3d6d1daa09d0883ed324447162cbf",
+              "packages": {
+                "@deepseek-ai/dsh": "0.2.1-rc.2",
+                "@deepseek-ai/cordis": "4.0.5",
+                "@deepseek-ai/schemastery": "3.18.5",
+                "@deepseek-ai/dsh-agent": "0.2.1-rc.2",
+                "@deepseek-ai/dsh-llm": "0.2.1-rc.2",
+                "@deepseek-ai/dsh-tools": "0.2.1-rc.2",
+                "@deepseek-ai/dsh-session": "0.2.1-rc.2",
+                "@deepseek-ai/dsh-session-projection": "0.2.1-rc.2",
+                "@deepseek-ai/dsh-session-persistence-jsonl": "0.2.1-rc.2",
+                "@deepseek-ai/dsh-agent-default-model": "0.2.1-rc.2",
+                "@deepseek-ai/dsh-workspace": "0.2.1-rc.2",
+                "@deepseek-ai/dsh-typert-protocol": "0.2.1-rc.2",
+                "@deepseek-ai/dsh-typert-registry": "0.2.1-rc.2",
+                "@deepseek-ai/dsh-api-session-controller": "0.2.1-rc.2",
+                "@deepseek-ai/dsh-client-ui-conversation": "0.2.1-rc.2",
+                "@deepseek-ai/dsh-client-ui-primitives": "0.2.1-rc.2",
+                "@deepseek-ai/dsh-session-format": "0.2.1-rc.2",
+                "@deepseek-ai/dsh-host-frontend-static": "0.2.1-rc.2",
+                "@deepseek-ai/dsh-web-frontend": "0.2.1-rc.2",
+                "@deepseek-ai/dsh-client-ui-input-trigger": "0.2.1-rc.2",
+                "@deepseek-ai/dsh-client-modules": "0.2.1-rc.2",
+                "@deepseek-ai/dsh-agent-loop": "0.2.1-rc.2",
+                "@deepseek-ai/dsh-attachment": "0.2.1-rc.2",
+                "@deepseek-ai/dsh-system-prompt": "0.2.1-rc.2",
+                "@deepseek-ai/dsh-api-gateway": "0.2.1-rc.2",
+                "@deepseek-ai/dsh-client-locale": "0.2.1-rc.2",
+                "@deepseek-ai/dsh-client-ui-slots": "0.2.1-rc.2",
+                "@deepseek-ai/dsh-client-ui-renderer": "0.2.1-rc.2",
+                "@deepseek-ai/dsh-host-open-in-app": "0.2.1-rc.2"
+              },
+              "patches": {
+                "dsh-api-session-controller@0.2.1-rc.2.patch": "49a04d7b28bb6a58fd0d4aeef439e6ac4d2877946221d2dda1cfcaf25f10c550",
+                "dsh-client-ui-conversation@0.2.1-rc.2.patch": "250a899648f6048668b3c812c2630bd865194fa973e3e8d5622fa8b1997b2a10",
+                "dsh-session-format@0.2.1-rc.2.patch": "e4f7d8fc367dd6380c533351f9de11b0ea39f50bfc963ec66aabab80eb878941",
+                "dsh-session-persistence-jsonl@0.2.1-rc.2.patch": "4ed1fbca422883052b4046a8e99a690064ed3c87ea6443df4a41d791152b6c47",
+                "dsh-host-open-in-app@0.2.1-rc.2.patch": "789fb6cd9ca7fe0bce4e806f8f1c16fef850cce7bd019034e642ec5f0d67cc3b"
+              },
+              "reason": "DSH_REVIEWED_COMBINATION",
+              "checkCount": 679,
+              "failures": [],
+              "frontend": {
+                "asset": "/assets/index-CN7NIWNw.js",
+                "sha256": "4bc914bfbb6adbdd63953a29f63835eb7127defd2a973149d64cdab489f1a9a5",
+                "resourceSha256": "7fa86a3d69052a18d1d359fb203f5d72dc6823ac1cd439d42a9ac1fce49bd476"
+              }
+            }
+          },
+          "win32": {
+            "path": ".scratch/formal-support-20261107/windows/dsh021/manifest.json",
+            "sha256": "8c6f28d68a6b22b4a1a2b1f345b4542f4a5176f064eb989bffc3d3ee5c9e30c1",
+            "hostVersion": "0.2.1-rc.2",
+            "node": "v24.13.1",
+            "pnpm": "10.26.2",
+            "composition": {
+              "mode": "verified",
+              "hostVersion": "0.2.1-rc.2",
+              "status": "verified",
+              "ready": true,
+              "formallySupported": true,
+              "combination": "d3d582707f94f2428c53d6eb9dd9133a2fc2bb00852cf484fd2fb75288a0f87c",
+              "lockSha256": "161e4d3bc1cf37e8e679f2a031c18b922679f3dc79362ffc3357b4d3699fbaa6",
+              "packages": {
+                "@deepseek-ai/dsh": "0.2.1-rc.2",
+                "@deepseek-ai/cordis": "4.0.5",
+                "@deepseek-ai/schemastery": "3.18.5",
+                "@deepseek-ai/dsh-agent": "0.2.1-rc.2",
+                "@deepseek-ai/dsh-llm": "0.2.1-rc.2",
+                "@deepseek-ai/dsh-tools": "0.2.1-rc.2",
+                "@deepseek-ai/dsh-session": "0.2.1-rc.2",
+                "@deepseek-ai/dsh-session-projection": "0.2.1-rc.2",
+                "@deepseek-ai/dsh-session-persistence-jsonl": "0.2.1-rc.2",
+                "@deepseek-ai/dsh-agent-default-model": "0.2.1-rc.2",
+                "@deepseek-ai/dsh-workspace": "0.2.1-rc.2",
+                "@deepseek-ai/dsh-typert-protocol": "0.2.1-rc.2",
+                "@deepseek-ai/dsh-typert-registry": "0.2.1-rc.2",
+                "@deepseek-ai/dsh-api-session-controller": "0.2.1-rc.2",
+                "@deepseek-ai/dsh-client-ui-conversation": "0.2.1-rc.2",
+                "@deepseek-ai/dsh-client-ui-primitives": "0.2.1-rc.2",
+                "@deepseek-ai/dsh-session-format": "0.2.1-rc.2",
+                "@deepseek-ai/dsh-host-frontend-static": "0.2.1-rc.2",
+                "@deepseek-ai/dsh-web-frontend": "0.2.1-rc.2",
+                "@deepseek-ai/dsh-client-ui-input-trigger": "0.2.1-rc.2",
+                "@deepseek-ai/dsh-client-modules": "0.2.1-rc.2",
+                "@deepseek-ai/dsh-agent-loop": "0.2.1-rc.2",
+                "@deepseek-ai/dsh-attachment": "0.2.1-rc.2",
+                "@deepseek-ai/dsh-system-prompt": "0.2.1-rc.2",
+                "@deepseek-ai/dsh-api-gateway": "0.2.1-rc.2",
+                "@deepseek-ai/dsh-client-locale": "0.2.1-rc.2",
+                "@deepseek-ai/dsh-client-ui-slots": "0.2.1-rc.2",
+                "@deepseek-ai/dsh-client-ui-renderer": "0.2.1-rc.2",
+                "@deepseek-ai/dsh-host-open-in-app": "0.2.1-rc.2"
+              },
+              "patches": {
+                "dsh-api-session-controller@0.2.1-rc.2.patch": "49a04d7b28bb6a58fd0d4aeef439e6ac4d2877946221d2dda1cfcaf25f10c550",
+                "dsh-client-ui-conversation@0.2.1-rc.2.patch": "250a899648f6048668b3c812c2630bd865194fa973e3e8d5622fa8b1997b2a10",
+                "dsh-session-format@0.2.1-rc.2.patch": "e4f7d8fc367dd6380c533351f9de11b0ea39f50bfc963ec66aabab80eb878941",
+                "dsh-session-persistence-jsonl@0.2.1-rc.2.patch": "4ed1fbca422883052b4046a8e99a690064ed3c87ea6443df4a41d791152b6c47",
+                "dsh-host-open-in-app@0.2.1-rc.2.patch": "789fb6cd9ca7fe0bce4e806f8f1c16fef850cce7bd019034e642ec5f0d67cc3b"
+              },
+              "reason": "DSH_REVIEWED_COMBINATION",
+              "checkCount": 679,
+              "failures": [],
+              "frontend": {
+                "asset": "/assets/index-CN7NIWNw.js",
+                "sha256": "4bc914bfbb6adbdd63953a29f63835eb7127defd2a973149d64cdab489f1a9a5",
+                "resourceSha256": "7fa86a3d69052a18d1d359fb203f5d72dc6823ac1cd439d42a9ac1fce49bd476"
+              }
+            }
+          }
+        },
+        "finalBatch149": {
+          "manifest": {
+            "path": "private-evidence/cf8968d32dca/manifest.json",
+            "sha256": "05a017fb9cf9f701d7d0454707cafe3fdf3c329debff77fdf632c683c9e492ed"
+          },
+          "nativeReport": "private-evidence/db9c2ad64cdc/dshrc2-native.json",
+          "nativeReportSha256": "e92f26dfa4566f121b825f4d3dbe6b4499fa2b28d71b82dd5cef0747bc75223f",
+          "observedCombination": "44f385acfc3af7ddd4c629c1069da27631b0f5c9e0dbb6e39eec1aca41e1f1a3",
+          "observedInstallationLockSha256": "84585ba43e14b6799e9a8ea5b22b7acf6dc6ac2957f8c5ec6fc274db751ccfdb"
+        }
+      },
+      "compositionSha256": "b644f180b9c45bf18e3d87ebee1c97c3ebc839ae17538bd4ebfac60675777267",
+      "actualAdapter": {
+        "name": "@arlo/adapter-dsh",
+        "version": "0.1.0",
+        "artifactSha256": "2315e243219619a6e8b3b49a3a2f63e9f8a026e39982837bb8a7ae8a5b7ddcd1"
+      }
+    },
+    "dsh-0.2.0-rc.2-issue121": {
+      "host": "dsh",
+      "version": "0.2.0-rc.2",
+      "packages": {
+        "@deepseek-ai/dsh": "0.2.0-rc.2",
+        "@deepseek-ai/cordis": "4.0.4",
+        "@deepseek-ai/schemastery": "3.18.4",
+        "@deepseek-ai/dsh-agent": "0.2.0-rc.2",
+        "@deepseek-ai/dsh-llm": "0.2.0-rc.2",
+        "@deepseek-ai/dsh-tools": "0.2.0-rc.2",
+        "@deepseek-ai/dsh-session": "0.2.0-rc.2",
+        "@deepseek-ai/dsh-session-projection": "0.2.0-rc.2",
+        "@deepseek-ai/dsh-session-persistence-jsonl": "0.2.0-rc.2",
+        "@deepseek-ai/dsh-agent-default-model": "0.2.0-rc.2",
+        "@deepseek-ai/dsh-workspace": "0.2.0-rc.2",
+        "@deepseek-ai/dsh-typert-protocol": "0.2.0-rc.2",
+        "@deepseek-ai/dsh-typert-registry": "0.2.0-rc.2",
+        "@deepseek-ai/dsh-api-session-controller": "0.2.0-rc.2",
+        "@deepseek-ai/dsh-client-ui-conversation": "0.2.0-rc.2",
+        "@deepseek-ai/dsh-client-ui-primitives": "0.2.0-rc.2",
+        "@deepseek-ai/dsh-session-format": "0.2.0-rc.2",
+        "@deepseek-ai/dsh-host-frontend-static": "0.2.0-rc.2",
+        "@deepseek-ai/dsh-web-frontend": "0.2.0-rc.2",
+        "@deepseek-ai/dsh-client-ui-input-trigger": "0.2.0-rc.2",
+        "@deepseek-ai/dsh-client-modules": "0.2.0-rc.2",
+        "@deepseek-ai/dsh-agent-loop": "0.2.0-rc.2",
+        "@deepseek-ai/dsh-attachment": "0.2.0-rc.2",
+        "@deepseek-ai/dsh-system-prompt": "0.2.0-rc.2",
+        "@deepseek-ai/dsh-api-gateway": "0.2.0-rc.2",
+        "@deepseek-ai/dsh-client-locale": "0.2.0-rc.2",
+        "@deepseek-ai/dsh-client-ui-slots": "0.2.0-rc.2"
+      },
+      "lock": "web/consumer-lock.yaml",
+      "lockSha256": "3b6a630611789f0d7b86ff492a0bccc14e5100a1dfaaf16768ee939c06ca8c4d",
+      "reviewedComposition": "packages/adapter-dsh/delivery/reviewed-composition.json",
+      "reviewedCompositionSha256": "604bb69b4e9b4a9820dc36105a88a9566eea4469e224b502ecf46ce4a35d99b9",
+      "patches": {
+        "dsh-api-session-controller@0.2.0-rc.2.patch": "b2afabd345f0fa26e644d932c416dd758a8966904372cad0cce40ebb71007089",
+        "dsh-client-ui-conversation@0.2.0-rc.2.patch": "0b2b06d44eecc7c2001b1dac5b94361529d3c0955e2de5ab5d577c7580a7f36f",
+        "dsh-client-ui-primitives@0.2.0-rc.2.patch": "700d902c845d6f096b0f918e4c2af6d0c340ef177280dd996fe535fb0e267109",
+        "dsh-session-format@0.2.0-rc.2.patch": "e4f7d8fc367dd6380c533351f9de11b0ea39f50bfc963ec66aabab80eb878941"
+      },
+      "browser": {
+        "asset": "/assets/index-5SrrfWpU.js",
+        "sha256": "ffce6d612902d01e479c6130fc071b253f9d4bd53940212a4bdbeefe1eed4124"
+      },
+      "browserFileCount": 130,
+      "evidence": [
+        "docs/compatibility/issue-120-evidence/web-complete-manifest.json",
+        "docs/compatibility/issue-121-evidence/summary.json"
+      ],
+      "install": "node scripts/delivery.mjs build --out CORE --pnpm PNPM_CLI; node scripts/web-delivery.mjs build --core CORE --out NEW_WEB_DIR --pnpm PNPM_CLI",
+      "diagnose": "node scripts/dsh-compatibility.mjs diagnose --consumer WEB_CONSUMER"
+    },
+    "pi-1.1.0-issue121": {
+      "host": "pi",
+      "version": "1.1.0",
+      "packages": {
+        "@earendil-works/pi-coding-agent": "1.1.0",
+        "@earendil-works/pi-tui": "1.1.0",
+        "@earendil-works/pi-ai": "1.1.0",
+        "@earendil-works/pi-agent-core": "1.1.0",
+        "@earendil-works/pi-codemode": "1.1.0",
+        "@earendil-works/pi-mcp": "1.1.0",
+        "@earendil-works/pi-telemetry": "1.1.0"
+      },
+      "lock": "pnpm-lock.yaml",
+      "evidence": [
+        "docs/compatibility/issue-119-evidence/summary.json"
+      ],
+      "install": "node scripts/pi-delivery.mjs build --host-version 1.1.0 --out NEW_DIR --output PI_REPORT --pnpm PNPM_CLI",
+      "diagnose": "Use validate --stage contract --target pi --pi-report PI_REPORT; live root: /arlo-doctor",
+      "observedInstallationManifestSha256": "079958df1dafac47c53cc98742cbf43bc8627d1a052031c4a1e9f386aed73c7a",
+      "identityNote": "Observed #119 installation; #121 runtime runs have their own installation hashes in the row evidence. A package version alone is not installation identity."
+    },
+    "pi-1.3.0": {
+      "host": "pi",
+      "version": "1.3.0",
+      "packages": {
+        "@earendil-works/pi-coding-agent": "1.3.0",
+        "@earendil-works/pi-tui": "1.3.0",
+        "@earendil-works/pi-ai": "1.3.0",
+        "@earendil-works/pi-agent-core": "1.3.0",
+        "@earendil-works/pi-codemode": "1.3.0",
+        "@earendil-works/pi-mcp": "1.3.0",
+        "@earendil-works/pi-telemetry": "1.3.0"
+      },
+      "lock": "pi-acceptance/candidates/1.3.0/pnpm-lock.yaml",
+      "lockSha256": "cf7881b2bbf6a78aee2ce91c068056171d06b83570762fd6a7073a6c57cbefdd",
+      "evidence": [
+        "docs/compatibility/issue-149-evidence/summary.json"
+      ],
+      "install": "node scripts/pi-delivery.mjs build --host-version 1.3.0 --out NEW_DIR --output PI_REPORT --pnpm PNPM_CLI",
+      "diagnose": "/arlo-doctor in the installed root; public inspectPiCompatibility from the installed adapter",
+      "finalBatch149": {
+        "buildReport": "private-evidence/0acb512550d2/pi1.3.0.json",
+        "buildReportSha256": "9080d38fdcf2d55efdc7934ca7a7ac2ac45b4d08485324c516eadb5344b5f801",
+        "manifest": {
+          "path": "private-evidence/bee29e4664c4/manifest.json",
+          "sha256": "3ad6f30090b0fdc1daf86412be84bd9b3affc0770afb8143bff225ef90e3b27c"
+        },
+        "nativeReport": "private-evidence/4cd0664c1047/pi1.3.0-native.json",
+        "nativeReportSha256": "e1ecc5299099427ed23ca4429bced28e37fd9e7a4e9f4ff1f20da5298432a729"
+      }
+    },
+    "pi-1.4.0": {
+      "host": "pi",
+      "version": "1.4.0",
+      "packages": {
+        "@earendil-works/pi-coding-agent": "1.4.0",
+        "@earendil-works/pi-tui": "1.4.0",
+        "@earendil-works/pi-ai": "1.4.0",
+        "@earendil-works/pi-agent-core": "1.4.0",
+        "@earendil-works/pi-codemode": "1.4.0",
+        "@earendil-works/pi-mcp": "1.4.0",
+        "@earendil-works/pi-telemetry": "1.4.0"
+      },
+      "lock": "pi-acceptance/candidates/1.4.0/pnpm-lock.yaml",
+      "lockSha256": "1a520ce6274aa9eb24919adad841827398315c35b53212e8d8e70443198b5dc8",
+      "evidence": [
+        "docs/compatibility/issue-149-evidence/summary.json"
+      ],
+      "install": "node scripts/pi-delivery.mjs build --host-version 1.4.0 --out NEW_DIR --output PI_REPORT --pnpm PNPM_CLI",
+      "diagnose": "/arlo-doctor in the installed root; public inspectPiCompatibility from the installed adapter",
+      "finalBatch149": {
+        "buildReport": "private-evidence/adc949cb2b1e/pi1.4.0.json",
+        "buildReportSha256": "05d621509a41c28f22f858c83f2eeaa836b0b6768a4ab80d4dd70f6e86bb2233",
+        "manifest": {
+          "path": "private-evidence/71012da55fa2/manifest.json",
+          "sha256": "723e4813126bab809969b4e421f22ca6c8ab2210cde1e4c1bb9bd8dad856b50e"
+        },
+        "nativeReport": "private-evidence/204b632d3768/pi1.4.0-native.json",
+        "nativeReportSha256": "00ebb69d2024dbab8a50881ef52092b01d3becc79d9621a7979df20ef105249c"
+      }
+    },
+    "dsh-0.2.1-rc.5": {
+      "host": "dsh",
+      "version": "0.2.1-rc.5",
+      "packages": {
+        "@deepseek-ai/dsh": "0.2.1-rc.5",
+        "@deepseek-ai/cordis": "4.0.5",
+        "@deepseek-ai/schemastery": "3.18.5",
+        "@deepseek-ai/dsh-agent": "0.2.1-rc.5",
+        "@deepseek-ai/dsh-llm": "0.2.1-rc.5",
+        "@deepseek-ai/dsh-tools": "0.2.1-rc.5",
+        "@deepseek-ai/dsh-session": "0.2.1-rc.5",
+        "@deepseek-ai/dsh-session-projection": "0.2.1-rc.5",
+        "@deepseek-ai/dsh-session-persistence-jsonl": "0.2.1-rc.5",
+        "@deepseek-ai/dsh-agent-default-model": "0.2.1-rc.5",
+        "@deepseek-ai/dsh-workspace": "0.2.1-rc.5",
+        "@deepseek-ai/dsh-typert-protocol": "0.2.1-rc.5",
+        "@deepseek-ai/dsh-typert-registry": "0.2.1-rc.5",
+        "@deepseek-ai/dsh-api-session-controller": "0.2.1-rc.5",
+        "@deepseek-ai/dsh-client-ui-conversation": "0.2.1-rc.5",
+        "@deepseek-ai/dsh-client-ui-primitives": "0.2.1-rc.5",
+        "@deepseek-ai/dsh-session-format": "0.2.1-rc.5",
+        "@deepseek-ai/dsh-host-frontend-static": "0.2.1-rc.5",
+        "@deepseek-ai/dsh-web-frontend": "0.2.1-rc.5",
+        "@deepseek-ai/dsh-client-ui-input-trigger": "0.2.1-rc.5",
+        "@deepseek-ai/dsh-client-modules": "0.2.1-rc.5",
+        "@deepseek-ai/dsh-agent-loop": "0.2.1-rc.5",
+        "@deepseek-ai/dsh-attachment": "0.2.1-rc.5",
+        "@deepseek-ai/dsh-system-prompt": "0.2.1-rc.5",
+        "@deepseek-ai/dsh-api-gateway": "0.2.1-rc.5",
+        "@deepseek-ai/dsh-client-locale": "0.2.1-rc.5",
+        "@deepseek-ai/dsh-client-ui-slots": "0.2.1-rc.5",
+        "@deepseek-ai/dsh-client-ui-renderer": "0.2.1-rc.5",
+        "@deepseek-ai/dsh-host-open-in-app": "0.2.1-rc.5"
+      },
+      "lock": "web/candidates/0.2.1-rc.5/complete-lock.yaml",
+      "lockSha256": "0fb2bf067ada9a64abea251dda9e5a9d7a054c9404f4339d7f568f533728546d",
+      "patches": {
+        "dsh-api-session-controller@0.2.1-rc.5.patch": "49a04d7b28bb6a58fd0d4aeef439e6ac4d2877946221d2dda1cfcaf25f10c550",
+        "dsh-client-ui-conversation@0.2.1-rc.5.patch": "99c3abdffefa7caa80c67c0274fb7a07d5d2780879cf259009e0fb9823312de0",
+        "dsh-host-open-in-app@0.2.1-rc.5.patch": "789fb6cd9ca7fe0bce4e806f8f1c16fef850cce7bd019034e642ec5f0d67cc3b",
+        "dsh-session-format@0.2.1-rc.5.patch": "e4f7d8fc367dd6380c533351f9de11b0ea39f50bfc963ec66aabab80eb878941",
+        "dsh-session-persistence-jsonl@0.2.1-rc.5.patch": "4ed1fbca422883052b4046a8e99a690064ed3c87ea6443df4a41d791152b6c47"
+      },
+      "frontend": {
+        "files": {
+          "assets/fonts/KaTeX_AMS-Regular-BQhdFMY1.woff2": "0cdd387c9590a1a9f9794560022dbb59654a7d86f187aa0c81495ad42d3a7308",
+          "assets/fonts/KaTeX_Caligraphic-Bold-Dq_IR9rO.woff2": "de7701e42cf1f4cf0b766c03fb27977207eee2f4fd5d76fa82188406da43ea4c",
+          "assets/fonts/KaTeX_Caligraphic-Regular-Di6jR-x-.woff2": "5d53e70ad607c2352162dec9e0923fb54ecdafaccbf604cd8dcf7d00facb989b",
+          "assets/fonts/KaTeX_Fraktur-Bold-CL6g_b3V.woff2": "74444efd593c005e3f4573b44524704c0af0a937fe911cca9e94068d0d140d3f",
+          "assets/fonts/KaTeX_Fraktur-Regular-CTYiF6lA.woff2": "51814d270d06ff0255dba0799994fa4d8c84d11f09951d47595f4abb1f3602dc",
+          "assets/fonts/KaTeX_Main-Bold-Cx986IdX.woff2": "0f60d1b897938ec918c8ce073092411baf9438f6739465693ff18b0f9d20b021",
+          "assets/fonts/KaTeX_Main-BoldItalic-DxDJ3AOS.woff2": "99cd42a3c072d918f2f44984a807cf7aa16e13545fd0875fc07c6c65f99e715b",
+          "assets/fonts/KaTeX_Main-Italic-NWA7e6Wa.woff2": "97479ca6cce906abc961ecac96faa5f9ca2e61b8e7670d475826bcdee9a7c267",
+          "assets/fonts/KaTeX_Main-Regular-B22Nviop.woff2": "c2342cd8b869e01752a9321dc17213fc40d4d04c79688c1d43f2cf316abd7866",
+          "assets/fonts/KaTeX_Math-BoldItalic-CZnvNsCZ.woff2": "dc47344dbb6cb5b655c8460d561f4df5f501b90c804ad3c6cec65fe322351ab1",
+          "assets/fonts/KaTeX_Math-Italic-t53AETM-.woff2": "7af58c5ec8f132a2ddde9027c6d7814decce4d3b822a11192a42a20e2e973264",
+          "assets/fonts/KaTeX_SansSerif-Bold-D1sUS0GD.woff2": "e99ae51144bf1232efcc1bfe5add36262c6866b0faab24fa75740e1b98577a62",
+          "assets/fonts/KaTeX_SansSerif-Italic-C3H0VqGB.woff2": "00b26ac825e2095056396e0553b8ac26d3f8ad158c3826e28b4c45b385c4714a",
+          "assets/fonts/KaTeX_SansSerif-Regular-DDBCnlJ7.woff2": "68e8c73ef42afd3ccec58bf0fba302cce448938e7fc020a5e31f8a952eee1342",
+          "assets/fonts/KaTeX_Script-Regular-D3wIWfF6.woff2": "036d4e95149b69ff9bcc0cd55771efeb25ffa3947293e69acd78d5ac328c684b",
+          "assets/fonts/KaTeX_Size1-Regular-mCD8mA8B.woff2": "6b47c40166b6dbe21a5dfca7718413f2147fd2399be1ba605d8ad39cedf25dfe",
+          "assets/fonts/KaTeX_Size2-Regular-Dy4dx90m.woff2": "d04c54219f9eaec6d4d4fd42dfb28785975a4794d6b2fc71e566b9cd6db842dd",
+          "assets/fonts/KaTeX_Size4-Regular-Dl5lxZxV.woff2": "a4af7d414440a1c1790825cfb700cf9cf43b0f2c4b04f0ebc523011ad9853ec0",
+          "assets/fonts/KaTeX_Typewriter-Regular-CO6r4hn1.woff2": "71d517d67827787cfabdf186914cc3358eda539e37931941f2b2fd4a21f68c0b",
+          "assets/fonts/Montserrat-OFL.txt": "861d64229728cd65a98d119612c12769582574d1a092f0b63c8b0fd474e7065f",
+          "assets/fonts/montserrat-light-Cvd2VjE_.woff2": "da25f1327eb1dcc70c193897b5d7e00d31821d9518c0a49e073ff50d97a3f10a",
+          "assets/fonts/montserrat-medium-B4OyO9CN.woff2": "8a81ca6f05cb6831d5487e4b287ce5a625a718c39226b736f155900adc394166",
+          "assets/fonts/montserrat-regular-DYep38cA.woff2": "0f4a15e29a9535af580a64db967929a8d6b202fad9a467be390619a591d2c4c5",
+          "assets/index-BNyAYEM7.css": "47c890e8b3898eb4e5a53933bd318e58d4cf168cd7ccef46789d48a070bba591",
+          "assets/index-BXV-oxvX.js": "0f3fc6b857e4f8bd4d69619ce1010240cdaaa443abf0826532a24ef8f6e32ef0",
+          "assets/langs/asciidoc-CSVQ5wI8.js": "ccbe3ab4515748773c185140855a976f2f3723a4e482f8423c36cf9ee6954b12",
+          "assets/langs/bat-CickPsom.js": "443aa1c3678e319e553f3ae7aef4ef7e6f068e2c83172ced17247d5ba850d6a3",
+          "assets/langs/bibtex-CHM0blh-.js": "4af4d61dd9d7297f65b361204af72d53e91fa70a4ede5e85bcaf40b4a63cd4a2",
+          "assets/langs/c-BIGW1oBm.js": "9c06263922b97a0e5890b832e23d44f3c0da54430ac6f971aa0ede8f4c2b8b66",
+          "assets/langs/clojure-P80f7IUj.js": "e70b326f33d37ddb29dd71abcc72321f1b0d900888ef05db9d7821fdf60eab22",
+          "assets/langs/cmake-D1j8_8rp.js": "f87d0ba1478aa4f5eb35b22e1276f0b330f30030b2c2e33cc7400a7b14f96eb2",
+          "assets/langs/cpp-DddhVWhK.js": "532fe55f0cf99df5f27e5396453ffae2d2afa7da82cdb19abaf245004c67da1b",
+          "assets/langs/csharp-DSvCPggb.js": "8443ef70cc6fec2de601c15c548ab1890e9bbc71a21ba9c216de77481c3cb6d6",
+          "assets/langs/css-CLj8gQPS.js": "69ee0204c2c40a92b8368049da700f0d08d40f5274809cfb624fd09e73eb32ee",
+          "assets/langs/csv-fuZLfV_i.js": "dc5872798e0825621bc48f5907e872a0fb34bd3bb2c7a5fd3c6841670675f830",
+          "assets/langs/dart-bE4Kk8sk.js": "8d6d70a18e68e8c4ef0aecf78ed03f9768342b9953dd0e9f8963b070152b1ab5",
+          "assets/langs/diff-D97Zzqfu.js": "710e6506726fe0befb51b8e40fc9aa12cf7fa733ec8f24019359276c4ea653dc",
+          "assets/langs/dotenv-Da5cRb03.js": "c7dc2e241e78b22b2a8015afb7c759b019616267ace3ab7660b3a8aa2fe207d7",
+          "assets/langs/elixir-CvYZzuDY.js": "be08af7448a3bc9de8e6d71e8fc351a09a5d5ba77784a8c4012199a9e3f5f5fe",
+          "assets/langs/erlang-DsQrWhSR.js": "87ef69877dda1297912b0a7a12ee0f3f00de0f675bb6214b0f1adf58629b75fa",
+          "assets/langs/fish-BvzEVeQv.js": "f7881c9158118435c2f1a6d3859ecd84ad7539c845584fd110ab844c69e7972b",
+          "assets/langs/fsharp-CXgrBDvD.js": "7cda55ae2e03fd929e8d18dbde6c9dfbe48d91f02e4c65bbb88e21ef3e38653a",
+          "assets/langs/go-C27-OAKa.js": "a6c3f73f1abb778ef3f5e489db1942542dc88ddac5b111ff55813fa1655dd23c",
+          "assets/langs/graphql-VhKNCVsv.js": "83bdded4a36def36699c50c60a98a136f92eb61d3c4a131b32e5e20c31e06da1",
+          "assets/langs/groovy-gcz8RCvz.js": "25aafe383369a4f78a33abdb518404d8836773f3dfb0f199e7d5104acea74832",
+          "assets/langs/haskell-Df6bDoY_.js": "731f9a3ba301c738fbbb6278b596171b0195cb69bd42febdf6edc6da10f87faf",
+          "assets/langs/hcl-BWvSN4gD.js": "2f141d770bcd86b2e056b76b6a65b74c534454f371490d3bdff2dec63ceb9fd8",
+          "assets/langs/html-derivative-DOyKdj44.js": "fa06bb6afb8b726edde9412e7aee065c560fe4afd21fcac4ac9992b783dd8ddb",
+          "assets/langs/html-fwsONPVS.js": "98fab9ca36666a6cd0163a9c54349d9d05b891912056028d6fd1cf0f012c3cdf",
+          "assets/langs/http-br_RHStI.js": "f3b5329f396ac17c57cadc8bf21e42fb34072e70b60a2fc5ac91684ad78c52e9",
+          "assets/langs/ini-BEwlwnbL.js": "d72bde3de42bb1ef3268bd65afedecf54747c208ac24335f7c6b4456924091c1",
+          "assets/langs/java-CylS5w8V.js": "934a0e63cf4cefb991100f15c42fdc60aaee3c7036a7ba6cb10ce5a6322a7ae9",
+          "assets/langs/javascript-DI5JR1nB.js": "b0952ac6a3182b0c45b005da5d76a764890d6da3df2fe61affe471a59744a169",
+          "assets/langs/julia-BfSmLjIk.js": "6523a4247b0a4a5c1d933134baa96cc12c9685a1b06237f0fce5ab6ed2059730",
+          "assets/langs/kotlin-BdnUsdx6.js": "99d81f485d9366a1f3f8c84b0fc5cee69b0d28d6c8f7f1e8dac29e554e80d24f",
+          "assets/langs/latex-B2nUCzCX.js": "265d43c3cae080cc97ac1f40a569aca48758cc680aad6a9f940dbdb584d55fc1",
+          "assets/langs/less-B1dDrJ26.js": "50c4bace8838379b74e0a22dab369c3cb81b57ba1b5b17ea5af8668f8290e8bf",
+          "assets/langs/log-2UxHyX5q.js": "7b2292970ede37be20c120a51d12bcbff43e82278aef1626816d71c344a07e27",
+          "assets/langs/lua-BaeVxFsk.js": "b218901041a92a152f51a7f3f74f26120e931e258abb1c73bcee551721015f67",
+          "assets/langs/make-CHLpvVh8.js": "9ef9765da0e58e256d97f4f2da8197a72ad4d84e8217b7160728d646c7e5e236",
+          "assets/langs/markdown-Cvjx9yec.js": "d9a83df9f57287a1f3594d5231480ea90a14adf7a8550c7a57930c3cf5b3f47d",
+          "assets/langs/mdx-Cmh6b_Ma.js": "8b88c45af52bcc95513e479bfce5b068d91f60a811acf8bb614bbb071d0e1151",
+          "assets/langs/nix-CwoSXNpI.js": "1af30178686ebb1c86d28d0511450379ac22d55fe0c0a72d5fa323915128afce",
+          "assets/langs/perl-DsWkoyyU.js": "170909d86f068983ff341d2effa52fdf73e870231a2527550c8b3b996faa3c82",
+          "assets/langs/php-hBQ2F09C.js": "c429abf50b4a2871565fe88911b63746e56d1e3a4be5762df0f3a4d352f6f8f1",
+          "assets/langs/powershell-BmBUJMz7.js": "8c4b6d7c57d7624ac4fcb6882377a78db37b617fc3974831961fe837c364f52c",
+          "assets/langs/proto-C7zT0LnQ.js": "fc5a20a7755c13ecedd65173c09d76e4694d4db44771318d89872607e2559659",
+          "assets/langs/python-B6aJPvgy.js": "1c6725168b498ade965cf0d8723c600fc9bf0de74988b6191106b304b571aaae",
+          "assets/langs/r-Cf5RLm7j.js": "8b6463b604a4c77d19e14aef404c920e66f2f04585e258280f543e93ce52f3bd",
+          "assets/langs/rst-CyvSi_BO.js": "e8ac815b49cd838a02f5dce139709b7a1e6c12c3b8cef9624c479232d569ea25",
+          "assets/langs/ruby-CO7l6YCm.js": "a287afcf431e64565e4d82e619af89aa1a6b0eef24e0526edb42951f3231210b",
+          "assets/langs/rust-B1yitclQ.js": "c02d27696b07c37fa2cac9de826a967a30401a33959cd891ebbf11d5bf245ce3",
+          "assets/langs/scala-CqE71os6.js": "5068f9ad81fc447782644ebe267a492032aee9580cfff6c96fb44984f71055ae",
+          "assets/langs/scss-D5BDwBP9.js": "d873165bb797f0547966aa681ade9af96c06ec17c2b0c12708303d9ace461753",
+          "assets/langs/sql-CRqJ_cUM.js": "60e00dca0f03a580d3717adbb9c730772e750909dc8c78408051091278eda6c0",
+          "assets/langs/svelte-BYadmKUw.js": "f136485a32bd2c2a37772ccd6cf13dcedf6af989dbd32e9b5283513e94a3d5bd",
+          "assets/langs/swift-C2oV4EkX.js": "f77b5e491884859198e703e3e981a46e218c05a5b82ec33984c05ec851a8d3b3",
+          "assets/langs/system-verilog-0hqHdDBg.js": "c9b9df256a28ddc9d5b60dcd0bd43137f3b3cdeb8ca472a4e8921f42232897b4",
+          "assets/langs/toml-vGWfd6FD.js": "aeb916b96e9eb064aa87c8f765abfded0ab0d53aefa3aa9b90cc1af4d1ad75d2",
+          "assets/langs/vb-Cu-pLBUe.js": "f5806bce4864a69a019a73599bf174bbdb32539ec19e8d6dc3ac0254262b8410",
+          "assets/langs/verilog-nZwndyjY.js": "9f43d6af8cbbd2b38473fb28ca9f59043129433e021f2d9c308c85bf11333900",
+          "assets/langs/vue-B0l-UZcs.js": "5b537a0c8fb2ebde0d85e1abdfccb663ffee8c7b4504f345cb15444ec15ae0df",
+          "assets/langs/xml-sdJ4AIDG.js": "d41d94621a62727ad56943d2d7e04e820c2642c3a9c246eb10e7d6e6e89d1fed",
+          "assets/langs/yaml-Buea-lGh.js": "8aad9cddbe3602b06b194e66d021aa63d715df01cf94e8ffcac810e48f0529e3",
+          "assets/vendor-DV2921Zo.css": "4cea59483551208ce61ff27251da83d5f7a0893ef34cfe4b808d61be6e13ebc7",
+          "assets/vendor-DcuzkuQH.js": "c14ba1089d78f48b8959a7bc42c9013b4a57aa4122e053d54f74c0a4d1d156a7",
+          "favicon-dark.svg": "dde7db781f41e7aeb4709ff5485af2bdcf7f4b4ea81b4500cfd5df44efdbd817",
+          "favicon.svg": "9e983b4f649c25c6ca0623a50be1a6e705fd8f49f756638b980fa13b40575ab6",
+          "index.html": "3ddfb0ce0bc60975c3dba70c8b960768f2f83d7293b562d82cb97e7d365a54c9",
+          "manifest.webmanifest": "39d993c8e94ab4ce3d2c112fd4eec8c1d91ba32a11b974fdf2fd21d5e596a98b"
+        },
+        "resourceSha256": "dba3c941aa0d8c66d3680dd30ab7707f6a99acf8ca9ffa6b9673d069099c6254",
+        "asset": "/assets/index-BXV-oxvX.js",
+        "sha256": "0f3fc6b857e4f8bd4d69619ce1010240cdaaa443abf0826532a24ef8f6e32ef0"
+      },
+      "compositionSha256": "9a6659378d1c690f3c3f27a75fa5b79e090de22bf56ecbf7e5782d515784616a",
+      "actualAdapter": {
+        "name": "@arlo/adapter-dsh",
+        "version": "0.1.0",
+        "artifactSha256": "f65b04199d037808ff171aab89985ffda482da437a2f943740ec801fd533d3f0"
+      },
+      "evidence": [
+        "docs/compatibility/issue-149-evidence/summary.json"
+      ],
+      "install": "node scripts/web-delivery.mjs build --host-version 0.2.1-rc.5 --out NEW_DIR --pnpm PNPM_CLI",
+      "diagnose": "node CONSUMER/node_modules/@arlo/adapter-dsh/delivery/diagnose.mjs diagnose --consumer CONSUMER",
+      "finalBatch149": {
+        "manifest": {
+          "path": "private-evidence/c7e2bc59d230/manifest.json",
+          "sha256": "5b54477d6209c6db5ca5fe68eaa4ec5f676a52f9d59ba900379aaf95b7c5bf1e"
+        },
+        "nativeReport": "private-evidence/4aea0519558c/dshrc5-native.json",
+        "nativeReportSha256": "bf35c1f7db04de24e4f56b1fd2f9def7f93c56cff1d95e29136db6de3bc106cf",
+        "observedCombination": "1be97372ffe6765a99893a3640d3d314cd509db5fdfbb002a27fe415136e8faa",
+        "observedInstallationLockSha256": "cb588bced921568494e615a2d77d0e5840a16bd08c4cc9f437522a90508354f0",
+        "completeRuntimeDependencyClosure": {
+          "lockSha256": "d48eadf27777da9cf67924a9a086d7cdd64edc3a3aa6894827cc0a3849ef353e",
+          "installedIdentitySha256": "490de3f88499a6bd067eec852af6c44cb630a989c20f3fb1c2acb2f2c92dd689",
+          "installedPackages": 570,
+          "optionalNotInstalled": [
+            "@deepseek-ai/libreoffice-kit-darwin-arm64@0.1.5",
+            "@deepseek-ai/libreoffice-kit-darwin-x64@0.1.5",
+            "@deepseek-ai/libreoffice-kit-win32-arm64@0.1.5",
+            "@deepseek-ai/libreoffice-kit-win32-x64@0.1.5",
+            "@deepseek-ai/node-addon-system-darwin-arm64@0.1.2",
+            "@deepseek-ai/node-addon-system-darwin-x64@0.1.2",
+            "@deepseek-ai/node-addon-system-linux-arm64@0.1.2",
+            "@img/sharp-darwin-arm64@0.35.5",
+            "@img/sharp-darwin-x64@0.35.5",
+            "@img/sharp-freebsd-wasm32@0.35.5",
+            "@img/sharp-libvips-darwin-arm64@1.3.4",
+            "@img/sharp-libvips-darwin-x64@1.3.4",
+            "@img/sharp-libvips-linux-arm64@1.3.4",
+            "@img/sharp-libvips-linux-arm@1.3.4",
+            "@img/sharp-libvips-linux-ppc64@1.3.4",
+            "@img/sharp-libvips-linux-riscv64@1.3.4",
+            "@img/sharp-libvips-linux-s390x@1.3.4",
+            "@img/sharp-libvips-linuxmusl-arm64@1.3.4",
+            "@img/sharp-linux-arm64@0.35.5",
+            "@img/sharp-linux-arm@0.35.5",
+            "@img/sharp-linux-ppc64@0.35.5",
+            "@img/sharp-linux-riscv64@0.35.5",
+            "@img/sharp-linux-s390x@0.35.5",
+            "@img/sharp-linuxmusl-arm64@0.35.5",
+            "@img/sharp-webcontainers-wasm32@0.35.5",
+            "@img/sharp-win32-arm64@0.35.5",
+            "@img/sharp-win32-ia32@0.35.5",
+            "@img/sharp-win32-x64@0.35.5",
+            "@koromix/koffi-darwin-arm64@3.1.1",
+            "@koromix/koffi-darwin-x64@3.1.1",
+            "@koromix/koffi-freebsd-arm64@3.1.1",
+            "@koromix/koffi-freebsd-ia32@3.1.1",
+            "@koromix/koffi-freebsd-x64@3.1.1",
+            "@koromix/koffi-linux-arm64@3.1.1",
+            "@koromix/koffi-linux-ia32@3.1.1",
+            "@koromix/koffi-linux-loong64@3.1.1",
+            "@koromix/koffi-linux-riscv64@3.1.1",
+            "@koromix/koffi-openbsd-ia32@3.1.1",
+            "@koromix/koffi-openbsd-x64@3.1.1",
+            "@koromix/koffi-win32-arm64@3.1.1",
+            "@koromix/koffi-win32-ia32@3.1.1",
+            "@koromix/koffi-win32-x64@3.1.1",
+            "@vscode/ripgrep-darwin-arm64@1.18.0",
+            "@vscode/ripgrep-darwin-x64@1.18.0",
+            "@vscode/ripgrep-linux-arm64@1.18.0",
+            "@vscode/ripgrep-linux-arm@1.18.0",
+            "@vscode/ripgrep-linux-ia32@1.18.0",
+            "@vscode/ripgrep-linux-ppc64@1.18.0",
+            "@vscode/ripgrep-linux-riscv64@1.18.0",
+            "@vscode/ripgrep-linux-s390x@1.18.0",
+            "@vscode/ripgrep-win32-arm64@1.18.0",
+            "@vscode/ripgrep-win32-ia32@1.18.0",
+            "@vscode/ripgrep-win32-x64@1.18.0",
+            "node-addon-require-builtin-darwin-arm64@0.1.9",
+            "node-addon-require-builtin-darwin-x64@0.1.9",
+            "node-addon-require-builtin-linux-arm64-gnu@0.1.9",
+            "node-addon-require-builtin-linux-arm64-musl@0.1.9",
+            "node-addon-require-builtin-win32-arm64-msvc@0.1.9",
+            "node-addon-require-builtin-win32-ia32-msvc@0.1.9",
+            "node-addon-require-builtin-win32-x64-msvc@0.1.9",
+            "sherpa-onnx-darwin-arm64@1.13.8",
+            "sherpa-onnx-darwin-x64@1.13.8",
+            "sherpa-onnx-linux-arm64@1.13.8",
+            "sherpa-onnx-win-ia32@1.13.8",
+            "sherpa-onnx-win-x64@1.13.8"
+          ]
+        }
+      },
+      "beforeReview144": {
+        "host": "dsh",
+        "version": "0.2.1-rc.5",
+        "packages": {
+          "@deepseek-ai/dsh": "0.2.1-rc.5",
+          "@deepseek-ai/cordis": "4.0.5",
+          "@deepseek-ai/schemastery": "3.18.5",
+          "@deepseek-ai/dsh-agent": "0.2.1-rc.5",
+          "@deepseek-ai/dsh-llm": "0.2.1-rc.5",
+          "@deepseek-ai/dsh-tools": "0.2.1-rc.5",
+          "@deepseek-ai/dsh-session": "0.2.1-rc.5",
+          "@deepseek-ai/dsh-session-projection": "0.2.1-rc.5",
+          "@deepseek-ai/dsh-session-persistence-jsonl": "0.2.1-rc.5",
+          "@deepseek-ai/dsh-agent-default-model": "0.2.1-rc.5",
+          "@deepseek-ai/dsh-workspace": "0.2.1-rc.5",
+          "@deepseek-ai/dsh-typert-protocol": "0.2.1-rc.5",
+          "@deepseek-ai/dsh-typert-registry": "0.2.1-rc.5",
+          "@deepseek-ai/dsh-api-session-controller": "0.2.1-rc.5",
+          "@deepseek-ai/dsh-client-ui-conversation": "0.2.1-rc.5",
+          "@deepseek-ai/dsh-client-ui-primitives": "0.2.1-rc.5",
+          "@deepseek-ai/dsh-session-format": "0.2.1-rc.5",
+          "@deepseek-ai/dsh-host-frontend-static": "0.2.1-rc.5",
+          "@deepseek-ai/dsh-web-frontend": "0.2.1-rc.5",
+          "@deepseek-ai/dsh-client-ui-input-trigger": "0.2.1-rc.5",
+          "@deepseek-ai/dsh-client-modules": "0.2.1-rc.5",
+          "@deepseek-ai/dsh-agent-loop": "0.2.1-rc.5",
+          "@deepseek-ai/dsh-attachment": "0.2.1-rc.5",
+          "@deepseek-ai/dsh-system-prompt": "0.2.1-rc.5",
+          "@deepseek-ai/dsh-api-gateway": "0.2.1-rc.5",
+          "@deepseek-ai/dsh-client-locale": "0.2.1-rc.5",
+          "@deepseek-ai/dsh-client-ui-slots": "0.2.1-rc.5",
+          "@deepseek-ai/dsh-client-ui-renderer": "0.2.1-rc.5",
+          "@deepseek-ai/dsh-host-open-in-app": "0.2.1-rc.5"
+        },
+        "lock": "web/candidates/0.2.1-rc.5/complete-lock.yaml",
+        "lockSha256": "0fb2bf067ada9a64abea251dda9e5a9d7a054c9404f4339d7f568f533728546d",
+        "patches": {
+          "dsh-api-session-controller@0.2.1-rc.5.patch": "49a04d7b28bb6a58fd0d4aeef439e6ac4d2877946221d2dda1cfcaf25f10c550",
+          "dsh-client-ui-conversation@0.2.1-rc.5.patch": "99c3abdffefa7caa80c67c0274fb7a07d5d2780879cf259009e0fb9823312de0",
+          "dsh-host-open-in-app@0.2.1-rc.5.patch": "789fb6cd9ca7fe0bce4e806f8f1c16fef850cce7bd019034e642ec5f0d67cc3b",
+          "dsh-session-format@0.2.1-rc.5.patch": "e4f7d8fc367dd6380c533351f9de11b0ea39f50bfc963ec66aabab80eb878941",
+          "dsh-session-persistence-jsonl@0.2.1-rc.5.patch": "4ed1fbca422883052b4046a8e99a690064ed3c87ea6443df4a41d791152b6c47"
+        },
+        "frontend": {
+          "files": {
+            "assets/fonts/KaTeX_AMS-Regular-BQhdFMY1.woff2": "0cdd387c9590a1a9f9794560022dbb59654a7d86f187aa0c81495ad42d3a7308",
+            "assets/fonts/KaTeX_Caligraphic-Bold-Dq_IR9rO.woff2": "de7701e42cf1f4cf0b766c03fb27977207eee2f4fd5d76fa82188406da43ea4c",
+            "assets/fonts/KaTeX_Caligraphic-Regular-Di6jR-x-.woff2": "5d53e70ad607c2352162dec9e0923fb54ecdafaccbf604cd8dcf7d00facb989b",
+            "assets/fonts/KaTeX_Fraktur-Bold-CL6g_b3V.woff2": "74444efd593c005e3f4573b44524704c0af0a937fe911cca9e94068d0d140d3f",
+            "assets/fonts/KaTeX_Fraktur-Regular-CTYiF6lA.woff2": "51814d270d06ff0255dba0799994fa4d8c84d11f09951d47595f4abb1f3602dc",
+            "assets/fonts/KaTeX_Main-Bold-Cx986IdX.woff2": "0f60d1b897938ec918c8ce073092411baf9438f6739465693ff18b0f9d20b021",
+            "assets/fonts/KaTeX_Main-BoldItalic-DxDJ3AOS.woff2": "99cd42a3c072d918f2f44984a807cf7aa16e13545fd0875fc07c6c65f99e715b",
+            "assets/fonts/KaTeX_Main-Italic-NWA7e6Wa.woff2": "97479ca6cce906abc961ecac96faa5f9ca2e61b8e7670d475826bcdee9a7c267",
+            "assets/fonts/KaTeX_Main-Regular-B22Nviop.woff2": "c2342cd8b869e01752a9321dc17213fc40d4d04c79688c1d43f2cf316abd7866",
+            "assets/fonts/KaTeX_Math-BoldItalic-CZnvNsCZ.woff2": "dc47344dbb6cb5b655c8460d561f4df5f501b90c804ad3c6cec65fe322351ab1",
+            "assets/fonts/KaTeX_Math-Italic-t53AETM-.woff2": "7af58c5ec8f132a2ddde9027c6d7814decce4d3b822a11192a42a20e2e973264",
+            "assets/fonts/KaTeX_SansSerif-Bold-D1sUS0GD.woff2": "e99ae51144bf1232efcc1bfe5add36262c6866b0faab24fa75740e1b98577a62",
+            "assets/fonts/KaTeX_SansSerif-Italic-C3H0VqGB.woff2": "00b26ac825e2095056396e0553b8ac26d3f8ad158c3826e28b4c45b385c4714a",
+            "assets/fonts/KaTeX_SansSerif-Regular-DDBCnlJ7.woff2": "68e8c73ef42afd3ccec58bf0fba302cce448938e7fc020a5e31f8a952eee1342",
+            "assets/fonts/KaTeX_Script-Regular-D3wIWfF6.woff2": "036d4e95149b69ff9bcc0cd55771efeb25ffa3947293e69acd78d5ac328c684b",
+            "assets/fonts/KaTeX_Size1-Regular-mCD8mA8B.woff2": "6b47c40166b6dbe21a5dfca7718413f2147fd2399be1ba605d8ad39cedf25dfe",
+            "assets/fonts/KaTeX_Size2-Regular-Dy4dx90m.woff2": "d04c54219f9eaec6d4d4fd42dfb28785975a4794d6b2fc71e566b9cd6db842dd",
+            "assets/fonts/KaTeX_Size4-Regular-Dl5lxZxV.woff2": "a4af7d414440a1c1790825cfb700cf9cf43b0f2c4b04f0ebc523011ad9853ec0",
+            "assets/fonts/KaTeX_Typewriter-Regular-CO6r4hn1.woff2": "71d517d67827787cfabdf186914cc3358eda539e37931941f2b2fd4a21f68c0b",
+            "assets/fonts/Montserrat-OFL.txt": "861d64229728cd65a98d119612c12769582574d1a092f0b63c8b0fd474e7065f",
+            "assets/fonts/montserrat-light-Cvd2VjE_.woff2": "da25f1327eb1dcc70c193897b5d7e00d31821d9518c0a49e073ff50d97a3f10a",
+            "assets/fonts/montserrat-medium-B4OyO9CN.woff2": "8a81ca6f05cb6831d5487e4b287ce5a625a718c39226b736f155900adc394166",
+            "assets/fonts/montserrat-regular-DYep38cA.woff2": "0f4a15e29a9535af580a64db967929a8d6b202fad9a467be390619a591d2c4c5",
+            "assets/index-BNyAYEM7.css": "47c890e8b3898eb4e5a53933bd318e58d4cf168cd7ccef46789d48a070bba591",
+            "assets/index-BXV-oxvX.js": "0f3fc6b857e4f8bd4d69619ce1010240cdaaa443abf0826532a24ef8f6e32ef0",
+            "assets/langs/asciidoc-CSVQ5wI8.js": "ccbe3ab4515748773c185140855a976f2f3723a4e482f8423c36cf9ee6954b12",
+            "assets/langs/bat-CickPsom.js": "443aa1c3678e319e553f3ae7aef4ef7e6f068e2c83172ced17247d5ba850d6a3",
+            "assets/langs/bibtex-CHM0blh-.js": "4af4d61dd9d7297f65b361204af72d53e91fa70a4ede5e85bcaf40b4a63cd4a2",
+            "assets/langs/c-BIGW1oBm.js": "9c06263922b97a0e5890b832e23d44f3c0da54430ac6f971aa0ede8f4c2b8b66",
+            "assets/langs/clojure-P80f7IUj.js": "e70b326f33d37ddb29dd71abcc72321f1b0d900888ef05db9d7821fdf60eab22",
+            "assets/langs/cmake-D1j8_8rp.js": "f87d0ba1478aa4f5eb35b22e1276f0b330f30030b2c2e33cc7400a7b14f96eb2",
+            "assets/langs/cpp-DddhVWhK.js": "532fe55f0cf99df5f27e5396453ffae2d2afa7da82cdb19abaf245004c67da1b",
+            "assets/langs/csharp-DSvCPggb.js": "8443ef70cc6fec2de601c15c548ab1890e9bbc71a21ba9c216de77481c3cb6d6",
+            "assets/langs/css-CLj8gQPS.js": "69ee0204c2c40a92b8368049da700f0d08d40f5274809cfb624fd09e73eb32ee",
+            "assets/langs/csv-fuZLfV_i.js": "dc5872798e0825621bc48f5907e872a0fb34bd3bb2c7a5fd3c6841670675f830",
+            "assets/langs/dart-bE4Kk8sk.js": "8d6d70a18e68e8c4ef0aecf78ed03f9768342b9953dd0e9f8963b070152b1ab5",
+            "assets/langs/diff-D97Zzqfu.js": "710e6506726fe0befb51b8e40fc9aa12cf7fa733ec8f24019359276c4ea653dc",
+            "assets/langs/dotenv-Da5cRb03.js": "c7dc2e241e78b22b2a8015afb7c759b019616267ace3ab7660b3a8aa2fe207d7",
+            "assets/langs/elixir-CvYZzuDY.js": "be08af7448a3bc9de8e6d71e8fc351a09a5d5ba77784a8c4012199a9e3f5f5fe",
+            "assets/langs/erlang-DsQrWhSR.js": "87ef69877dda1297912b0a7a12ee0f3f00de0f675bb6214b0f1adf58629b75fa",
+            "assets/langs/fish-BvzEVeQv.js": "f7881c9158118435c2f1a6d3859ecd84ad7539c845584fd110ab844c69e7972b",
+            "assets/langs/fsharp-CXgrBDvD.js": "7cda55ae2e03fd929e8d18dbde6c9dfbe48d91f02e4c65bbb88e21ef3e38653a",
+            "assets/langs/go-C27-OAKa.js": "a6c3f73f1abb778ef3f5e489db1942542dc88ddac5b111ff55813fa1655dd23c",
+            "assets/langs/graphql-VhKNCVsv.js": "83bdded4a36def36699c50c60a98a136f92eb61d3c4a131b32e5e20c31e06da1",
+            "assets/langs/groovy-gcz8RCvz.js": "25aafe383369a4f78a33abdb518404d8836773f3dfb0f199e7d5104acea74832",
+            "assets/langs/haskell-Df6bDoY_.js": "731f9a3ba301c738fbbb6278b596171b0195cb69bd42febdf6edc6da10f87faf",
+            "assets/langs/hcl-BWvSN4gD.js": "2f141d770bcd86b2e056b76b6a65b74c534454f371490d3bdff2dec63ceb9fd8",
+            "assets/langs/html-derivative-DOyKdj44.js": "fa06bb6afb8b726edde9412e7aee065c560fe4afd21fcac4ac9992b783dd8ddb",
+            "assets/langs/html-fwsONPVS.js": "98fab9ca36666a6cd0163a9c54349d9d05b891912056028d6fd1cf0f012c3cdf",
+            "assets/langs/http-br_RHStI.js": "f3b5329f396ac17c57cadc8bf21e42fb34072e70b60a2fc5ac91684ad78c52e9",
+            "assets/langs/ini-BEwlwnbL.js": "d72bde3de42bb1ef3268bd65afedecf54747c208ac24335f7c6b4456924091c1",
+            "assets/langs/java-CylS5w8V.js": "934a0e63cf4cefb991100f15c42fdc60aaee3c7036a7ba6cb10ce5a6322a7ae9",
+            "assets/langs/javascript-DI5JR1nB.js": "b0952ac6a3182b0c45b005da5d76a764890d6da3df2fe61affe471a59744a169",
+            "assets/langs/julia-BfSmLjIk.js": "6523a4247b0a4a5c1d933134baa96cc12c9685a1b06237f0fce5ab6ed2059730",
+            "assets/langs/kotlin-BdnUsdx6.js": "99d81f485d9366a1f3f8c84b0fc5cee69b0d28d6c8f7f1e8dac29e554e80d24f",
+            "assets/langs/latex-B2nUCzCX.js": "265d43c3cae080cc97ac1f40a569aca48758cc680aad6a9f940dbdb584d55fc1",
+            "assets/langs/less-B1dDrJ26.js": "50c4bace8838379b74e0a22dab369c3cb81b57ba1b5b17ea5af8668f8290e8bf",
+            "assets/langs/log-2UxHyX5q.js": "7b2292970ede37be20c120a51d12bcbff43e82278aef1626816d71c344a07e27",
+            "assets/langs/lua-BaeVxFsk.js": "b218901041a92a152f51a7f3f74f26120e931e258abb1c73bcee551721015f67",
+            "assets/langs/make-CHLpvVh8.js": "9ef9765da0e58e256d97f4f2da8197a72ad4d84e8217b7160728d646c7e5e236",
+            "assets/langs/markdown-Cvjx9yec.js": "d9a83df9f57287a1f3594d5231480ea90a14adf7a8550c7a57930c3cf5b3f47d",
+            "assets/langs/mdx-Cmh6b_Ma.js": "8b88c45af52bcc95513e479bfce5b068d91f60a811acf8bb614bbb071d0e1151",
+            "assets/langs/nix-CwoSXNpI.js": "1af30178686ebb1c86d28d0511450379ac22d55fe0c0a72d5fa323915128afce",
+            "assets/langs/perl-DsWkoyyU.js": "170909d86f068983ff341d2effa52fdf73e870231a2527550c8b3b996faa3c82",
+            "assets/langs/php-hBQ2F09C.js": "c429abf50b4a2871565fe88911b63746e56d1e3a4be5762df0f3a4d352f6f8f1",
+            "assets/langs/powershell-BmBUJMz7.js": "8c4b6d7c57d7624ac4fcb6882377a78db37b617fc3974831961fe837c364f52c",
+            "assets/langs/proto-C7zT0LnQ.js": "fc5a20a7755c13ecedd65173c09d76e4694d4db44771318d89872607e2559659",
+            "assets/langs/python-B6aJPvgy.js": "1c6725168b498ade965cf0d8723c600fc9bf0de74988b6191106b304b571aaae",
+            "assets/langs/r-Cf5RLm7j.js": "8b6463b604a4c77d19e14aef404c920e66f2f04585e258280f543e93ce52f3bd",
+            "assets/langs/rst-CyvSi_BO.js": "e8ac815b49cd838a02f5dce139709b7a1e6c12c3b8cef9624c479232d569ea25",
+            "assets/langs/ruby-CO7l6YCm.js": "a287afcf431e64565e4d82e619af89aa1a6b0eef24e0526edb42951f3231210b",
+            "assets/langs/rust-B1yitclQ.js": "c02d27696b07c37fa2cac9de826a967a30401a33959cd891ebbf11d5bf245ce3",
+            "assets/langs/scala-CqE71os6.js": "5068f9ad81fc447782644ebe267a492032aee9580cfff6c96fb44984f71055ae",
+            "assets/langs/scss-D5BDwBP9.js": "d873165bb797f0547966aa681ade9af96c06ec17c2b0c12708303d9ace461753",
+            "assets/langs/sql-CRqJ_cUM.js": "60e00dca0f03a580d3717adbb9c730772e750909dc8c78408051091278eda6c0",
+            "assets/langs/svelte-BYadmKUw.js": "f136485a32bd2c2a37772ccd6cf13dcedf6af989dbd32e9b5283513e94a3d5bd",
+            "assets/langs/swift-C2oV4EkX.js": "f77b5e491884859198e703e3e981a46e218c05a5b82ec33984c05ec851a8d3b3",
+            "assets/langs/system-verilog-0hqHdDBg.js": "c9b9df256a28ddc9d5b60dcd0bd43137f3b3cdeb8ca472a4e8921f42232897b4",
+            "assets/langs/toml-vGWfd6FD.js": "aeb916b96e9eb064aa87c8f765abfded0ab0d53aefa3aa9b90cc1af4d1ad75d2",
+            "assets/langs/vb-Cu-pLBUe.js": "f5806bce4864a69a019a73599bf174bbdb32539ec19e8d6dc3ac0254262b8410",
+            "assets/langs/verilog-nZwndyjY.js": "9f43d6af8cbbd2b38473fb28ca9f59043129433e021f2d9c308c85bf11333900",
+            "assets/langs/vue-B0l-UZcs.js": "5b537a0c8fb2ebde0d85e1abdfccb663ffee8c7b4504f345cb15444ec15ae0df",
+            "assets/langs/xml-sdJ4AIDG.js": "d41d94621a62727ad56943d2d7e04e820c2642c3a9c246eb10e7d6e6e89d1fed",
+            "assets/langs/yaml-Buea-lGh.js": "8aad9cddbe3602b06b194e66d021aa63d715df01cf94e8ffcac810e48f0529e3",
+            "assets/vendor-DV2921Zo.css": "4cea59483551208ce61ff27251da83d5f7a0893ef34cfe4b808d61be6e13ebc7",
+            "assets/vendor-DcuzkuQH.js": "c14ba1089d78f48b8959a7bc42c9013b4a57aa4122e053d54f74c0a4d1d156a7",
+            "favicon-dark.svg": "dde7db781f41e7aeb4709ff5485af2bdcf7f4b4ea81b4500cfd5df44efdbd817",
+            "favicon.svg": "9e983b4f649c25c6ca0623a50be1a6e705fd8f49f756638b980fa13b40575ab6",
+            "index.html": "3ddfb0ce0bc60975c3dba70c8b960768f2f83d7293b562d82cb97e7d365a54c9",
+            "manifest.webmanifest": "39d993c8e94ab4ce3d2c112fd4eec8c1d91ba32a11b974fdf2fd21d5e596a98b"
+          },
+          "resourceSha256": "dba3c941aa0d8c66d3680dd30ab7707f6a99acf8ca9ffa6b9673d069099c6254",
+          "asset": "/assets/index-BXV-oxvX.js",
+          "sha256": "0f3fc6b857e4f8bd4d69619ce1010240cdaaa443abf0826532a24ef8f6e32ef0"
+        },
+        "compositionSha256": "0efb75352e66fe4221ae4f951e7c90356bdc754c4dcad34b6186651faf8f9b8d",
+        "actualAdapter": {
+          "name": "@arlo/adapter-dsh",
+          "version": "0.1.0",
+          "artifactSha256": "dd3c7a419f028cbf131e2c491d9b49302f188b53503c1f73b84ab7bef9338697"
+        },
+        "evidence": [
+          "docs/compatibility/issue-149-evidence/summary.json"
+        ],
+        "install": "node scripts/web-delivery.mjs build --host-version 0.2.1-rc.5 --out NEW_DIR --pnpm PNPM_CLI",
+        "diagnose": "node CONSUMER/node_modules/@arlo/adapter-dsh/delivery/diagnose.mjs diagnose --consumer CONSUMER",
+        "finalBatch149": {
+          "manifest": {
+            "path": "private-evidence/7462204715f8/manifest.json",
+            "sha256": "80ec1ed114d6d4552b2e50384a8f277f172c6b81a22babf3c3ab3b1166fa539e"
+          },
+          "nativeReport": "private-evidence/2581a30938f1/dshrc5-native.json",
+          "nativeReportSha256": "1fa049f3659895f57a820dd3d5cfa8c40b7036174af4b0b2ac3b311980bfe74d",
+          "observedCombination": "1d909fa17eb759114087f6e6ce50e26149eed5f96bf890f93d1a1eec231e7c3f",
+          "observedInstallationLockSha256": "4c25fd552530b28858373e7e38faeb4828e03f5ea4c0c08f50413ac2305087e6"
+        }
+      }
+    }
+  },
+  "rows": [
+    {
+      "host": "pi",
+      "version": "1.1.0",
+      "recipe": "pi-1.1.0",
+      "platform": "linux",
+      "arch": "x64",
+      "os": "Ubuntu 26.04.1, kernel 7.0.0-42-generic",
+      "node": "24.13.1",
+      "support": "formal",
+      "diagnosis": "passed",
+      "acceptance": "failed",
+      "testedCapabilities": [
+        "native send/associated reply",
+        "busy reception",
+        "root new/resume/fork",
+        "recovery and persistent allowance",
+        "cancellation and bilateral participation"
+      ],
+      "limitations": [
+        "Known native preflight processing-slot defect remains failed. Original editor observation failures are preserved; initial-allowance and root-configuration reruns pass.",
+        "Current delayed settlement, cancellation and undo scenarios passed; no promise to remove host restrictions."
+      ],
+      "evidence": [
+        "docs/compatibility/final-matrix-122.md",
+        "docs/compatibility/issue-122-evidence/summary.json",
+        "docs/compatibility/issue-121-evidence/summary.json",
+        "docs/compatibility/node-runtime-121.md",
+        "docs/compatibility/pi-experimental-119.md"
+      ]
+    },
+    {
+      "host": "dsh",
+      "version": "0.2.0-rc.2",
+      "recipe": "dsh-0.2.0-rc.2",
+      "platform": "linux",
+      "arch": "x64",
+      "os": "Ubuntu 26.04.1, kernel 7.0.0-42-generic",
+      "node": "24.13.1",
+      "support": "formal",
+      "diagnosis": "passed",
+      "acceptance": "failed",
+      "testedCapabilities": [
+        "native @, exact endpoint, send/active reception/associated reply",
+        "same-host explicit create, model inheritance and cancellation",
+        "contact labels, history, queue and unload",
+        "Pi 1.1.0 cross-host both directions"
+      ],
+      "limitations": [
+        "Original full native run failed two browser scenarios (empty page/boot-order root registration); other scenarios and baseline round trip passed.",
+        "The #134 icon fix is installed and passes; old 404 results remain historical evidence."
+      ],
+      "evidence": [
+        "docs/compatibility/final-matrix-122.md",
+        "docs/compatibility/issue-122-evidence/summary.json",
+        "docs/compatibility/issue-121-evidence/summary.json",
+        "docs/compatibility/node-runtime-121.md",
+        "docs/compatibility/dsh-experimental-120.md"
+      ]
+    },
+    {
+      "host": "pi",
+      "version": "1.1.0",
+      "recipe": "pi-1.1.0-issue121",
+      "platform": "linux",
+      "arch": "x64",
+      "os": "Ubuntu 26.04.1, kernel 7.0.0-38-generic",
+      "node": "22.22.1",
+      "support": "formal",
+      "diagnosis": "passed",
+      "acceptance": "failed",
+      "testedCapabilities": [
+        "native send/associated reply",
+        "busy reception",
+        "root new/resume/fork",
+        "recovery and persistent allowance",
+        "cancellation and bilateral participation"
+      ],
+      "limitations": [
+        "processing slot released during preflight; delayed settlement and contact undo remain known host defects",
+        "Node validation selects 25 checks, not the complete Pi suite; independent rechecks do not rewrite original failures"
+      ],
+      "evidence": [
+        "docs/compatibility/issue-121-evidence/summary.json",
+        "docs/compatibility/node-runtime-121.md",
+        "docs/compatibility/pi-experimental-119.md"
+      ]
+    },
+    {
+      "host": "dsh",
+      "version": "0.2.0-rc.2",
+      "recipe": "dsh-0.2.0-rc.2-issue121",
+      "platform": "linux",
+      "arch": "x64",
+      "os": "Ubuntu 26.04.1, kernel 7.0.0-38-generic",
+      "node": "22.22.1",
+      "support": "formal",
+      "diagnosis": "passed",
+      "acceptance": "failed",
+      "testedCapabilities": [
+        "native @, exact endpoint, send/active reception/associated reply",
+        "same-host explicit create, model inheritance and cancellation",
+        "contact labels, history, queue and unload",
+        "Pi 1.1.0 cross-host both directions"
+      ],
+      "limitations": [
+        "completed functionality followed by cursor icon 404; native runner exit 1 retained",
+        "Node validation covers default/cross-host/rendering/unload; remaining native cases only at build Node"
+      ],
+      "evidence": [
+        "docs/compatibility/issue-121-evidence/summary.json",
+        "docs/compatibility/node-runtime-121.md",
+        "docs/compatibility/dsh-experimental-120.md"
+      ]
+    },
+    {
+      "host": "pi",
+      "version": "1.1.0",
+      "recipe": "pi-1.1.0-issue121",
+      "platform": "linux",
+      "arch": "x64",
+      "os": "Ubuntu 26.04.1, kernel 7.0.0-38-generic",
+      "node": "24.15.0",
+      "support": "formal",
+      "diagnosis": "passed",
+      "acceptance": "failed",
+      "testedCapabilities": [
+        "native send/associated reply",
+        "busy reception",
+        "root new/resume/fork",
+        "recovery and persistent allowance",
+        "cancellation and bilateral participation"
+      ],
+      "limitations": [
+        "processing slot released during preflight; delayed settlement and contact undo remain known host defects",
+        "Node validation selects 25 checks, not the complete Pi suite; independent rechecks do not rewrite original failures"
+      ],
+      "evidence": [
+        "docs/compatibility/issue-121-evidence/summary.json",
+        "docs/compatibility/node-runtime-121.md",
+        "docs/compatibility/pi-experimental-119.md"
+      ]
+    },
+    {
+      "host": "dsh",
+      "version": "0.2.0-rc.2",
+      "recipe": "dsh-0.2.0-rc.2-issue121",
+      "platform": "linux",
+      "arch": "x64",
+      "os": "Ubuntu 26.04.1, kernel 7.0.0-38-generic",
+      "node": "24.15.0",
+      "support": "formal",
+      "diagnosis": "passed",
+      "acceptance": "failed",
+      "testedCapabilities": [
+        "native @, exact endpoint, send/active reception/associated reply",
+        "same-host explicit create, model inheritance and cancellation",
+        "contact labels, history, queue and unload",
+        "Pi 1.1.0 cross-host both directions"
+      ],
+      "limitations": [
+        "completed functionality followed by cursor icon 404; native runner exit 1 retained",
+        "Node validation covers default/cross-host/rendering/unload; remaining native cases only at build Node"
+      ],
+      "evidence": [
+        "docs/compatibility/issue-121-evidence/summary.json",
+        "docs/compatibility/node-runtime-121.md",
+        "docs/compatibility/dsh-experimental-120.md"
+      ]
+    },
+    {
+      "host": "pi",
+      "version": "1.1.0",
+      "recipe": "pi-1.1.0-issue121",
+      "platform": "linux",
+      "arch": "x64",
+      "os": "Ubuntu 26.04.1, kernel 7.0.0-38-generic",
+      "node": "24.22.1",
+      "support": "formal",
+      "diagnosis": "passed",
+      "acceptance": "failed",
+      "testedCapabilities": [
+        "native send/associated reply",
+        "busy reception",
+        "root new/resume/fork",
+        "recovery and persistent allowance",
+        "cancellation and bilateral participation"
+      ],
+      "limitations": [
+        "processing slot released during preflight; delayed settlement and contact undo remain known host defects",
+        "Node validation selects 25 checks, not the complete Pi suite; independent rechecks do not rewrite original failures"
+      ],
+      "evidence": [
+        "docs/compatibility/issue-121-evidence/summary.json",
+        "docs/compatibility/node-runtime-121.md",
+        "docs/compatibility/pi-experimental-119.md"
+      ]
+    },
+    {
+      "host": "dsh",
+      "version": "0.2.0-rc.2",
+      "recipe": "dsh-0.2.0-rc.2-issue121",
+      "platform": "linux",
+      "arch": "x64",
+      "os": "Ubuntu 26.04.1, kernel 7.0.0-38-generic",
+      "node": "24.22.1",
+      "support": "formal",
+      "diagnosis": "passed",
+      "acceptance": "failed",
+      "testedCapabilities": [
+        "native @, exact endpoint, send/active reception/associated reply",
+        "same-host explicit create, model inheritance and cancellation",
+        "contact labels, history, queue and unload",
+        "Pi 1.1.0 cross-host both directions"
+      ],
+      "limitations": [
+        "completed functionality followed by cursor icon 404; native runner exit 1 retained",
+        "Node validation covers default/cross-host/rendering/unload; remaining native cases only at build Node"
+      ],
+      "evidence": [
+        "docs/compatibility/issue-121-evidence/summary.json",
+        "docs/compatibility/node-runtime-121.md",
+        "docs/compatibility/dsh-experimental-120.md"
+      ]
+    },
+    {
+      "host": "pi",
+      "version": "1.2.0",
+      "recipe": "pi-1.2.0",
+      "platform": "linux",
+      "arch": "x64",
+      "node": "24.13.1",
+      "os": "7.0.0-42-generic",
+      "support": "formal",
+      "diagnosis": "passed",
+      "acceptance": "passed",
+      "testedCapabilities": [
+        "Complete installed Pi native suite and doctor diagnostics with default formal admission",
+        "Native @, same-host send, active reception, busy scheduling, claim and associated reply",
+        "Draft editing/cancellation/undo, context/reload/reattachment, trusted identity, permissions and persisted allowance",
+        "Bidirectional native communication with the reviewed DSH rc.5 composition"
+      ],
+      "limitations": [
+        "Only this exact host version, Linux x64 and Node 24.13.1 are newly measured in #149; Windows, other architectures, additional runtimes and unlisted releases retain their separate historical or unverified status.",
+        "Earlier nonzero attempts remain archived; diagnosis readiness does not imply model work completion."
+      ],
+      "evidence": [
+        "docs/compatibility/issue-149-evidence/summary.json",
+        "docs/compatibility/linux-next-149.md"
+      ],
+      "nativeAcceptance": {
+        "report": "private-evidence/ff44cc76eaef/pi1.2.0-native.json",
+        "sha256": "fa9298e94f13b0cde2ff1e0ceb98badd972c6005334a30168e4d98e0d4e1ef16",
+        "rawComplete": true,
+        "rawExitCode": 0,
+        "applicableTestsPassed": 53,
+        "contractTestsPassed": 5,
+        "notApplicableTests": 0,
+        "scenarioCount": 14,
+        "webChecks": 0
+      },
+      "beforePromotion20261107": {
+        "support": "experimental",
+        "diagnosis": "passed",
+        "acceptance": "failed",
+        "testedCapabilities": [
+          "53 native tests across 14 installed Pi files; original complete runs retained with failures",
+          "native @ and exact endpoint, send/claim/associated reply/status, participation and isolation",
+          "all four finite Linux Pi/DSH pairings pass the bidirectional native cross-host scenario"
+        ],
+        "limitations": [
+          "Original complete runs failed observation ordering, partial JSONL append or fatal-exit observation; targeted reruns pass after driver repairs. Original complete runs remain failed.",
+          "Delayed settlement and contact undo pass with #128/#129. Windows candidate build is blocked; no formal promotion."
+        ],
+        "evidence": [
+          "docs/compatibility/final-matrix-122.md",
+          "docs/compatibility/issue-122-evidence/summary.json",
+          "docs/compatibility/issue-119-evidence/summary.json",
+          "docs/compatibility/pi-experimental-119.md"
+        ],
+        "os": "Ubuntu 26.04.1, kernel 7.0.0-42-generic"
+      },
+      "beforeFirstBatch149": {
+        "host": "pi",
+        "version": "1.2.0",
+        "recipe": "pi-1.2.0",
+        "platform": "linux",
+        "arch": "x64",
+        "os": "Ubuntu 26.04.1, kernel 7.0.0-42-generic",
+        "node": "24.13.1",
+        "support": "formal",
+        "diagnosis": "passed",
+        "acceptance": "passed",
+        "testedCapabilities": [
+          "default verified admission and diagnosis without experimental host flags",
+          "complete installed native suite: all applicable tests passed",
+          "all four baseline/upgraded Pi and DSH pairings: bidirectional native communication, associated reply and status",
+          "frozen installation, public declarations and actual installed JavaScript entries"
+        ],
+        "limitations": [
+          "Only this exact host version, reviewed complete profile and platform/runtime tuple are measured; additional Node versions and platforms remain untested."
+        ],
+        "evidence": [
+          "docs/compatibility/final-matrix-122.md",
+          "docs/compatibility/issue-122-evidence/summary.json",
+          "docs/compatibility/issue-119-evidence/summary.json",
+          "docs/compatibility/pi-experimental-119.md",
+          "docs/compatibility/formal-support-20261107.json",
+          "docs/compatibility/formal-support-20261107.md"
+        ],
+        "beforePromotion20261107": {
+          "support": "experimental",
+          "diagnosis": "passed",
+          "acceptance": "failed",
+          "testedCapabilities": [
+            "53 native tests across 14 installed Pi files; original complete runs retained with failures",
+            "native @ and exact endpoint, send/claim/associated reply/status, participation and isolation",
+            "all four finite Linux Pi/DSH pairings pass the bidirectional native cross-host scenario"
+          ],
+          "limitations": [
+            "Original complete runs failed observation ordering, partial JSONL append or fatal-exit observation; targeted reruns pass after driver repairs. Original complete runs remain failed.",
+            "Delayed settlement and contact undo pass with #128/#129. Windows candidate build is blocked; no formal promotion."
+          ],
+          "evidence": [
+            "docs/compatibility/final-matrix-122.md",
+            "docs/compatibility/issue-122-evidence/summary.json",
+            "docs/compatibility/issue-119-evidence/summary.json",
+            "docs/compatibility/pi-experimental-119.md"
+          ],
+          "os": "Ubuntu 26.04.1, kernel 7.0.0-42-generic"
+        },
+        "nativeAcceptance": {
+          "report": ".scratch/formal-support-20261107/linux-pi120-persistent-native.json",
+          "sha256": "f49d6845da8768201f1e7b8acc4da1aa5dc32ef57c4dbadb197e8762a9a9606f",
+          "rawComplete": true,
+          "rawExitCode": 0,
+          "applicableTestsPassed": 53,
+          "notApplicableTests": 0,
+          "scenarioCount": 14,
+          "webChecks": 0
+        }
+      }
+    },
+    {
+      "host": "dsh",
+      "version": "0.2.1-rc.2",
+      "recipe": "dsh-0.2.1-rc.2",
+      "platform": "linux",
+      "arch": "x64",
+      "node": "24.13.1",
+      "os": "7.0.0-42-generic",
+      "support": "formal",
+      "diagnosis": "passed",
+      "acceptance": "passed",
+      "testedCapabilities": [
+        "Complete 14-scenario / 122-check installed Web native suite",
+        "Native @, same-host creation, inherited/configured models, cancellation and unavailable-model branches",
+        "Same-host send, active reception, associated reply, editor/history/queue/resources, trusted identity and persisted allowance",
+        "Bidirectional native communication with Pi 1.3.0 and 1.4.0",
+        "Independent packaged diagnostics and mandatory contract/resource/module/patch integrity rejection"
+      ],
+      "limitations": [
+        "Only this exact host version, Linux x64 and Node 24.13.1 are newly measured in #149; Windows, other architectures, additional runtimes and unlisted releases retain their separate historical or unverified status.",
+        "Exact complete composition only; top-level version and ready do not substitute for native acceptance."
+      ],
+      "evidence": [
+        "docs/compatibility/issue-149-evidence/summary.json",
+        "docs/compatibility/linux-next-149.md"
+      ],
+      "nativeAcceptance": {
+        "report": "private-evidence/4aa7f750df61/dshrc2-native.json",
+        "sha256": "d8c1f5b3b2e7ec139cc8b68e7f192e049eb58aa804d95a0e17832c4b141fdcb6",
+        "rawComplete": true,
+        "rawExitCode": 0,
+        "applicableTestsPassed": 0,
+        "contractTestsPassed": 0,
+        "notApplicableTests": 0,
+        "scenarioCount": 14,
+        "webChecks": 122
+      },
+      "beforePromotion20261107": {
+        "support": "experimental",
+        "diagnosis": "passed",
+        "acceptance": "passed",
+        "testedCapabilities": [
+          "14 installed native Web scenarios including round trip, rendering, creation/model/cancel, unload and negative-model paths",
+          "candidate DSH with baseline Pi and final Pi 1.2.0 both native directions, associated reply and status",
+          "icon HTTP positive/negative and composition refusal tests"
+        ],
+        "limitations": [
+          "Explicit experimental entry remains required; Linux success does not promote Windows or other Node tuples.",
+          "Original #120 admission refusal and #133 icon failures belong to older recipes; #122 adds the fifth candidate patch and freezes its runtime bytes."
+        ],
+        "evidence": [
+          "docs/compatibility/final-matrix-122.md",
+          "docs/compatibility/issue-122-evidence/summary.json",
+          "docs/compatibility/dsh-experimental-120.md",
+          "docs/compatibility/issue-120-evidence/candidate-complete.json"
+        ],
+        "os": "Ubuntu 26.04.1, kernel 7.0.0-42-generic"
+      },
+      "beforeFirstBatch149": {
+        "host": "dsh",
+        "version": "0.2.1-rc.2",
+        "recipe": "dsh-0.2.1-rc.2",
+        "platform": "linux",
+        "arch": "x64",
+        "os": "Ubuntu 26.04.1, kernel 7.0.0-42-generic",
+        "node": "24.13.1",
+        "support": "formal",
+        "diagnosis": "passed",
+        "acceptance": "passed",
+        "testedCapabilities": [
+          "default verified admission and diagnosis without experimental host flags",
+          "complete installed native suite: all applicable tests passed",
+          "all four baseline/upgraded Pi and DSH pairings: bidirectional native communication, associated reply and status",
+          "frozen installation, public declarations and actual installed JavaScript entries"
+        ],
+        "limitations": [
+          "Only this exact host version, reviewed complete profile and platform/runtime tuple are measured; additional Node versions and platforms remain untested."
+        ],
+        "evidence": [
+          "docs/compatibility/final-matrix-122.md",
+          "docs/compatibility/issue-122-evidence/summary.json",
+          "docs/compatibility/dsh-experimental-120.md",
+          "docs/compatibility/issue-120-evidence/candidate-complete.json",
+          "docs/compatibility/formal-support-20261107.json",
+          "docs/compatibility/formal-support-20261107.md"
+        ],
+        "beforePromotion20261107": {
+          "support": "experimental",
+          "diagnosis": "passed",
+          "acceptance": "passed",
+          "testedCapabilities": [
+            "14 installed native Web scenarios including round trip, rendering, creation/model/cancel, unload and negative-model paths",
+            "candidate DSH with baseline Pi and final Pi 1.2.0 both native directions, associated reply and status",
+            "icon HTTP positive/negative and composition refusal tests"
+          ],
+          "limitations": [
+            "Explicit experimental entry remains required; Linux success does not promote Windows or other Node tuples.",
+            "Original #120 admission refusal and #133 icon failures belong to older recipes; #122 adds the fifth candidate patch and freezes its runtime bytes."
+          ],
+          "evidence": [
+            "docs/compatibility/final-matrix-122.md",
+            "docs/compatibility/issue-122-evidence/summary.json",
+            "docs/compatibility/dsh-experimental-120.md",
+            "docs/compatibility/issue-120-evidence/candidate-complete.json"
+          ],
+          "os": "Ubuntu 26.04.1, kernel 7.0.0-42-generic"
+        },
+        "nativeAcceptance": {
+          "report": ".scratch/formal-support-20261107/linux-dsh021-final-native.json",
+          "sha256": "4e52bcec88d944e3ec3779892d725491599dd4853e87a29895a63747fa54bd52",
+          "rawComplete": true,
+          "rawExitCode": 0,
+          "applicableTestsPassed": 0,
+          "notApplicableTests": 0,
+          "scenarioCount": 14,
+          "webChecks": 122
+        }
+      },
+      "beforeReview144": {
+        "host": "dsh",
+        "version": "0.2.1-rc.2",
+        "recipe": "dsh-0.2.1-rc.2",
+        "platform": "linux",
+        "arch": "x64",
+        "node": "24.13.1",
+        "os": "7.0.0-42-generic",
+        "support": "formal",
+        "diagnosis": "passed",
+        "acceptance": "passed",
+        "testedCapabilities": [
+          "Complete 14-scenario / 122-check installed Web native suite",
+          "Native @, same-host creation, inherited/configured models, cancellation and unavailable-model branches",
+          "Same-host send, active reception, associated reply, editor/history/queue/resources, trusted identity and persisted allowance",
+          "Bidirectional native communication with Pi 1.3.0 and 1.4.0",
+          "Independent packaged diagnostics and mandatory contract/resource/module/patch integrity rejection"
+        ],
+        "limitations": [
+          "Only this exact host version, Linux x64 and Node 24.13.1 are newly measured in #149; Windows, other architectures, additional runtimes and unlisted releases retain their separate historical or unverified status.",
+          "Exact complete composition only; top-level version and ready do not substitute for native acceptance."
+        ],
+        "evidence": [
+          "docs/compatibility/issue-149-evidence/summary.json",
+          "docs/compatibility/linux-next-149.md"
+        ],
+        "nativeAcceptance": {
+          "report": "private-evidence/db9c2ad64cdc/dshrc2-native.json",
+          "sha256": "e92f26dfa4566f121b825f4d3dbe6b4499fa2b28d71b82dd5cef0747bc75223f",
+          "rawComplete": true,
+          "rawExitCode": 0,
+          "applicableTestsPassed": 0,
+          "contractTestsPassed": 0,
+          "notApplicableTests": 0,
+          "scenarioCount": 14,
+          "webChecks": 122
+        },
+        "beforePromotion20261107": {
+          "support": "experimental",
+          "diagnosis": "passed",
+          "acceptance": "passed",
+          "testedCapabilities": [
+            "14 installed native Web scenarios including round trip, rendering, creation/model/cancel, unload and negative-model paths",
+            "candidate DSH with baseline Pi and final Pi 1.2.0 both native directions, associated reply and status",
+            "icon HTTP positive/negative and composition refusal tests"
+          ],
+          "limitations": [
+            "Explicit experimental entry remains required; Linux success does not promote Windows or other Node tuples.",
+            "Original #120 admission refusal and #133 icon failures belong to older recipes; #122 adds the fifth candidate patch and freezes its runtime bytes."
+          ],
+          "evidence": [
+            "docs/compatibility/final-matrix-122.md",
+            "docs/compatibility/issue-122-evidence/summary.json",
+            "docs/compatibility/dsh-experimental-120.md",
+            "docs/compatibility/issue-120-evidence/candidate-complete.json"
+          ],
+          "os": "Ubuntu 26.04.1, kernel 7.0.0-42-generic"
+        },
+        "beforeFirstBatch149": {
+          "host": "dsh",
+          "version": "0.2.1-rc.2",
+          "recipe": "dsh-0.2.1-rc.2",
+          "platform": "linux",
+          "arch": "x64",
+          "os": "Ubuntu 26.04.1, kernel 7.0.0-42-generic",
+          "node": "24.13.1",
+          "support": "formal",
+          "diagnosis": "passed",
+          "acceptance": "passed",
+          "testedCapabilities": [
+            "default verified admission and diagnosis without experimental host flags",
+            "complete installed native suite: all applicable tests passed",
+            "all four baseline/upgraded Pi and DSH pairings: bidirectional native communication, associated reply and status",
+            "frozen installation, public declarations and actual installed JavaScript entries"
+          ],
+          "limitations": [
+            "Only this exact host version, reviewed complete profile and platform/runtime tuple are measured; additional Node versions and platforms remain untested."
+          ],
+          "evidence": [
+            "docs/compatibility/final-matrix-122.md",
+            "docs/compatibility/issue-122-evidence/summary.json",
+            "docs/compatibility/dsh-experimental-120.md",
+            "docs/compatibility/issue-120-evidence/candidate-complete.json",
+            "docs/compatibility/formal-support-20261107.json",
+            "docs/compatibility/formal-support-20261107.md"
+          ],
+          "beforePromotion20261107": {
+            "support": "experimental",
+            "diagnosis": "passed",
+            "acceptance": "passed",
+            "testedCapabilities": [
+              "14 installed native Web scenarios including round trip, rendering, creation/model/cancel, unload and negative-model paths",
+              "candidate DSH with baseline Pi and final Pi 1.2.0 both native directions, associated reply and status",
+              "icon HTTP positive/negative and composition refusal tests"
+            ],
+            "limitations": [
+              "Explicit experimental entry remains required; Linux success does not promote Windows or other Node tuples.",
+              "Original #120 admission refusal and #133 icon failures belong to older recipes; #122 adds the fifth candidate patch and freezes its runtime bytes."
+            ],
+            "evidence": [
+              "docs/compatibility/final-matrix-122.md",
+              "docs/compatibility/issue-122-evidence/summary.json",
+              "docs/compatibility/dsh-experimental-120.md",
+              "docs/compatibility/issue-120-evidence/candidate-complete.json"
+            ],
+            "os": "Ubuntu 26.04.1, kernel 7.0.0-42-generic"
+          },
+          "nativeAcceptance": {
+            "report": ".scratch/formal-support-20261107/linux-dsh021-final-native.json",
+            "sha256": "4e52bcec88d944e3ec3779892d725491599dd4853e87a29895a63747fa54bd52",
+            "rawComplete": true,
+            "rawExitCode": 0,
+            "applicableTestsPassed": 0,
+            "notApplicableTests": 0,
+            "scenarioCount": 14,
+            "webChecks": 122
+          }
+        }
+      }
+    },
+    {
+      "host": "pi",
+      "version": "1.1.0",
+      "recipe": "pi-1.1.0",
+      "platform": "win32",
+      "arch": "x64",
+      "node": "24.13.1",
+      "support": "formal",
+      "diagnosis": "passed",
+      "acceptance": "failed",
+      "testedCapabilities": [
+        "private frozen installation and installed-entry contract",
+        "complete 14-file native run: 20 passed, 32 failed and one skipped test; root-configuration and settlement files pass"
+      ],
+      "limitations": [
+        "Complete native run has 12 failed files and two passed files; draft/readiness timeouts and claim-count assertions remain failed.",
+        "A later repeated contract run failed the unstable-identity refusal test; baseline cross-host native phase did not start.",
+        "Overlapping suites and limited visible CPU/memory were not controlled by a complete serial rerun. No host-version incompatibility or promotion is inferred."
+      ],
+      "evidence": [
+        "docs/compatibility/final-matrix-122.md",
+        "docs/compatibility/issue-122-evidence/summary.json"
+      ],
+      "os": "Windows 10 19045 (SSH, Node sees 1 logical CPU; VM configured 4 vCPU / 4 GiB)"
+    },
+    {
+      "host": "dsh",
+      "version": "0.2.0-rc.2",
+      "recipe": "dsh-0.2.0-rc.2",
+      "platform": "win32",
+      "arch": "x64",
+      "node": "24.13.1",
+      "support": "formal",
+      "diagnosis": "passed",
+      "acceptance": "failed",
+      "testedCapabilities": [
+        "private complete five-patch frozen installation and composition contract",
+        "independent Chromium headless shell 151.0.7922.34 launches; native round-trip reaches seven checks before failing"
+      ],
+      "limitations": [
+        "Original complete 14-scenario Edge run failed before functional validation due to SSH session encryption/profile errors.",
+        "Independent-browser round-trip failed after entering the real installed Web page; native success is not claimed. Other selected reruns timed out or were interrupted.",
+        "Overlapping suites and constrained resources were not followed by a complete serial control run. Support remains unchanged; see per-run evidence."
+      ],
+      "evidence": [
+        "docs/compatibility/final-matrix-122.md",
+        "docs/compatibility/issue-122-evidence/summary.json"
+      ],
+      "os": "Windows 10 19045 (SSH, Node sees 1 logical CPU; VM configured 4 vCPU / 4 GiB)"
+    },
+    {
+      "host": "pi",
+      "version": "1.2.0",
+      "recipe": "pi-1.2.0",
+      "platform": "win32",
+      "arch": "x64",
+      "node": "24.13.1",
+      "support": "formal",
+      "diagnosis": "passed",
+      "acceptance": "passed-applicable",
+      "testedCapabilities": [
+        "Complete applicable installed Pi native suite and native doctor with default formal admission",
+        "Native @, same-host send, active reception, busy scheduling, claim and associated reply",
+        "Draft editing/cancellation/undo, context/reload/reattachment, trusted identity, permissions and persisted allowance",
+        "Bidirectional native communication with the final DSH rc.5 composition"
+      ],
+      "limitations": [
+        "Only this exact host version, Windows 10 Home 22H2, native OS release 10.0.19045, full build 19045.6456, x64 and Node 24.13.1 are measured in #151/#156; other Windows releases, editions, servicing revisions, architectures and additional runtimes remain separately historical or unverified.",
+        "Observed current Windows registry metadata and declared measured Windows selectors are separate. Missing, invalid or unavailable OS metadata affects environment evidence only; formal host policy and existing mandatory readiness remain separate.",
+        "52 applicable native business tests and 5 separate contract tests passed in the measured predecessor. One Linux-only suspend-key scenario is explicitly inapplicable; original raw exit 2 and complete=false are preserved. Final installed revalidation has its own report and identity; readiness does not replace full applicable native acceptance."
+      ],
+      "evidence": [
+        "docs/compatibility/issue-152-evidence/summary.json",
+        "docs/compatibility/issue-156-evidence/summary.json",
+        "docs/compatibility/windows-next-156.md"
+      ],
+      "os": "Windows 10 Home 22H2; OS release 10.0.19045; full build 19045.6456",
+      "beforePromotion20261107": {
+        "support": "untested",
+        "diagnosis": "not-run",
+        "acceptance": "blocked",
+        "testedCapabilities": [],
+        "limitations": [
+          "Private frozen installation failed to finish within both 300-second and diagnostic 600-second budgets; no successful installed candidate or native run.",
+          "Contract refuses failed build reports. This is a build/environment block, not proof of host incompatibility."
+        ],
+        "evidence": [
+          "docs/compatibility/final-matrix-122.md",
+          "docs/compatibility/issue-122-evidence/summary.json"
+        ],
+        "os": "Windows 10 19045 (SSH, Node sees 1 logical CPU; VM configured 4 vCPU / 4 GiB)"
+      },
+      "beforeWindowsBatch151": {
+        "host": "pi",
+        "version": "1.2.0",
+        "recipe": "pi-1.2.0",
+        "platform": "win32",
+        "arch": "x64",
+        "node": "24.13.1",
+        "support": "formal",
+        "diagnosis": "passed",
+        "acceptance": "passed-applicable",
+        "testedCapabilities": [
+          "default verified admission and diagnosis without experimental host flags",
+          "complete installed native suite: all applicable tests passed",
+          "all four baseline/upgraded Pi and DSH pairings: bidirectional native communication, associated reply and status",
+          "frozen installation, public declarations and actual installed JavaScript entries"
+        ],
+        "limitations": [
+          "Only this exact host version, reviewed complete profile and platform/runtime tuple are measured; additional Node versions and platforms remain untested.",
+          "52 applicable native tests passed; one Linux-only suspend-key test is not applicable. Strict raw aggregation remains complete=false, exit2. acceptance=passed-applicable is the explicit platform policy result, not a rewritten raw report."
+        ],
+        "evidence": [
+          "docs/compatibility/final-matrix-122.md",
+          "docs/compatibility/issue-122-evidence/summary.json",
+          "docs/compatibility/formal-support-20261107.json",
+          "docs/compatibility/formal-support-20261107.md"
+        ],
+        "os": "Windows 10 19045; final source verified by source-file attestation",
+        "beforePromotion20261107": {
+          "support": "untested",
+          "diagnosis": "not-run",
+          "acceptance": "blocked",
+          "testedCapabilities": [],
+          "limitations": [
+            "Private frozen installation failed to finish within both 300-second and diagnostic 600-second budgets; no successful installed candidate or native run.",
+            "Contract refuses failed build reports. This is a build/environment block, not proof of host incompatibility."
+          ],
+          "evidence": [
+            "docs/compatibility/final-matrix-122.md",
+            "docs/compatibility/issue-122-evidence/summary.json"
+          ],
+          "os": "Windows 10 19045 (SSH, Node sees 1 logical CPU; VM configured 4 vCPU / 4 GiB)"
+        },
+        "nativeAcceptance": {
+          "report": ".scratch/formal-support-20261107/windows/pi120-r2-native.json",
+          "sha256": "2909943785c692ea2adad9f8c2b3b24e85ea35e4266c8a11bba4e938103d6417",
+          "rawComplete": false,
+          "rawExitCode": 2,
+          "applicableTestsPassed": 52,
+          "notApplicableTests": 1,
+          "scenarioCount": 14,
+          "webChecks": 0
+        }
+      },
+      "windows": {
+        "osRelease": "10.0.19045",
+        "productName": "Windows 10 Home",
+        "displayVersion": "22H2",
+        "build": "19045.6456"
+      },
+      "finalWindowsVerification": {
+        "status": "passed-applicable",
+        "sourceCommit": "b5fa4586a1a11db01296b8584b343920f3bb2611",
+        "report": "C:\\Users\\arlotest\\Arlo-156-windows-verification-r3-20261109\\.task\\results\\pi120-native-r3.json",
+        "reportSha256": "12854b34db846c85f2a57f0711be5e664d0dcaeba14d1716e47ebe8eca502aa6",
+        "artifactManifestSha256": "b422661466b1428895b263203296b01178570801fb76d78d34af8aace44443d7",
+        "evidence": "docs/compatibility/issue-156-evidence/summary.json",
+        "scope": "Exact recorded Windows environment and immutable installed identity; raw skip/partial outcomes and the separate Pi1.3 affected-file reruns remain explicit in #156."
+      }
+    },
+    {
+      "host": "dsh",
+      "version": "0.2.1-rc.2",
+      "recipe": "dsh-0.2.1-rc.2",
+      "platform": "win32",
+      "arch": "x64",
+      "node": "24.13.1",
+      "support": "formal",
+      "diagnosis": "passed",
+      "acceptance": "passed",
+      "testedCapabilities": [
+        "Complete applicable 14-scenario / 122-check installed DSH Web native suite",
+        "Native @, same-host creation, inherited/configured models, cancellation and unavailable-model branches",
+        "Same-host send, active reception, associated reply, editor/history/queue/resources, trusted identity and persisted allowance",
+        "Bidirectional native communication with Pi 1.3.0 and 1.4.0",
+        "Independent packaged diagnosis and mandatory closure/peer/entry/resource/module/patch integrity rejection"
+      ],
+      "limitations": [
+        "Only this exact host version, Windows 10 Home 22H2, native OS release 10.0.19045, full build 19045.6456, x64 and Node 24.13.1 are measured in #151/#156; other Windows releases, editions, servicing revisions, architectures and additional runtimes remain separately historical or unverified.",
+        "Observed current Windows registry metadata and declared measured Windows selectors are separate. Missing, invalid or unavailable OS metadata affects environment evidence only; formal host policy and existing mandatory readiness remain separate.",
+        "Exact complete composition only. The measured predecessor passed all 14 native scenarios and 122 checks; final installation revalidation is separately tied to final artifacts. Top-level version and ready do not replace native acceptance."
+      ],
+      "evidence": [
+        "docs/compatibility/issue-152-evidence/summary.json",
+        "docs/compatibility/issue-156-evidence/summary.json",
+        "docs/compatibility/windows-next-156.md"
+      ],
+      "os": "Windows 10 Home 22H2; OS release 10.0.19045; full build 19045.6456",
+      "beforePromotion20261107": {
+        "support": "experimental",
+        "diagnosis": "passed",
+        "acceptance": "failed",
+        "testedCapabilities": [
+          "private complete five-patch frozen installation and composition contract",
+          "independent Chromium headless shell 151.0.7922.34 launches; native round-trip reaches seven checks before failing"
+        ],
+        "limitations": [
+          "Original complete 14-scenario Edge run failed before functional validation due to SSH session encryption/profile errors.",
+          "Independent-browser round-trip failed after entering the real installed Web page; native success is not claimed. Other selected reruns timed out or were interrupted.",
+          "Overlapping suites and constrained resources were not followed by a complete serial control run. Support remains unchanged; see per-run evidence."
+        ],
+        "evidence": [
+          "docs/compatibility/final-matrix-122.md",
+          "docs/compatibility/issue-122-evidence/summary.json"
+        ],
+        "os": "Windows 10 19045 (SSH, Node sees 1 logical CPU; VM configured 4 vCPU / 4 GiB)"
+      },
+      "beforeWindowsBatch151": {
+        "host": "dsh",
+        "version": "0.2.1-rc.2",
+        "recipe": "dsh-0.2.1-rc.2",
+        "platform": "win32",
+        "arch": "x64",
+        "node": "24.13.1",
+        "support": "formal",
+        "diagnosis": "passed",
+        "acceptance": "passed",
+        "testedCapabilities": [
+          "default verified admission and diagnosis without experimental host flags",
+          "complete installed native suite: all applicable tests passed",
+          "all four baseline/upgraded Pi and DSH pairings: bidirectional native communication, associated reply and status",
+          "frozen installation, public declarations and actual installed JavaScript entries"
+        ],
+        "limitations": [
+          "Only this exact host version, reviewed complete profile and platform/runtime tuple are measured; additional Node versions and platforms remain untested."
+        ],
+        "evidence": [
+          "docs/compatibility/final-matrix-122.md",
+          "docs/compatibility/issue-122-evidence/summary.json",
+          "docs/compatibility/formal-support-20261107.json",
+          "docs/compatibility/formal-support-20261107.md"
+        ],
+        "os": "Windows 10 19045; final source verified by source-file attestation",
+        "beforePromotion20261107": {
+          "support": "experimental",
+          "diagnosis": "passed",
+          "acceptance": "failed",
+          "testedCapabilities": [
+            "private complete five-patch frozen installation and composition contract",
+            "independent Chromium headless shell 151.0.7922.34 launches; native round-trip reaches seven checks before failing"
+          ],
+          "limitations": [
+            "Original complete 14-scenario Edge run failed before functional validation due to SSH session encryption/profile errors.",
+            "Independent-browser round-trip failed after entering the real installed Web page; native success is not claimed. Other selected reruns timed out or were interrupted.",
+            "Overlapping suites and constrained resources were not followed by a complete serial control run. Support remains unchanged; see per-run evidence."
+          ],
+          "evidence": [
+            "docs/compatibility/final-matrix-122.md",
+            "docs/compatibility/issue-122-evidence/summary.json"
+          ],
+          "os": "Windows 10 19045 (SSH, Node sees 1 logical CPU; VM configured 4 vCPU / 4 GiB)"
+        },
+        "nativeAcceptance": {
+          "report": ".scratch/formal-support-20261107/windows/dsh021-native.json",
+          "sha256": "7f24c69be54297c726e999b7d8bf6d16715b54e1514975d64c05c6395e3ab87e",
+          "rawComplete": true,
+          "rawExitCode": 0,
+          "applicableTestsPassed": 0,
+          "notApplicableTests": 0,
+          "scenarioCount": 14,
+          "webChecks": 122
+        }
+      },
+      "compositionSha256": "b644f180b9c45bf18e3d87ebee1c97c3ebc839ae17538bd4ebfac60675777267",
+      "windows": {
+        "osRelease": "10.0.19045",
+        "productName": "Windows 10 Home",
+        "displayVersion": "22H2",
+        "build": "19045.6456"
+      },
+      "finalWindowsVerification": {
+        "status": "passed",
+        "sourceCommit": "b5fa4586a1a11db01296b8584b343920f3bb2611",
+        "report": "C:\\Users\\arlotest\\Arlo-156-windows-final-20261108\\.task\\results\\dshrc2-native.json",
+        "reportSha256": "8d1aca8dd69c5a5206ae4ed9f94d5b00f8a3db1bf8650c60c14900cbfe4a883d",
+        "artifactManifestSha256": "7bf12b9f89e88369f5e9804a2471d61671e3d41152a2285a2a52cfd2a43dfe66",
+        "evidence": "docs/compatibility/issue-156-evidence/summary.json",
+        "scope": "Exact recorded Windows environment and immutable installed identity; raw skip/partial outcomes and the separate Pi1.3 affected-file reruns remain explicit in #156."
+      }
+    },
+    {
+      "host": "pi",
+      "version": "1.1.0",
+      "recipe": "pi-1.1.0",
+      "platform": "win32",
+      "arch": "x64",
+      "node": "24.15.0",
+      "support": "untested",
+      "diagnosis": "not-run",
+      "acceptance": "not-run",
+      "testedCapabilities": [],
+      "limitations": [
+        "No Windows run for this tuple in #118-#121; Linux observations do not extend Windows support."
+      ],
+      "evidence": []
+    },
+    {
+      "host": "dsh",
+      "version": "0.2.0-rc.2",
+      "recipe": "dsh-0.2.0-rc.2",
+      "platform": "win32",
+      "arch": "x64",
+      "node": "24.15.0",
+      "support": "untested",
+      "diagnosis": "not-run",
+      "acceptance": "not-run",
+      "testedCapabilities": [],
+      "limitations": [
+        "No Windows run for this tuple in #118-#121; Linux observations do not extend Windows support."
+      ],
+      "evidence": []
+    },
+    {
+      "host": "pi",
+      "version": "1.3.0",
+      "recipe": "pi-1.3.0",
+      "platform": "linux",
+      "arch": "x64",
+      "node": "24.13.1",
+      "os": "7.0.0-42-generic",
+      "support": "formal",
+      "diagnosis": "passed",
+      "acceptance": "passed",
+      "testedCapabilities": [
+        "Complete installed Pi native suite and doctor diagnostics with default formal admission",
+        "Native @, same-host send, active reception, busy scheduling, claim and associated reply",
+        "Draft editing/cancellation/undo, context/reload/reattachment, trusted identity, permissions and persisted allowance",
+        "Bidirectional native communication with the reviewed DSH rc.2 and rc.5 compositions"
+      ],
+      "limitations": [
+        "Only this exact host version, Linux x64 and Node 24.13.1 are newly measured in #149; Windows, other architectures, additional runtimes and unlisted releases retain their separate historical or unverified status.",
+        "Earlier nonzero attempts remain archived; diagnosis readiness does not imply model work completion."
+      ],
+      "evidence": [
+        "docs/compatibility/issue-149-evidence/summary.json",
+        "docs/compatibility/linux-next-149.md"
+      ],
+      "nativeAcceptance": {
+        "report": "private-evidence/4cd0664c1047/pi1.3.0-native.json",
+        "sha256": "e1ecc5299099427ed23ca4429bced28e37fd9e7a4e9f4ff1f20da5298432a729",
+        "rawComplete": true,
+        "rawExitCode": 0,
+        "applicableTestsPassed": 53,
+        "contractTestsPassed": 5,
+        "notApplicableTests": 0,
+        "scenarioCount": 14,
+        "webChecks": 0
+      },
+      "beforeFirstBatch149": {
+        "host": "pi",
+        "version": "1.3.0",
+        "recipe": "pi-1.3.0",
+        "platform": "linux",
+        "arch": "x64",
+        "node": "24.13.1",
+        "os": "7.0.0-42-generic",
+        "support": "formal",
+        "diagnosis": "passed",
+        "acceptance": "passed",
+        "testedCapabilities": [
+          "Complete installed Pi native suite and doctor diagnostics with default formal admission",
+          "Native @, same-host send, active reception, busy scheduling, claim and associated reply",
+          "Draft editing/cancellation/undo, context/reload/reattachment, trusted identity, permissions and persisted allowance",
+          "Bidirectional native communication with the reviewed DSH rc.2 and rc.5 compositions"
+        ],
+        "limitations": [
+          "Only this exact host version, Linux x64 and Node 24.13.1 are newly measured in #149; Windows, other architectures, additional runtimes and unlisted releases retain their separate historical or unverified status.",
+          "Earlier nonzero attempts remain archived; diagnosis readiness does not imply model work completion."
+        ],
+        "evidence": [
+          "docs/compatibility/issue-149-evidence/summary.json",
+          "docs/compatibility/linux-next-149.md"
+        ],
+        "nativeAcceptance": {
+          "report": "private-evidence/4cd0664c1047/pi1.3.0-native.json",
+          "sha256": "e1ecc5299099427ed23ca4429bced28e37fd9e7a4e9f4ff1f20da5298432a729",
+          "rawComplete": true,
+          "rawExitCode": 0,
+          "applicableTestsPassed": 58,
+          "notApplicableTests": 0,
+          "scenarioCount": 14,
+          "webChecks": 0
+        }
+      }
+    },
+    {
+      "host": "pi",
+      "version": "1.4.0",
+      "recipe": "pi-1.4.0",
+      "platform": "linux",
+      "arch": "x64",
+      "node": "24.13.1",
+      "os": "7.0.0-42-generic",
+      "support": "formal",
+      "diagnosis": "passed",
+      "acceptance": "passed",
+      "testedCapabilities": [
+        "Complete installed Pi native suite and doctor diagnostics with default formal admission",
+        "Native @, same-host send, active reception, busy scheduling, claim and associated reply",
+        "Draft editing/cancellation/undo, context/reload/reattachment, trusted identity, permissions and persisted allowance",
+        "Bidirectional native communication with the reviewed DSH rc.2 and rc.5 compositions"
+      ],
+      "limitations": [
+        "Only this exact host version, Linux x64 and Node 24.13.1 are newly measured in #149; Windows, other architectures, additional runtimes and unlisted releases retain their separate historical or unverified status.",
+        "Earlier nonzero attempts remain archived; diagnosis readiness does not imply model work completion."
+      ],
+      "evidence": [
+        "docs/compatibility/issue-149-evidence/summary.json",
+        "docs/compatibility/linux-next-149.md"
+      ],
+      "nativeAcceptance": {
+        "report": "private-evidence/204b632d3768/pi1.4.0-native.json",
+        "sha256": "00ebb69d2024dbab8a50881ef52092b01d3becc79d9621a7979df20ef105249c",
+        "rawComplete": true,
+        "rawExitCode": 0,
+        "applicableTestsPassed": 53,
+        "contractTestsPassed": 5,
+        "notApplicableTests": 0,
+        "scenarioCount": 14,
+        "webChecks": 0
+      },
+      "beforeFirstBatch149": {
+        "host": "pi",
+        "version": "1.4.0",
+        "recipe": "pi-1.4.0",
+        "platform": "linux",
+        "arch": "x64",
+        "node": "24.13.1",
+        "os": "7.0.0-42-generic",
+        "support": "formal",
+        "diagnosis": "passed",
+        "acceptance": "passed",
+        "testedCapabilities": [
+          "Complete installed Pi native suite and doctor diagnostics with default formal admission",
+          "Native @, same-host send, active reception, busy scheduling, claim and associated reply",
+          "Draft editing/cancellation/undo, context/reload/reattachment, trusted identity, permissions and persisted allowance",
+          "Bidirectional native communication with the reviewed DSH rc.2 and rc.5 compositions"
+        ],
+        "limitations": [
+          "Only this exact host version, Linux x64 and Node 24.13.1 are newly measured in #149; Windows, other architectures, additional runtimes and unlisted releases retain their separate historical or unverified status.",
+          "Earlier nonzero attempts remain archived; diagnosis readiness does not imply model work completion."
+        ],
+        "evidence": [
+          "docs/compatibility/issue-149-evidence/summary.json",
+          "docs/compatibility/linux-next-149.md"
+        ],
+        "nativeAcceptance": {
+          "report": "private-evidence/204b632d3768/pi1.4.0-native.json",
+          "sha256": "00ebb69d2024dbab8a50881ef52092b01d3becc79d9621a7979df20ef105249c",
+          "rawComplete": true,
+          "rawExitCode": 0,
+          "applicableTestsPassed": 58,
+          "notApplicableTests": 0,
+          "scenarioCount": 14,
+          "webChecks": 0
+        }
+      }
+    },
+    {
+      "host": "dsh",
+      "version": "0.2.1-rc.5",
+      "recipe": "dsh-0.2.1-rc.5",
+      "platform": "linux",
+      "arch": "x64",
+      "node": "24.13.1",
+      "os": "7.0.0-42-generic",
+      "support": "formal",
+      "diagnosis": "passed",
+      "acceptance": "passed",
+      "testedCapabilities": [
+        "Complete 14-scenario / 122-check installed Web native suite",
+        "Native @, same-host creation, inherited/configured models, cancellation and unavailable-model branches",
+        "Same-host send, active reception, associated reply, editor/history/queue/resources, trusted identity and persisted allowance",
+        "Bidirectional native communication with Pi 1.2.0, 1.3.0 and 1.4.0",
+        "Independent packaged diagnostics and mandatory contract/resource/module/patch integrity rejection"
+      ],
+      "limitations": [
+        "Only this exact host version, Linux x64 and Node 24.13.1 are newly measured in #149; Windows, other architectures, additional runtimes and unlisted releases retain their separate historical or unverified status.",
+        "Exact complete composition only; top-level version and ready do not substitute for native acceptance."
+      ],
+      "evidence": [
+        "docs/compatibility/issue-149-evidence/summary.json",
+        "docs/compatibility/linux-next-149.md"
+      ],
+      "nativeAcceptance": {
+        "report": "private-evidence/4aea0519558c/dshrc5-native.json",
+        "sha256": "bf35c1f7db04de24e4f56b1fd2f9def7f93c56cff1d95e29136db6de3bc106cf",
+        "rawComplete": true,
+        "rawExitCode": 0,
+        "applicableTestsPassed": 0,
+        "contractTestsPassed": 0,
+        "notApplicableTests": 0,
+        "scenarioCount": 14,
+        "webChecks": 122
+      },
+      "beforeFirstBatch149": {
+        "host": "dsh",
+        "version": "0.2.1-rc.5",
+        "recipe": "dsh-0.2.1-rc.5",
+        "platform": "linux",
+        "arch": "x64",
+        "node": "24.13.1",
+        "os": "7.0.0-42-generic",
+        "support": "formal",
+        "diagnosis": "passed",
+        "acceptance": "passed",
+        "testedCapabilities": [
+          "Complete 14-scenario / 122-check installed Web native suite",
+          "Native @, same-host creation, inherited/configured models, cancellation and unavailable-model branches",
+          "Same-host send, active reception, associated reply, editor/history/queue/resources, trusted identity and persisted allowance",
+          "Bidirectional native communication with Pi 1.2.0, 1.3.0 and 1.4.0",
+          "Independent packaged diagnostics and mandatory contract/resource/module/patch integrity rejection"
+        ],
+        "limitations": [
+          "Only this exact host version, Linux x64 and Node 24.13.1 are newly measured in #149; Windows, other architectures, additional runtimes and unlisted releases retain their separate historical or unverified status.",
+          "Exact complete composition only; top-level version and ready do not substitute for native acceptance."
+        ],
+        "evidence": [
+          "docs/compatibility/issue-149-evidence/summary.json",
+          "docs/compatibility/linux-next-149.md"
+        ],
+        "nativeAcceptance": {
+          "report": "private-evidence/2581a30938f1/dshrc5-native.json",
+          "sha256": "1fa049f3659895f57a820dd3d5cfa8c40b7036174af4b0b2ac3b311980bfe74d",
+          "rawComplete": true,
+          "rawExitCode": 0,
+          "applicableTestsPassed": 0,
+          "notApplicableTests": 0,
+          "scenarioCount": 14,
+          "webChecks": 122
+        }
+      },
+      "beforeReview144": {
+        "host": "dsh",
+        "version": "0.2.1-rc.5",
+        "recipe": "dsh-0.2.1-rc.5",
+        "platform": "linux",
+        "arch": "x64",
+        "node": "24.13.1",
+        "os": "7.0.0-42-generic",
+        "support": "formal",
+        "diagnosis": "passed",
+        "acceptance": "passed",
+        "testedCapabilities": [
+          "Complete 14-scenario / 122-check installed Web native suite",
+          "Native @, same-host creation, inherited/configured models, cancellation and unavailable-model branches",
+          "Same-host send, active reception, associated reply, editor/history/queue/resources, trusted identity and persisted allowance",
+          "Bidirectional native communication with Pi 1.2.0, 1.3.0 and 1.4.0",
+          "Independent packaged diagnostics and mandatory contract/resource/module/patch integrity rejection"
+        ],
+        "limitations": [
+          "Only this exact host version, Linux x64 and Node 24.13.1 are newly measured in #149; Windows, other architectures, additional runtimes and unlisted releases retain their separate historical or unverified status.",
+          "Exact complete composition only; top-level version and ready do not substitute for native acceptance."
+        ],
+        "evidence": [
+          "docs/compatibility/issue-149-evidence/summary.json",
+          "docs/compatibility/linux-next-149.md"
+        ],
+        "nativeAcceptance": {
+          "report": "private-evidence/2581a30938f1/dshrc5-native.json",
+          "sha256": "1fa049f3659895f57a820dd3d5cfa8c40b7036174af4b0b2ac3b311980bfe74d",
+          "rawComplete": true,
+          "rawExitCode": 0,
+          "applicableTestsPassed": 0,
+          "contractTestsPassed": 0,
+          "notApplicableTests": 0,
+          "scenarioCount": 14,
+          "webChecks": 122
+        },
+        "beforeFirstBatch149": {
+          "host": "dsh",
+          "version": "0.2.1-rc.5",
+          "recipe": "dsh-0.2.1-rc.5",
+          "platform": "linux",
+          "arch": "x64",
+          "node": "24.13.1",
+          "os": "7.0.0-42-generic",
+          "support": "formal",
+          "diagnosis": "passed",
+          "acceptance": "passed",
+          "testedCapabilities": [
+            "Complete 14-scenario / 122-check installed Web native suite",
+            "Native @, same-host creation, inherited/configured models, cancellation and unavailable-model branches",
+            "Same-host send, active reception, associated reply, editor/history/queue/resources, trusted identity and persisted allowance",
+            "Bidirectional native communication with Pi 1.2.0, 1.3.0 and 1.4.0",
+            "Independent packaged diagnostics and mandatory contract/resource/module/patch integrity rejection"
+          ],
+          "limitations": [
+            "Only this exact host version, Linux x64 and Node 24.13.1 are newly measured in #149; Windows, other architectures, additional runtimes and unlisted releases retain their separate historical or unverified status.",
+            "Exact complete composition only; top-level version and ready do not substitute for native acceptance."
+          ],
+          "evidence": [
+            "docs/compatibility/issue-149-evidence/summary.json",
+            "docs/compatibility/linux-next-149.md"
+          ],
+          "nativeAcceptance": {
+            "report": "private-evidence/2581a30938f1/dshrc5-native.json",
+            "sha256": "1fa049f3659895f57a820dd3d5cfa8c40b7036174af4b0b2ac3b311980bfe74d",
+            "rawComplete": true,
+            "rawExitCode": 0,
+            "applicableTestsPassed": 0,
+            "notApplicableTests": 0,
+            "scenarioCount": 14,
+            "webChecks": 122
+          }
+        }
+      }
+    },
+    {
+      "host": "pi",
+      "version": "1.3.0",
+      "recipe": "pi-1.3.0",
+      "platform": "win32",
+      "arch": "x64",
+      "node": "24.13.1",
+      "acceptance": "passed-applicable",
+      "testedCapabilities": [
+        "Complete applicable installed Pi native suite and native doctor with default formal admission",
+        "Native @, same-host send, active reception, busy scheduling, claim and associated reply",
+        "Draft editing/cancellation/undo, context/reload/reattachment, trusted identity, permissions and persisted allowance",
+        "Bidirectional native communication with the final DSH rc.2 and rc.5 compositions"
+      ],
+      "limitations": [
+        "Only this exact host version, Windows 10 Home 22H2, native OS release 10.0.19045, full build 19045.6456, x64 and Node 24.13.1 are measured in #151/#156; other Windows releases, editions, servicing revisions, architectures and additional runtimes remain separately historical or unverified.",
+        "Observed current Windows registry metadata and declared measured Windows selectors are separate. Missing, invalid or unavailable OS metadata affects environment evidence only; formal host policy and existing mandatory readiness remain separate.",
+        "52 applicable native business tests and 5 separate contract tests passed in the measured predecessor. One Linux-only suspend-key scenario is explicitly inapplicable; original raw exit 2 and complete=false are preserved. Final installed revalidation has its own report and identity; readiness does not replace full applicable native acceptance."
+      ],
+      "evidence": [
+        "docs/compatibility/issue-153-evidence/summary.json",
+        "docs/compatibility/issue-156-evidence/summary.json",
+        "docs/compatibility/windows-next-156.md"
+      ],
+      "windows": {
+        "osRelease": "10.0.19045",
+        "productName": "Windows 10 Home",
+        "displayVersion": "22H2",
+        "build": "19045.6456"
+      },
+      "os": "Windows 10 Home 22H2; OS release 10.0.19045; full build 19045.6456",
+      "support": "formal",
+      "diagnosis": "passed",
+      "finalWindowsVerification": {
+        "status": "passed-applicable",
+        "sourceCommit": "b5fa4586a1a11db01296b8584b343920f3bb2611",
+        "report": "C:\\Users\\arlotest\\Arlo-156-windows-final-20261108\\.task\\results\\pi130-native.json",
+        "reportSha256": "c23b51c9a81157364b148dabf43ce186757d6e4c3e3c33bbacf6363ad4009b36",
+        "artifactManifestSha256": "a70ee1a4d0c9aa0658bcd05fe9188a5c59a913660e64aaba4f590cb3734c83e5",
+        "evidence": "docs/compatibility/issue-156-evidence/summary.json",
+        "scope": "Exact recorded Windows environment and immutable installed identity; raw skip/partial outcomes and the separate Pi1.3 affected-file reruns remain explicit in #156."
+      }
+    },
+    {
+      "host": "pi",
+      "version": "1.4.0",
+      "recipe": "pi-1.4.0",
+      "platform": "win32",
+      "arch": "x64",
+      "node": "24.13.1",
+      "acceptance": "passed-applicable",
+      "testedCapabilities": [
+        "Complete applicable installed Pi native suite and native doctor with default formal admission",
+        "Native @, same-host send, active reception, busy scheduling, claim and associated reply",
+        "Draft editing/cancellation/undo, context/reload/reattachment, trusted identity, permissions and persisted allowance",
+        "Bidirectional native communication with the final DSH rc.2 and rc.5 compositions"
+      ],
+      "limitations": [
+        "Only this exact host version, Windows 10 Home 22H2, native OS release 10.0.19045, full build 19045.6456, x64 and Node 24.13.1 are measured in #151/#156; other Windows releases, editions, servicing revisions, architectures and additional runtimes remain separately historical or unverified.",
+        "Observed current Windows registry metadata and declared measured Windows selectors are separate. Missing, invalid or unavailable OS metadata affects environment evidence only; formal host policy and existing mandatory readiness remain separate.",
+        "52 applicable native business tests and 5 separate contract tests passed in the measured predecessor. One Linux-only suspend-key scenario is explicitly inapplicable; original raw exit 2 and complete=false are preserved. Final installed revalidation has its own report and identity; readiness does not replace full applicable native acceptance."
+      ],
+      "evidence": [
+        "docs/compatibility/issue-154-evidence/summary.json",
+        "docs/compatibility/issue-156-evidence/summary.json",
+        "docs/compatibility/windows-next-156.md"
+      ],
+      "windows": {
+        "osRelease": "10.0.19045",
+        "productName": "Windows 10 Home",
+        "displayVersion": "22H2",
+        "build": "19045.6456"
+      },
+      "os": "Windows 10 Home 22H2; OS release 10.0.19045; full build 19045.6456",
+      "support": "formal",
+      "diagnosis": "passed",
+      "finalWindowsVerification": {
+        "status": "passed-applicable",
+        "sourceCommit": "b5fa4586a1a11db01296b8584b343920f3bb2611",
+        "report": "C:\\Users\\arlotest\\Arlo-156-windows-verification-r3-20261109\\.task\\results\\pi140-native-r3.json",
+        "reportSha256": "05d3569162a84ea4489101fac4c98c6f10c6fdf66b948fb5173c5b8089c0b03f",
+        "artifactManifestSha256": "8b33a5c66a42ee8fe537c47da4f5ba6040122b458f437994daf5e9972796e663",
+        "evidence": "docs/compatibility/issue-156-evidence/summary.json",
+        "scope": "Exact recorded Windows environment and immutable installed identity; raw skip/partial outcomes and the separate Pi1.3 affected-file reruns remain explicit in #156."
+      }
+    },
+    {
+      "host": "dsh",
+      "version": "0.2.1-rc.5",
+      "recipe": "dsh-0.2.1-rc.5",
+      "platform": "win32",
+      "arch": "x64",
+      "node": "24.13.1",
+      "compositionSha256": "9a6659378d1c690f3c3f27a75fa5b79e090de22bf56ecbf7e5782d515784616a",
+      "acceptance": "passed",
+      "testedCapabilities": [
+        "Complete applicable 14-scenario / 122-check installed DSH Web native suite",
+        "Native @, same-host creation, inherited/configured models, cancellation and unavailable-model branches",
+        "Same-host send, active reception, associated reply, editor/history/queue/resources, trusted identity and persisted allowance",
+        "Bidirectional native communication with Pi 1.2.0, 1.3.0 and 1.4.0",
+        "Independent packaged diagnosis and mandatory closure/peer/entry/resource/module/patch integrity rejection"
+      ],
+      "limitations": [
+        "Only this exact host version, Windows 10 Home 22H2, native OS release 10.0.19045, full build 19045.6456, x64 and Node 24.13.1 are measured in #151/#156; other Windows releases, editions, servicing revisions, architectures and additional runtimes remain separately historical or unverified.",
+        "Observed current Windows registry metadata and declared measured Windows selectors are separate. Missing, invalid or unavailable OS metadata affects environment evidence only; formal host policy and existing mandatory readiness remain separate.",
+        "Exact complete composition only. The measured predecessor passed all 14 native scenarios and 122 checks; final installation revalidation is separately tied to final artifacts. Top-level version and ready do not replace native acceptance."
+      ],
+      "evidence": [
+        "docs/compatibility/issue-155-evidence/summary.json",
+        "docs/compatibility/issue-156-evidence/summary.json",
+        "docs/compatibility/windows-next-156.md"
+      ],
+      "windows": {
+        "osRelease": "10.0.19045",
+        "productName": "Windows 10 Home",
+        "displayVersion": "22H2",
+        "build": "19045.6456"
+      },
+      "os": "Windows 10 Home 22H2; OS release 10.0.19045; full build 19045.6456",
+      "support": "formal",
+      "diagnosis": "passed",
+      "finalWindowsVerification": {
+        "status": "passed",
+        "sourceCommit": "b5fa4586a1a11db01296b8584b343920f3bb2611",
+        "report": "C:\\Users\\arlotest\\Arlo-156-windows-verification-r3-20261109\\.task\\results\\dshrc5-native-r3.json",
+        "reportSha256": "5a2c69026b2ee23ce2a02aeb5e0d93be98e97884515b052a2664ed024fe9135d",
+        "artifactManifestSha256": "0f7470031521dcc90a5710995e1ca1c3569bd81eb73479cf74271870b22f49dd",
+        "evidence": "docs/compatibility/issue-156-evidence/summary.json",
+        "scope": "Exact recorded Windows environment and immutable installed identity; raw skip/partial outcomes and the separate Pi1.3 affected-file reruns remain explicit in #156."
+      }
+    }
+  ],
+  "firstBatch149": {
+    "codePoint": "c6decf1a8e57ea569ebb89d739da0b02ae7a7e5e",
+    "summary": "docs/compatibility/issue-149-evidence/summary.json",
+    "platform": "linux",
+    "arch": "x64",
+    "node": "24.13.1",
+    "unaffectedPi": {
+      "sourceCommit": "3a758a807c70e36a4238963c0fb7a02dd2031220",
+      "currentShippedSourceUnchanged": true,
+      "reason": "Review fixes affect only DSH adapter/helpers/profile declarations and Web builder; Pi, shared packages, root manifests and lock bytes are unchanged. Complete Pi suites and diagnostics retained without unnecessary reruns."
+    },
+    "pairs": {
+      "pi1.3.0-dshrc2": {
+        "status": "passed",
+        "rawComplete": false,
+        "rawExitCode": 0,
+        "webChecks": 12,
+        "report": "private-evidence/e775eb2e2ee1/pair-pi1.3.0-dshrc2.json",
+        "sha256": "70089d3ef00f1aa10354a7d4b1b268376fb2e0fe0bd3ff6efb3be3e0e9ca0d9f"
+      },
+      "pi1.4.0-dshrc2": {
+        "status": "passed",
+        "rawComplete": false,
+        "rawExitCode": 0,
+        "webChecks": 12,
+        "report": "private-evidence/d0ddce5284ba/pair-pi1.4.0-dshrc2.json",
+        "sha256": "664564b9e7c0cddad79dc4f308a161ad28795af9b7846a5c29bc08d38aadfd7d"
+      },
+      "pi1.2.0-dshrc5": {
+        "status": "passed",
+        "rawComplete": false,
+        "rawExitCode": 0,
+        "webChecks": 12,
+        "report": "private-evidence/47dcfab31c20/pair-pi1.2.0-dshrc5.json",
+        "sha256": "b5e25165a41110fac3c0fe4a0f18597942739a161267acce7616e3ccf53ec216"
+      },
+      "pi1.3.0-dshrc5": {
+        "status": "passed",
+        "rawComplete": false,
+        "rawExitCode": 0,
+        "webChecks": 12,
+        "report": "private-evidence/84b7c18cfcaa/pair-pi1.3.0-dshrc5.json",
+        "sha256": "6735dfb43e300de79def5f29e2c00b66fdd9c74049d4c5ef3f4eb2ea8a4145b9"
+      },
+      "pi1.4.0-dshrc5": {
+        "status": "passed",
+        "rawComplete": false,
+        "rawExitCode": 0,
+        "webChecks": 12,
+        "report": "private-evidence/b2af992c9e98/pair-pi1.4.0-dshrc5.json",
+        "sha256": "38137790c76a6087e310023432c53f6b7bff892551d40e4c10c76f219d900913"
+      }
+    },
+    "baselineControl": {
+      "baseline-controls": {
+        "path": "private-evidence/37639a4358af/baseline-controls-result.json",
+        "sha256": "ddef740cf24fd4be569350039b676c4886ec07eb8cc4be6e8caa3d7d5e722ce7",
+        "result": {
+          "name": "review-final-r3/baseline-controls",
+          "sourceCommit": "c6decf1a8e57ea569ebb89d739da0b02ae7a7e5e",
+          "command": [
+            "private-evidence/ed634e760e7a/node",
+            "private-evidence/44e8d3519c6a/149-baseline-controls.mjs",
+            "private-evidence/45b99d24bce1/consumer"
+          ],
+          "cwd": "private-evidence/42ff9c1dafdd/Arlo-spec144-149",
+          "exitCode": 0,
+          "signal": null,
+          "processError": null,
+          "seconds": 1.5189955234527588,
+          "log": "private-evidence/75edd1434759/baseline-controls.log",
+          "logSha256": "c715d9410a71d11f7315a3848a1eaa552e910f0297943a9e698781a8884f8d8f"
+        }
+      },
+      "dshbaseline-integrity": {
+        "path": "private-evidence/78ebd43c8cc5/dshbaseline-integrity-result.json",
+        "sha256": "c1fa7d26c820bc1e6c5e0bdade66a93b48636e0432751fcbf29f91f4287d2bb0",
+        "result": {
+          "name": "review-final-r3/dshbaseline-integrity",
+          "sourceCommit": "c6decf1a8e57ea569ebb89d739da0b02ae7a7e5e",
+          "command": [
+            "private-evidence/ed634e760e7a/node",
+            "web/compatibility.test.mjs",
+            "--consumer",
+            "private-evidence/45b99d24bce1/consumer"
+          ],
+          "cwd": "private-evidence/42ff9c1dafdd/Arlo-spec144-149",
+          "exitCode": 0,
+          "signal": null,
+          "processError": null,
+          "seconds": 14.456689357757568,
+          "log": "private-evidence/35efc06c8c6b/dshbaseline-integrity.log",
+          "logSha256": "adad2b5f57f3a683e8bd876d9da317527c5a52221b3ea998712c89bdfb5a8955"
+        }
+      }
+    }
+  },
+  "windowsBatch151": {
+    "status": "passed-planned-windows-batch",
+    "node": "24.13.1",
+    "platform": "win32",
+    "arch": "x64",
+    "windows": {
+      "osRelease": "10.0.19045",
+      "productName": "Windows 10 Home",
+      "displayVersion": "22H2",
+      "build": "19045.6456"
+    },
+    "evidence": "docs/compatibility/issue-156-evidence/summary.json",
+    "parent151RemainsOpen": true,
+    "scope": "Five exact installed Windows combinations and all five ordered bidirectional pairs verified; original failures/reruns/skips and all historical rows retain their own scope. Parent151 remains open. Additional runtimes/hosts and whole compatibility stage remain separate.",
+    "artifactSourceCommit": "b5fa4586a1a11db01296b8584b343920f3bb2611",
+    "acceptanceDriverSourceCommit": "fdbc8907901841fe94253ec6fbf73efef9be893c"
+  },
+  "validationContext": "Historical pre-rename implementation. Arlo native host behavior has not been revalidated."
+}
