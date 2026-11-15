@@ -31,6 +31,11 @@ export function createPrivateBuildEnvironment({ prefix, metadata, offlineCache, 
     fs.mkdirSync(directory, { mode: 0o700 });
     return [name, directory];
   }));
+  if (process.platform === 'win32') {
+    // PowerShell's native known-folder lookup needs these private profile
+    // folders; otherwise its module cache falls back to the package cwd.
+    for (const name of ['Local', 'Roaming']) fs.mkdirSync(path.join(dirs.home, 'AppData', name), { recursive: true });
+  }
   const isolatedOfflineCache = path.join(dirs.cache, 'pnpm');
   if (offlineCache) fs.cpSync(offlineCache, isolatedOfflineCache, { recursive: true });
   fs.writeFileSync(path.join(dirs.config, 'npmrc'), npmrc);

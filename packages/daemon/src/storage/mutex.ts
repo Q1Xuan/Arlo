@@ -2,7 +2,6 @@ import cp from 'node:child_process';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { getCurrentUserSid, windowsPowerShellEnv, verifyWindowsAcl, ArloError, ArloErrorCode } from '@arlo/sdk';
 
 export type StateMutexRelease = (() => Promise<void>) & { isHeld(): boolean };
@@ -58,9 +57,12 @@ export async function acquireStateMutex(stateDir: string): Promise<StateMutexRel
   }
   const identity = fs.realpathSync.native(stateDir).toLowerCase();
   const name = `Global\\Arlo-${getCurrentUserSid()}-${crypto.createHash('sha256').update(identity).digest('hex')}`;
-  const helper = cp.spawn('powershell.exe', ['-NoProfile', '-NonInteractive', '-File',
-    fileURLToPath(new URL('./windows-mutex.ps1', import.meta.url)), '-Name', name], {
-    windowsHide: true, env: windowsPowerShellEnv(), stdio: ['pipe', 'pipe', 'ignore'],
+  const script = fs.readFileSync(new URL('./windows-mutex.ps1', import.meta.url), 'utf8');
+  // Execute only the bundled helper text, without changing Windows execution
+  // policy. Pass the mutex name as data rather than interpolating PowerShell.
+  const command = Buffer.from(`& {\n${script}\n} -Name $env:ARLO_STATE_MUTEX_NAME`, 'utf16le').toString('base64');
+  const helper = cp.spawn('powershell.exe', ['-NoProfile', '-NonInteractive', '-EncodedCommand', command], {
+    windowsHide: true, env: { ...windowsPowerShellEnv(), ARLO_STATE_MUTEX_NAME: name }, stdio: ['pipe', 'pipe', 'ignore'],
   });
   helper.stdin.on('error', () => {});
   const exited = new Promise<void>(resolve => helper.once('close', () => resolve()));
