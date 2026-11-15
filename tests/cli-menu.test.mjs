@@ -1,23 +1,14 @@
 import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 import { once } from 'node:events';
+import { createCliProcessFixture } from './fixtures/cli-process.mjs';
 
 const cli = process.env.ARLO_CLI_ENTRY ?? fileURLToPath(new URL('../packages/daemon/bin/arlo.js', import.meta.url));
 const terminalDriver = fileURLToPath(new URL('./fixtures/cli-terminal.py', import.meta.url));
-function fixture() {
-  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'arlo-cli-menu-'));
-  const env = Object.fromEntries(['PATH', 'SystemRoot', 'WINDIR', 'ComSpec', 'PATHEXT'].filter(key => process.env[key])
-    .map(key => [key, process.env[key]]));
-  Object.assign(env, { HOME: directory, USERPROFILE: directory, APPDATA: directory, LOCALAPPDATA: directory,
-    XDG_CONFIG_HOME: directory, XDG_DATA_HOME: directory, XDG_STATE_HOME: directory,
-    XDG_CACHE_HOME: directory, XDG_RUNTIME_DIR: directory, DSH_HOME: directory, TERM: 'dumb' });
-  return { directory, env, close: () => fs.rmSync(directory, { recursive: true, force: true }) };
-}
 function terminal(context, args, steps) {
   return spawnSync('python3', [terminalDriver, JSON.stringify([process.execPath, cli, ...args]), JSON.stringify(steps)],
     { cwd: context.directory, env: context.env, encoding: 'utf8', timeout: 15_000 });
@@ -30,7 +21,7 @@ function invoke(context, args) {
 test('default terminal menu offers the four existing flows and cancel leaves user state untouched', {
   skip: process.platform === 'win32',
 }, () => {
-  const context = fixture();
+  const context = createCliProcessFixture('arlo-cli-menu-');
   try {
     const result = terminal(context, [], [['Choose an action', '0\n']]);
     assert.equal(result.status, 0, result.stderr + result.stdout);
@@ -42,7 +33,7 @@ test('default terminal menu offers the four existing flows and cancel leaves use
 });
 
 test('noninteractive default status accepts JSON options and reports an absent Daemon without a menu', () => {
-  const context = fixture();
+  const context = createCliProcessFixture('arlo-cli-menu-');
   try {
     const result = invoke(context, ['--json', '--state-dir', context.directory]);
     assert.equal(result.status, 1);
@@ -55,7 +46,7 @@ test('noninteractive default status accepts JSON options and reports an absent D
 test('menu setup and uninstall describe registration scope and reject a missing chosen host without mutations', {
   skip: process.platform === 'win32',
 }, () => {
-  const context = fixture();
+  const context = createCliProcessFixture('arlo-cli-menu-');
   fs.writeFileSync(path.join(context.directory, 'settings.json'), '{"theme":"dark","packages":["other-plugin"]}');
   try {
     for (const [action, scope] of [['1', /registers an existing compiled Arlo adapter/], ['4', /removes the owned host registration/]]) {
@@ -74,7 +65,7 @@ test('menu setup and uninstall describe registration scope and reject a missing 
 test('menu cancellation also handles terminal EOF and interrupt without creating state', {
   skip: process.platform === 'win32',
 }, () => {
-  const context = fixture();
+  const context = createCliProcessFixture('arlo-cli-menu-');
   try {
     for (const answer of ['\x04', '\x03']) {
       const result = terminal(context, [], [['Choose an action', answer]]);
@@ -86,7 +77,7 @@ test('menu cancellation also handles terminal EOF and interrupt without creating
 });
 
 test('explicit read and registration commands retain structured errors without prompting or changing a target', () => {
-  const context = fixture();
+  const context = createCliProcessFixture('arlo-cli-menu-');
   try {
     for (const command of ['status', 'doctor']) {
       const result = invoke(context, [command, '--state-dir', context.directory, '--json']);
@@ -106,7 +97,7 @@ test('explicit read and registration commands retain structured errors without p
 test('JSON terminal use and explicit terminal commands bypass the menu', {
   skip: process.platform === 'win32',
 }, () => {
-  const context = fixture();
+  const context = createCliProcessFixture('arlo-cli-menu-');
   try {
     for (const args of [['--json'], ['status', '--json']]) {
       const result = terminal(context, [...args, '--state-dir', context.directory], []);
@@ -120,7 +111,7 @@ test('JSON terminal use and explicit terminal commands bypass the menu', {
 test('serve, direct commands and menu actions observe the same real Daemon and graceful exit', {
   timeout: 25_000, skip: process.platform === 'win32',
 }, async () => {
-  const context = fixture();
+  const context = createCliProcessFixture('arlo-cli-menu-');
   const stateDir = path.join(context.directory, 'state');
   const serve = spawn(process.execPath, [cli, 'serve', '--state-dir', stateDir, '--port', '0'],
     { cwd: context.directory, env: context.env, stdio: ['ignore', 'pipe', 'pipe'], timeout: 20_000 });

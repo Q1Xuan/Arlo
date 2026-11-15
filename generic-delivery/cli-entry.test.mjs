@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
+import { createCliProcessFixture } from '../tests/fixtures/cli-process.mjs';
 
 const consumer = process.env.ARLO_CLI_CONSUMER_DIR;
 const npx = process.env.ARLO_NPX_CLI;
@@ -13,17 +13,14 @@ const terminalDriver = fileURLToPath(new URL('../tests/fixtures/cli-terminal.py'
 test('standard npx executes the installed compiled bin outside the source workspace without installing a host', {
   skip: !consumer || !npx,
 }, () => {
-  const directory = fs.mkdtempSync(path.join(process.env.ARLO_ACCEPTANCE_ROOT ?? os.tmpdir(), 'arlo-npx-'));
+  const context = createCliProcessFixture('arlo-npx-');
+  const { directory, env } = context;
   const npmrc = path.join(directory, 'npmrc');
   fs.writeFileSync(npmrc, '');
   const globalNpmrc = path.join(directory, 'global-npmrc');
   fs.writeFileSync(globalNpmrc, '');
-  const env = Object.fromEntries(['PATH', 'SystemRoot', 'WINDIR', 'ComSpec', 'PATHEXT'].filter(key => process.env[key])
-    .map(key => [key, process.env[key]]));
-  Object.assign(env, { HOME: directory, USERPROFILE: directory, APPDATA: directory, LOCALAPPDATA: directory,
-    XDG_CONFIG_HOME: directory, XDG_STATE_HOME: directory, XDG_DATA_HOME: directory,
-    NPM_CONFIG_USERCONFIG: npmrc, NPM_CONFIG_GLOBALCONFIG: globalNpmrc, NPM_CONFIG_CACHE: path.join(directory, 'cache'),
-    NPM_CONFIG_UPDATE_NOTIFIER: 'false', TERM: 'dumb' });
+  Object.assign(env, { NPM_CONFIG_USERCONFIG: npmrc, NPM_CONFIG_GLOBALCONFIG: globalNpmrc,
+    NPM_CONFIG_CACHE: path.join(directory, 'cache'), NPM_CONFIG_UPDATE_NOTIFIER: 'false' });
   const argv = [process.execPath, npx, '--offline', '--no', '--loglevel=silent', '--', 'arlo'];
   try {
     const result = spawnSync(argv[0], [...argv.slice(1), '--json', '--state-dir', path.join(directory, 'state')],
@@ -38,5 +35,5 @@ test('standard npx executes the installed compiled bin outside the source worksp
       assert.equal(cancelled.status, 0, cancelled.stderr + cancelled.stdout);
       assert.match(cancelled.stdout, /Cancelled/);
     }
-  } finally { fs.rmSync(directory, { recursive: true, force: true }); }
+  } finally { context.close(); }
 });
