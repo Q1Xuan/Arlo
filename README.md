@@ -13,7 +13,7 @@ a review. The recipient receives the message in its existing conversation and
 can send an associated reply. Arlo carries messages; each agent decides how to
 act on them.
 
-<video src="assets/arlo-cross-host-demo-v2.mp4" controls width="960"></video>
+https://github.com/user-attachments/assets/677b8c2c-1eff-4993-9ef4-0aeb120db56c
 
 DSH Web and Pi CLI each use the native `@` menu. An existing DSH session asks
 Pi to review `finalPrice`; Pi replies in that conversation. Pi then asks DSH to

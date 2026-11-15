@@ -10,7 +10,7 @@ Arlo 让已有的 Pi 与 DeepSeek Harness（DSH）会话相互发现、发送上
 例如，让一个会话把代码变更说明发送给另一个会话，请对方审查。接收方在原有对话中处理消息，
 并可关联回复。Arlo 负责通信，各 Agent 自行决定如何执行消息中的请求。
 
-<video src="assets/arlo-cross-host-demo-v2-zh.mp4" controls width="960"></video>
+https://github.com/user-attachments/assets/056d25d8-be72-45dd-b2ab-524885a5798c
 
 DSH 网页与 Pi 命令行各自使用原生 `@` 菜单。已有的 DSH 会话请 Pi 审查 `finalPrice`，
 Pi 在原对话中回复；随后 Pi 请 DSH 验算修正表达式。模型等待已剪掉，其余为实时画面。
