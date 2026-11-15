@@ -15,7 +15,7 @@ os.close(slave)
 output = bytearray()
 steps = iter(json.loads(sys.argv[2]))
 step = next(steps, None)
-deadline = time.monotonic() + 10
+deadline = time.monotonic() + (float(sys.argv[3]) if len(sys.argv) > 3 else 10)
 try:
     while time.monotonic() < deadline:
         if select.select([master], [], [], 0.05)[0]:

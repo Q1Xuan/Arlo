@@ -117,6 +117,7 @@ function auditLock(lock) {
 }
 function sourceFingerprint() {
   const sources = ['package.json', 'pnpm-lock.yaml', 'scripts/generic-delivery.mjs', 'scripts/generic-lock.mjs', 'scripts/private-build.mjs',
+    'packages/adapter-pi/package.json',
     'tests/cli-menu.test.mjs', 'tests/fixtures/cli-terminal.py', 'tests/fixtures/cli-process.mjs',
     'acceptance/preload.mjs', 'probes/isolation.mjs', 'probes/gui-network-guard.mjs',
     ...filesIn(path.join(repo, 'generic-delivery')).map(file => `generic-delivery/${file}`),
@@ -166,6 +167,10 @@ try {
         fs.cpSync(file === 'LICENSE' ? path.join(repo, 'LICENSE') : path.join(build, 'packages', name, file), path.join(target, file), { recursive: true });
       }
       writeJson(path.join(target, 'package.json'), { ...manifest, exports, files: ['src', 'bin', ...resourceFiles], devDependencies: undefined,
+        ...(name === 'daemon' ? { arlo: { components: Object.fromEntries(['sdk', 'adapterSdk', 'daemon', 'piAdapter'].map((role, index) => {
+          const pkg = index < 3 ? manifests[index] : json(path.join(repo, 'packages/adapter-pi/package.json'));
+          return [role, { name: pkg.name, version: pkg.version }];
+        })) } } : {}),
         private: releaseCandidate ? false : manifest.private,
         ...(releaseCandidate ? { publishConfig: { access: 'public' } } : {}),
         dependencies: Object.fromEntries(Object.entries(manifest.dependencies).map(([name, version]) => [name,

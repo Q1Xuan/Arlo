@@ -36,7 +36,7 @@ export async function runCli(args: string[] = process.argv.slice(2)): Promise<nu
       console.log('Cancelled. No changes applied.');
       return 0;
     }
-    if (command === 'setup') console.log('Setup registers an existing compiled Arlo adapter with the selected host. Obtain the compiled components before continuing.');
+    if (command === 'setup') console.log('Setup finds an existing host, previews coordinated component installation and registers native user access after confirmation.');
     if (command === 'uninstall') console.log('Uninstall removes the owned host registration. Installed components remain managed by their package manager.');
     args = [command, ...args];
   }

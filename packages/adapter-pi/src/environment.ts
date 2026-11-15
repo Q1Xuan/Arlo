@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { createHash } from 'node:crypto';
+import { piAdapterArtifactSha256 } from './artifact.ts';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { observeWindows, validWindowsEnvironment, type WindowsEnvironment } from './windows.ts';
@@ -40,22 +40,7 @@ export interface PiInstallationIdentity {
   binding: 'source' | 'bound' | 'unavailable';
 }
 
-/** Bind evidence metadata to the installed adapter without hashing the metadata itself. */
-export function piAdapterArtifactSha256(directory: string): string {
-  const hash = createHash('sha256');
-  const visit = (relative: string) => {
-    for (const entry of fs.readdirSync(path.join(directory, relative), { withFileTypes: true })
-      .sort((a, b) => a.name.localeCompare(b.name))) {
-      const file = path.posix.join(relative, entry.name);
-      if (entry.isDirectory()) visit(file);
-      else if (entry.isFile() && /\.(?:js|ts)$/.test(entry.name)) {
-        hash.update(file).update('\0').update(fs.readFileSync(path.join(directory, file))).update('\0');
-      }
-    }
-  };
-  visit('src');
-  return hash.digest('hex');
-}
+export { piAdapterArtifactSha256 } from './artifact.ts';
 
 function installedPackage(name: string): { name: string; version: string } {
   const hostRequire = createRequire(import.meta.resolve('@earendil-works/pi-coding-agent'));

@@ -8,6 +8,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawn } from '@lydell/node-pty';
 import { spawnSync } from 'node:child_process';
+import { cliProcess } from '../tests/fixtures/pi-component-distribution.mjs';
 
 const here = fileURLToPath(new URL('.', import.meta.url));
 const repo = path.resolve(here, '..');
@@ -273,6 +274,8 @@ export async function nativeScenario(label, options = {}) {
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
 
   async function start(name, settings = {}, native = {}) {
+    let loadedAdapterEntry = adapterEntry;
+    let setupReport;
     const home = path.join(directory, name);
     fs.mkdirSync(home, { mode: 0o700 });
     enforceWindowsAcl(home, true);
@@ -299,15 +302,21 @@ export async function nativeScenario(label, options = {}) {
     } } }));
     if (native.setup) {
       assert.ok(entries, 'CLI setup acceptance requires consumed compiled packages');
-      const setupCli = path.resolve(path.dirname(entries.daemonEntry), '../bin/arlo.js');
-      const setupArgs = [setupCli, 'setup', '--host', 'pi', '--target', path.resolve(path.dirname(entries.piEntry), '..'),
-        '--adapter', path.resolve(path.dirname(entries.adapterEntry), '..'), '--agent-dir', home, '--apply', '--json'];
+      const setupCli = native.cli ?? path.resolve(path.dirname(entries.daemonEntry), '../bin/arlo.js');
+      const setupArgs = [setupCli, 'setup', '--host', 'pi', '--target', native.target ?? path.resolve(path.dirname(entries.piEntry), '..'),
+        ...(!native.acquire ? ['--adapter', path.resolve(path.dirname(entries.adapterEntry), '..')] : []), '--agent-dir', home, '--apply', '--json'];
       await native.beforeSetup?.({ home, setupArgs, setupCli });
-      const registered = spawnSync(process.execPath, setupArgs, { encoding: 'utf8', cwd: home });
+      const registered = native.acquire ? await cliProcess(setupCli, setupArgs.slice(1), { directory: home, env: native.packageEnv })
+        : spawnSync(process.execPath, setupArgs, { encoding: 'utf8', cwd: home });
       fs.writeFileSync(path.join(home, 'setup-command.json'), JSON.stringify({ executable: process.execPath, args: setupArgs,
         status: registered.status, signal: registered.signal, stdout: registered.stdout, stderr: registered.stderr }, null, 2));
       assert.equal(registered.status, 0, registered.stderr + registered.stdout);
-      assert.equal(JSON.parse(registered.stdout).phase, 'configured-pending-start-or-reload');
+      setupReport = JSON.parse(registered.stdout);
+      assert.equal(setupReport.phase, 'configured-pending-start-or-reload');
+      if (native.acquire) {
+        const manifest = JSON.parse(fs.readFileSync(path.join(setupReport.adapter.directory, 'package.json'), 'utf8'));
+        loadedAdapterEntry = pathToFileURL(path.join(setupReport.adapter.directory, manifest.exports['.'].default)).href;
+      }
       // Existing user preference enables participation; package registration
       // itself must never grant communication authorization.
       fs.writeFileSync(path.join(home, 'arlo.json'), JSON.stringify({ crossHostEnabled: true }));
@@ -315,7 +324,7 @@ export async function nativeScenario(label, options = {}) {
     fs.writeFileSync(path.join(home, 'events.jsonl'), '');
     const fixture = path.join(home, 'fixture.mjs');
     fs.writeFileSync(fixture, fs.readFileSync(path.join(here, 'fixture.mjs'), 'utf8')
-      .replace("'ARLO_PI_ADAPTER_MODULE'", JSON.stringify(adapterEntry)));
+      .replace("'ARLO_PI_ADAPTER_MODULE'", JSON.stringify(loadedAdapterEntry)));
     const env = {};
     for (const key of ['SystemRoot', 'WINDIR', 'PATH', 'Path', 'PATHEXT', 'COMSPEC', 'ComSpec', 'OS', 'PROCESSOR_ARCHITECTURE']) {
       if (process.env[key]) env[key] = process.env[key];
@@ -323,7 +332,7 @@ export async function nativeScenario(label, options = {}) {
     Object.assign(env, { HOME: home, USERPROFILE: home, APPDATA: home, LOCALAPPDATA: home, TEMP: home, TMP: home,
       PI_CODING_AGENT_DIR: home, PI_TELEMETRY: 'false', PI_OFFLINE: '1', TERM: 'xterm-256color',
       PSExecutionPolicyPreference: 'Bypass', ARLO_PI_SCENARIO_DIR: home, ARLO_PI_STATE_DIR: stateDir,
-      ARLO_PI_GROUP: `native-${label}`, ARLO_PI_ADAPTER_ENTRY: adapterEntry,
+      ARLO_PI_GROUP: `native-${label}`, ARLO_PI_ADAPTER_ENTRY: loadedAdapterEntry,
       ...(native.setup ? { ARLO_PI_SETUP_MODE: '1', ARLO_STATE_DIR: stateDir } : {}),
       ...(native.missingCapability ? { ARLO_PI_MISSING_CAPABILITY: native.missingCapability } : {}),
       ...(native.invalidHeaderIdentity ? { ARLO_PI_INVALID_HEADER_IDENTITY: '1' } : {}),
@@ -347,7 +356,7 @@ export async function nativeScenario(label, options = {}) {
       if (data.includes('\x1b[c')) terminal.write('\x1b[?1;2c');
     });
     terminal.onExit(event => { exit = event; });
-    const peer = { name, home, terminal,
+    const peer = { name, home, terminal, setupReport,
       get output() { return output; }, get exit() { return exit; },
       events() {
         const text = fs.readFileSync(path.join(home, 'events.jsonl'), 'utf8');
