@@ -4,6 +4,8 @@ import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { createRequire } from 'node:module';
 import { test } from 'node:test';
+import { spawn } from 'node:child_process';
+import { once } from 'node:events';
 import { createCliProcessFixture } from './fixtures/cli-process.mjs';
 import { cliProcess, commandProcess, componentDistribution } from './fixtures/pi-component-distribution.mjs';
 
@@ -52,10 +54,14 @@ async function ordinaryInstallation(context, manager = 'pnpm') {
     return { owner, target: path.join(owner, 'node_modules/@deepseek-ai/dsh') };
   }
   const referenceOwner = path.resolve(ordinaryHost, '../../../');
+  // Recreate the retained ordinary installation through its real frozen lock,
+  // as npm ci does above. This keeps acceptance on the selected native graph
+  // rather than resolving newer unrelated transitives on every test run.
+  fs.copyFileSync(path.join(referenceOwner, 'pnpm-lock.yaml'), path.join(owner, 'pnpm-lock.yaml'));
   const referenceRequire = createRequire(path.join(fs.realpathSync(ordinaryHost), 'package.json'));
   const modules = referenceRequire('js-yaml').load(fs.readFileSync(path.join(referenceOwner, 'node_modules/.modules.yaml'), 'utf8'));
   const result = await commandProcess(process.execPath, [npm, '--global=false', `--prefix=${owner}`, 'exec', '--yes',
-    '--ignore-scripts', '--package=pnpm@10.26.2', '--', 'pnpm', 'install', '--ignore-scripts', '--ignore-workspace',
+    '--ignore-scripts', '--package=pnpm@10.26.2', '--', 'pnpm', 'install', '--frozen-lockfile', '--offline', '--ignore-scripts', '--ignore-workspace',
     `--dir=${owner}`, `--store-dir=${path.dirname(modules.storeDir)}`], context, {}, 600_000);
   assert.equal(result.status, 0, result.stdout + result.stderr);
   return { owner, target: path.join(owner, 'node_modules/@deepseek-ai/dsh') };
@@ -610,3 +616,141 @@ test('an unaudited native npm global DSH owner is diagnosed without changing its
     assert.equal(fs.existsSync(path.join(selected.profile, 'arlo-setup')), false);
   } finally { context.close(); }
 });
+
+// The real package operation gets its normal production deadline. Stopping
+// its actual npm/pnpm tree also keeps inherited pipes open, reproducing the
+// failure that a direct spawnSync timeout cannot bound.
+async function stoppedNativeOperation(interrupt) {
+  const context = createCliProcessFixture(interrupt ? 'arlo-dsh-native-interrupt-' : 'arlo-dsh-native-timeout-');
+  const distribution = await componentDistribution(bundle, 'adapter-dsh');
+  const selected = existingProfile(context);
+  fs.writeFileSync(path.join(context.directory, 'npmrc'), `@arlo:registry=${distribution.url}\nfetch-retries=0\n`);
+  context.env.NPM_CONFIG_USERCONFIG = path.join(context.directory, 'npmrc');
+  if (process.env.ARLO_CLI_PUBLIC_NPM_CACHE) {
+    const cache = path.join(context.directory, '.npm');
+    fs.cpSync(process.env.ARLO_CLI_PUBLIC_NPM_CACHE, cache, { recursive: true });
+    context.env.npm_config_cache = cache;
+  }
+  let child, receiptFile, stopped = [];
+  const evidence = fields => {
+    if (!receiptFile) return;
+    const receipt = JSON.parse(fs.readFileSync(receiptFile, 'utf8'));
+    fs.writeFileSync(receiptFile, JSON.stringify({ ...receipt, ...fields }, null, 2) + '\n');
+  };
+  const tree = pid => {
+    const result = [];
+    const visit = current => {
+      try {
+        const command = fs.readFileSync(`/proc/${current}/cmdline`, 'utf8').replaceAll('\0', ' ');
+        const stat = fs.readFileSync(`/proc/${current}/stat`, 'utf8');
+        result.push({ pid: current, command, start: stat.slice(stat.lastIndexOf(')') + 2).split(' ')[19] });
+        for (const value of fs.readFileSync(`/proc/${current}/task/${current}/children`, 'utf8').trim().split(/\s+/).filter(Boolean)) visit(Number(value));
+      } catch { /* An exited process is no longer a candidate. */ }
+    };
+    visit(pid); return result;
+  };
+  const alive = row => {
+    try {
+      const source = fs.readFileSync(`/proc/${row.pid}/stat`, 'utf8');
+      const stat = source.slice(source.lastIndexOf(')') + 2).split(' ');
+      return stat[19] === row.start && stat[0] !== 'Z';
+    } catch { return false; }
+  };
+  try {
+    const native = await ordinaryInstallation(context);
+    const args = ['--host', 'dsh', '--target', native.target, '--profile', 'web', '--dsh-home', selected.home, '--experimental', '--json'];
+    const preview = await cliProcess(cli, ['setup', ...args], context, {}, 600_000);
+    assert.equal(preview.status, 0, preview.stdout + preview.stderr);
+    const planned = JSON.parse(preview.stdout);
+    child = spawn(process.execPath, [cli, 'setup', ...args, '--apply'], { cwd: context.directory, env: context.env });
+    let stdout = '', stderr = '';
+    child.stdout.on('data', bytes => { stdout += bytes; });
+    child.stderr.on('data', bytes => { stderr += bytes; });
+    const closed = once(child, 'close');
+    const readyDeadline = Date.now() + 180_000;
+    while (Date.now() < readyDeadline) {
+      let record;
+      try { record = JSON.parse(fs.readFileSync(path.join(planned.preparation.directory, 'preparation.json'), 'utf8')); } catch { /* not yet preparing */ }
+      const current = tree(child.pid).slice(1);
+      if (record?.phase === 'native-preparing' && current.length >= 2
+        && current.some(row => row.command.includes(`--dir=${native.owner}`) && row.command.includes('--frozen-lockfile'))) {
+        stopped = current;
+        for (const row of stopped.toReversed()) if (alive(row)) process.kill(row.pid, 'SIGSTOP');
+        break;
+      }
+      if (child.exitCode !== null) break;
+      await new Promise(resolve => setTimeout(resolve, 10));
+    }
+    assert.ok(stopped.length >= 2, 'Stop the actual npm-exec and native pnpm descendants after the durable native preparation phase: ' + stdout + stderr);
+    const stoppedAt = Date.now();
+    if (process.env.ARLO_DSH_AUTO_EVIDENCE_ROOT) {
+      receiptFile = path.join(process.env.ARLO_DSH_AUTO_EVIDENCE_ROOT, `${path.basename(context.directory)}-processes.json`);
+      fs.writeFileSync(receiptFile, JSON.stringify({ cli, interrupt, nativeOwner: native.owner,
+        preparation: planned.preparation.directory, stoppedAt: new Date(stoppedAt).toISOString(), processes: stopped }, null, 2) + '\n');
+    }
+    if (interrupt) child.kill('SIGINT');
+    let watchdog;
+    const outcome = await Promise.race([closed, new Promise(resolve => {
+      watchdog = setTimeout(() => resolve(undefined), interrupt ? 10_000 : 260_000);
+    })]);
+    clearTimeout(watchdog);
+    assert.ok(outcome, 'The production package deadline must return even when the actual descendant tree cannot handle SIGTERM');
+    assert.equal(outcome[0], 1, stdout + stderr + JSON.stringify({ exit: outcome[0], signal: outcome[1] }));
+    assert.ok(Date.now() - stoppedAt < (interrupt ? 10_000 : 255_000));
+    assert.deepEqual(stopped.filter(alive), [], 'No stopped native package descendant survives the reported timeout');
+    const report = JSON.parse(stdout);
+    assert.equal(report.error, 'DSH_NATIVE_PREPARATION_FAILED');
+    assert.equal(report.preparation.transaction, 'native-preparing');
+    assert.deepEqual(report.preparation.failure, { code: interrupt ? 'EINTR' : 'ETIMEDOUT', phase: 'native-preparing', exit: null, signal: 'SIGKILL' });
+    evidence({ failure: report.preparation.failure, failureObservedAt: new Date().toISOString() });
+    assert.deepEqual(JSON.parse(fs.readFileSync(path.join(selected.profile, 'package.json'), 'utf8')), selected.manifest);
+    const pending = await cliProcess(cli, ['setup-status', ...args], context, {}, 600_000);
+    assert.equal(pending.status, 0, pending.stdout + pending.stderr);
+    assert.equal(JSON.parse(pending.stdout).phase, 'recovery-required');
+    assert.deepEqual(JSON.parse(pending.stdout).preparation.failure, report.preparation.failure);
+    assert.equal(JSON.parse(pending.stdout).runtime, 'unobserved');
+    assert.equal(JSON.parse(pending.stdout).communication, 'unobserved');
+    evidence({ freshStatus: { phase: JSON.parse(pending.stdout).phase, failure: JSON.parse(pending.stdout).preparation.failure,
+      runtime: JSON.parse(pending.stdout).runtime, communication: JSON.parse(pending.stdout).communication } });
+    const owner = path.join(native.owner, 'package.json');
+    const manifest = JSON.parse(fs.readFileSync(owner, 'utf8'));
+    manifest.custom.afterFailure = true;
+    fs.writeFileSync(owner, JSON.stringify(manifest, null, 2) + '\n');
+    const referenceRequire = createRequire(path.join(fs.realpathSync(ordinaryHost), 'package.json'));
+    const modules = referenceRequire('js-yaml').load(fs.readFileSync(path.join(path.resolve(ordinaryHost, '../../../'), 'node_modules/.modules.yaml'), 'utf8'));
+    const npm = path.resolve(path.dirname(process.execPath), '../lib/node_modules/npm/bin/npm-cli.js');
+    const restored = await commandProcess(process.execPath, [npm, '--global=false', `--prefix=${native.owner}`, 'exec', '--yes', '--ignore-scripts',
+      '--package=pnpm@10.26.2', '--', 'pnpm', 'install', '--frozen-lockfile', '--ignore-scripts', '--ignore-workspace',
+      `--dir=${native.owner}`, `--store-dir=${path.dirname(modules.storeDir)}`], context, {}, 600_000);
+    assert.equal(restored.status, 0, restored.stdout + restored.stderr);
+    const retry = await cliProcess(cli, ['setup', ...args, '--apply'], context, {}, 600_000);
+    assert.equal(retry.status, 0, retry.stdout + retry.stderr);
+    const completed = JSON.parse(retry.stdout);
+    assert.equal(completed.preparation.directory, report.preparation.directory);
+    assert.equal(completed.preparation.transaction, 'configured');
+    assert.equal(completed.preparation.failure, undefined);
+    assert.deepEqual(JSON.parse(fs.readFileSync(owner, 'utf8')).custom, { preserve: true, afterFailure: true });
+    assert.equal(fs.readFileSync(path.join(selected.profile, 'history/retained.txt'), 'utf8'), 'Existing native history remains.\n');
+    evidence({ recovery: { phase: completed.preparation.transaction, samePreparationResource: completed.preparation.directory === report.preparation.directory,
+      laterOwnerSettingsPreserved: true, nativeHistoryPreserved: true } });
+  } finally {
+    for (const row of stopped.toReversed()) if (alive(row)) process.kill(row.pid, 'SIGKILL');
+    if (child && child.exitCode === null && child.signalCode === null) {
+      for (const row of tree(child.pid).toReversed()) if (alive(row)) process.kill(row.pid, 'SIGKILL');
+      await once(child, 'close');
+    }
+    const cleanupDeadline = Date.now() + 5_000;
+    while (stopped.some(alive) && Date.now() < cleanupDeadline) await new Promise(resolve => setTimeout(resolve, 10));
+    evidence({ finishedAt: new Date().toISOString(), remainingLiveOwnedProcesses: stopped.filter(alive) });
+    await distribution.close(); context.close();
+  }
+
+}
+
+test('a native DSH package timeout stops its real descendant tree, reports durable failure and retries the same owner', {
+  timeout: 900_000, skip: !available || process.platform !== 'linux',
+}, () => stoppedNativeOperation(false));
+
+test('interrupting native DSH preparation stops its real descendant tree, reports durable failure and retries the same owner', {
+  timeout: 600_000, skip: !available || process.platform !== 'linux',
+}, () => stoppedNativeOperation(true));

@@ -4,6 +4,7 @@ import path from 'node:path';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
+import { runDshPackageTool } from './dsh-package-tool.ts';
 import { assertSafeStatePath, enforceWindowsAcl, verifyWindowsAcl } from '@arlo/sdk';
 import { componentDataDirectory, npmCli, prepareHostComponents } from './components.ts';
 import { fail, SetupError } from './errors.ts';
@@ -305,10 +306,10 @@ export async function planDshInstallation(target: string, profileDir: string, se
     const npm = npmCli(selectedNpm);
     const manager = initial.manager === 'pnpm' ? { name: 'pnpm' as const, version: initial.managerVersion!, args: [npm, 'exec', '--yes', '--ignore-scripts', `--package=pnpm@${initial.managerVersion}`, '--', 'pnpm'] }
       : { name: 'npm' as const, version: spawnSync(process.execPath, [npm, '--version'], { encoding: 'utf8', timeout: 15_000 }).stdout.trim(), args: [npm] };
-    const execute = (args: string[], cwd: string) => spawnSync(process.execPath,
+    const execute = (args: string[], cwd: string) => runDshPackageTool(
       [manager.args[0], '--global=false', `--prefix=${cwd}`, ...manager.args.slice(1), ...args,
         ...(manager.name === 'pnpm' ? [`--dir=${cwd}`, '--global=false', `--store-dir=${initial.storeDirectory}`] : [])],
-      { cwd, env: process.env, encoding: 'utf8', windowsHide: true, timeout: 240_000, maxBuffer: 4 * 1024 * 1024 });
+      cwd);
     stage = fs.mkdtempSync(path.join(os.tmpdir(), 'arlo-dsh-preparation-plan-')); enforceWindowsAcl(stage, true);
     const yaml = dshNativeLockParser(initial);
     const lockFile = path.join(initial.owner, initial.selector.lockFile);
@@ -339,7 +340,7 @@ export async function planDshInstallation(target: string, profileDir: string, se
     const unchanged = !added.length && !newPatches.length && repairs.every((repair: any) => repair.state === 'prepared');
     if (mode === 'inspect' && !unchanged) fail('DSH_PREPARATION_RECOVERY_REQUIRED', 'The selected ordinary host is not fully prepared. Inspect its retained preparation phases or preview setup; no program or profile changed.');
     if (!unchanged) {
-      const result = execute(manager.name === 'pnpm' ? ['install', '--lockfile-only', '--ignore-scripts', '--ignore-workspace', '--prefer-offline']
+      const result = await execute(manager.name === 'pnpm' ? ['install', '--lockfile-only', '--ignore-scripts', '--ignore-workspace', '--prefer-offline']
         : ['install', '--package-lock-only', '--ignore-scripts', '--no-audit', '--no-fund'], stage);
       if (result.status !== 0 || result.error) fail('DSH_PACKAGE_PLAN_FAILED', `The exact native ${manager.name} preparation plan failed (exit ${result.status ?? (result.error as NodeJS.ErrnoException | undefined)?.code}, signal ${result.signal ?? 'none'}). No installation or profile changed.`);
     }
@@ -428,7 +429,7 @@ export async function planDshInstallation(target: string, profileDir: string, se
           record.lock.phase = 'applied'; record.phase = 'owner-prepared'; save();
           if (!unchanged) {
             record.phase = 'native-preparing'; save();
-            const result = execute(manager.name === 'pnpm' ? ['install', '--frozen-lockfile', '--ignore-scripts', '--ignore-workspace', '--prefer-offline']
+            const result = await execute(manager.name === 'pnpm' ? ['install', '--frozen-lockfile', '--ignore-scripts', '--ignore-workspace', '--prefer-offline']
               : ['install', '--ignore-scripts', '--no-audit', '--no-fund', '--prefer-offline'], initial.owner);
             if (result.status !== 0 || result.error) {
               record.failure = { code: (result.error as NodeJS.ErrnoException | undefined)?.code ?? 'PACKAGE_TOOL_FAILED', phase: record.phase, exit: result.status, signal: result.signal }; save();

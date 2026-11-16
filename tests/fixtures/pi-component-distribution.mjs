@@ -38,7 +38,19 @@ export async function componentDistribution(bundle, adapter = 'adapter-pi') {
 }
 
 export async function commandProcess(executable, args, context, extra = {}, timeout = 120_000) {
-  const child = spawn(executable, args, { cwd: context.directory, env: { ...context.env, ...extra } });
+  const env = { ...context.env, ...extra };
+  // Public dependency/tool fixtures may be reused without caching the Arlo
+  // archives served by this test's registry. Every case keeps its own cache.
+  if (process.env.ARLO_CLI_PUBLIC_NPM_CACHE) {
+    const cache = env.npm_config_cache ?? path.join(context.directory, '.npm');
+    if (!fs.existsSync(cache)) fs.cpSync(process.env.ARLO_CLI_PUBLIC_NPM_CACHE, cache, { recursive: true });
+    env.npm_config_cache = cache;
+  }
+  if (process.env.ARLO_CLI_PUBLIC_PNPM_CACHE) {
+    const cache = path.join(env.XDG_CACHE_HOME ?? context.directory, 'pnpm');
+    if (!fs.existsSync(cache)) fs.cpSync(process.env.ARLO_CLI_PUBLIC_PNPM_CACHE, cache, { recursive: true });
+  }
+  const child = spawn(executable, args, { cwd: context.directory, env });
   let stdout = '', stderr = '';
   child.stdout.on('data', bytes => { stdout += bytes; });
   child.stderr.on('data', bytes => { stderr += bytes; });
