@@ -199,14 +199,32 @@ inspect the host's `arlo-host-loaded` output; `/arlo-doctor` is Pi-only.
 
 ## Uninstall
 
-Run `arlo uninstall` with the same host, target, adapter and configuration
-selection arguments used for setup. Review the preview, then repeat with
-`--apply` and reload the host normally.
+Run `arlo uninstall` with the same host, target and configuration selection used
+for setup. Pi finds an automatically acquired adapter through its private records;
+use `--adapter DIR` for a separately installed adapter. Review the native revocation
+and component cleanup preview, then repeat with `--apply` and reload Pi normally.
 
-Uninstall removes the registration it owns and preserves conflicting user edits.
-It leaves host history, model configuration, Arlo identity/accounting state and
-other sessions intact. Packages remain installed; remove them separately through
-the package manager at their original installation scope when no longer needed.
+Pi uninstall first removes its unchanged owned user declaration through `pi remove`.
+It then uses the recorded npm or pnpm companion to remove the coordinated packages
+and borrowed-peer link slots it added, when their ownership still matches and no
+other integration uses them. The host installation and borrowed physical peers
+remain intact. Separately installed packages and manual native declarations remain
+under their existing ownership.
+
+Shared components, later edits, ambiguous records and a running or unverified shared
+Daemon retain the resource with a reason in the result. Allow the Daemon to exit
+normally or reach its idle timeout, then retry uninstall on the same target. Failed
+or interrupted cleanup keeps its exact stage for a matching retry; failed component
+consumption can also be cleaned before any native registration exists. `setup-status`
+shows partial or completed cleanup. Review ownership conflicts before retrying;
+an old whole-file configuration snapshot is never restored.
+
+Host history, model configuration, project declarations, Arlo identities, sending
+allowances and other sessions remain intact. DSH uninstall currently revokes owned
+native registration; its component cleanup uses the later DSH lifecycle path.
+Automatic Pi component cleanup is currently verified on Linux x64. Windows revokes
+owned native registration and retains components while process origin remains
+unverified; complete Windows lifecycle verification is still pending.
 
 ## Technical architecture
 

@@ -9,6 +9,7 @@ import { assertSafeStatePath, enforceWindowsAcl, verifyWindowsAcl } from '@arlo/
 import { prepareStateDirectory } from '../storage/index.ts';
 import { assertConfigurationFile, persistSetupRecord, setupTransaction } from './transaction.ts';
 import { fail, type SetupOperationFailure } from './errors.ts';
+import { consumerInventory, matchesOwnedProgress, validConsumerInventory, type ConsumerInventory } from './component-inventory.ts';
 
 // One immutable release batch. Acquisition uses the user's standard registry
 // configuration; this is not a latest-version or arbitrary-URL installer.
@@ -32,9 +33,12 @@ export type ResourceRecord = { schemaVersion: 1; id: string; kind: 'components';
   root: string; consumer: string; manager: Tool; packages: typeof piRelease; planSha256: string; manifestSha256: string;
   phase: 'consuming' | 'components-installed' | 'registration-prepared' | 'configured';
   references: Record<string, { target: string; phase: 'registration-prepared' | 'configured'; kind?: ReferenceKind }>;
-  owned: { files: string[]; packageEntries: string[]; peerLinks: string[] }; borrowed: Record<string, Identity>;
+  owned: { files: string[]; packageEntries: string[]; peerLinks: string[]; inventory?: ConsumerInventory }; borrowed: Record<string, Identity>;
   artifacts?: Record<string, { directory: string; version: string; sha256: string; resolved: string; integrity: string }>;
   consumerSha256?: string;
+  cleanup?: { phase: 'removing' | 'removed'; scope: string; consumerSha256: string;
+    manifestSha256: string; planSha256: string; beforeInventory?: ConsumerInventory; expectedInventory?: ConsumerInventory;
+    failure?: { code: string; exit: number | null; signal: string | null; operation: string } };
   failure?: { code: string; exit: number | null; signal: string | null; operation?: string }; createdAt: string };
 
 export function physicalPackage(from: string, name: string): string {
@@ -139,7 +143,7 @@ function artifactFingerprint(directory: string): string {
 }
 // Hash the owned consumer, including transitive packages and generated links.
 // Borrowed peer link destinations are never followed or claimed as owned.
-function consumerFingerprint(directory: string): string {
+export function consumerFingerprint(directory: string): string {
   if (fs.lstatSync(directory).isSymbolicLink()) fail('COMPONENT_OWNERSHIP_CONFLICT', 'The owned consumer was redirected. Preserve it and review before retrying.');
   const hash = createHash('sha256');
   function visit(relative: string) {
@@ -156,13 +160,13 @@ function consumerFingerprint(directory: string): string {
   visit('');
   return hash.digest('hex');
 }
-function privateRecord(file: string): ResourceRecord | undefined {
+export function privateRecord(file: string): ResourceRecord | undefined {
   if (!fs.existsSync(file)) return;
   assertSafeStatePath(path.dirname(file));
   if (fs.lstatSync(file).isSymbolicLink() || !verifyWindowsAcl(file).valid) fail('COMPONENT_OWNERSHIP_CONFLICT', 'Preserve and repair the unsafe component ownership record.');
   try { return json(file); } catch { return fail('COMPONENT_OWNERSHIP_CONFLICT', 'Preserve and repair the unreadable component ownership record.'); }
 }
-function componentDataDirectory(): string {
+export function componentDataDirectory(): string {
   const data = process.platform === 'win32' ? process.env.LOCALAPPDATA ?? path.join(os.homedir(), 'AppData/Local')
     : process.env.XDG_DATA_HOME ?? path.join(os.homedir(), '.local/share');
   return path.join(path.resolve(data), 'arlo');
@@ -202,7 +206,7 @@ export async function preparePiComponents(target: string, scope: string, selecte
   const expectedOwned = { files: ['consumer/package.json', `consumer/${lockName}`], packageEntries: Object.keys(piRelease),
     peerLinks: piPeers.map(name => `consumer/node_modules/${name}`) };
   let record = privateRecord(recordFile);
-  const recordedFilesMissing = () => !!record?.artifacts && Object.values(record.artifacts)
+  const recordedFilesMissing = () => !record?.cleanup && !!record?.artifacts && Object.values(record.artifacts)
     .some(entry => typeof entry.directory === 'string' && !fs.existsSync(entry.directory));
   function validateRecord() {
     if (!record || record.schemaVersion !== 1 || record.kind !== 'components' || record.id !== id || record.root !== root || record.consumer !== consumer
@@ -211,11 +215,36 @@ export async function preparePiComponents(target: string, scope: string, selecte
       || !['consuming', 'components-installed', 'registration-prepared', 'configured'].includes(record.phase)
       || !record.references || typeof record.references !== 'object' || Array.isArray(record.references)
       || record.manifestSha256 !== digest(manifestBytes) || record.borrowed === undefined
-      || JSON.stringify(record.borrowed) !== JSON.stringify(host.peers) || JSON.stringify(record.owned) !== JSON.stringify(expectedOwned)
+      || JSON.stringify(record.borrowed) !== JSON.stringify(host.peers)
+      || JSON.stringify({ files: record.owned?.files, packageEntries: record.owned?.packageEntries, peerLinks: record.owned?.peerLinks }) !== JSON.stringify(expectedOwned)
+      || record.owned?.inventory !== undefined && !validConsumerInventory(record.owned.inventory)
       || !/^[a-f0-9]{64}$/.test(record.planSha256)) fail('COMPONENT_OWNERSHIP_CONFLICT', 'The durable record does not prove this exact component resource. Preserve it and review its ownership; no host changes were applied.');
     for (const [scopeDirectory, reference] of Object.entries(record.references)) {
       if (!path.isAbsolute(scopeDirectory) || reference?.target !== target || !['registration-prepared', 'configured'].includes(reference.phase)
         || reference.kind !== undefined && !['setup-record', 'preexisting-declaration'].includes(reference.kind)) fail('COMPONENT_OWNERSHIP_CONFLICT', 'A referring scope record is ambiguous. Preserve the shared resource and review before retrying.');
+    }
+    if (record.cleanup?.phase === 'removed') {
+      if (!path.isAbsolute(record.cleanup.scope) || Object.keys(record.references).length
+        || ![record.cleanup.consumerSha256, record.cleanup.manifestSha256, record.cleanup.planSha256].every(value => /^[a-f0-9]{64}$/.test(value))
+        || fingerprint(path.join(consumer, 'package.json')) !== record.cleanup.manifestSha256
+        || fingerprint(path.join(consumer, lockName)) !== record.cleanup.planSha256 || consumerFingerprint(consumer) !== record.cleanup.consumerSha256
+        || Object.keys(piRelease).some(name => fs.existsSync(path.join(consumer, 'node_modules', name)) || json(path.join(consumer, 'package.json')).dependencies?.[name])
+        || Object.values(record.artifacts ?? {}).some(entry => fs.existsSync(entry.directory))) {
+        fail('COMPONENT_OWNERSHIP_CONFLICT', 'The completed cleanup record does not prove an unchanged retired consumer. Preserve later edits and review before reinstalling.');
+      }
+      return;
+    }
+    if (record.cleanup?.phase === 'removing') {
+      const recordedSnapshot = fingerprint(path.join(consumer, 'package.json')) === record.cleanup.manifestSha256
+        && fingerprint(path.join(consumer, lockName)) === record.cleanup.planSha256 && consumerFingerprint(consumer) === record.cleanup.consumerSha256;
+      const ownedProgress = matchesOwnedProgress(consumerInventory(consumer, yaml), record.cleanup.beforeInventory, record.cleanup.expectedInventory);
+      if (!path.isAbsolute(record.cleanup.scope)
+        || ![record.cleanup.consumerSha256, record.cleanup.manifestSha256, record.cleanup.planSha256].every(value => /^[a-f0-9]{64}$/.test(value))
+        || !recordedSnapshot && !ownedProgress) {
+        fail('COMPONENT_OWNERSHIP_CONFLICT', 'The unfinished cleanup consumer changed later. Preserve its files and private record for recovery review.');
+      }
+      if (mode === 'install') fail('COMPONENT_RECOVERY_REVIEW_REQUIRED', 'Finish the pending component cleanup using uninstall on this exact target before requesting a new installation.');
+      return;
     }
     if (fingerprint(path.join(consumer, 'package.json')) !== record.manifestSha256 || fingerprint(path.join(consumer, lockName)) !== record.planSha256) {
       fail('COMPONENT_OWNERSHIP_CONFLICT', 'The owned component manifest or lock changed later. Preserve those edits and review before retrying.');
@@ -241,7 +270,7 @@ export async function preparePiComponents(target: string, scope: string, selecte
   enforceWindowsAcl(stage, true);
   let lockBytes: string;
   try {
-    if (record) lockBytes = fs.readFileSync(path.join(consumer, lockName), 'utf8');
+    if (record && !(mode === 'install' && record.cleanup?.phase === 'removed')) lockBytes = fs.readFileSync(path.join(consumer, lockName), 'utf8');
     else if (mode === 'inspect') lockBytes = '';
     else {
       fs.writeFileSync(path.join(stage, 'package.json'), manifestBytes, { mode: 0o600 });
@@ -297,8 +326,8 @@ export async function preparePiComponents(target: string, scope: string, selecte
     }
   } catch (error) { fs.rmSync(stage, { recursive: true, force: true }); throw error; }
   const state = () => ({ id, directory: root, consumer, manager: { name: tool.name, version: tool.version },
-    state: record?.artifacts ? Object.values(record.artifacts).every(entry => fs.existsSync(entry.directory)) ? 'installed' : 'missing'
-      : record ? 'partial' : mode === 'inspect' ? 'missing' : 'planned', transaction: record?.phase ?? 'none',
+    state: record?.cleanup?.phase === 'removed' ? 'removed' : record?.cleanup?.phase === 'removing' ? 'partial' : record?.artifacts ? Object.values(record.artifacts).every(entry => fs.existsSync(entry.directory)) ? 'installed' : 'missing'
+      : record ? 'partial' : mode === 'inspect' ? 'missing' : 'planned', transaction: record?.cleanup?.phase ?? record?.phase ?? 'none',
     packages: piRelease, borrowed: host.peers, references: Object.keys(record?.references ?? {}),
     ...(recordedFilesMissing() ? { inventory: 'review-required' } : {}) });
   const recheck = () => {
@@ -314,6 +343,8 @@ export async function preparePiComponents(target: string, scope: string, selecte
   }
   async function consume() {
     recheck();
+    let renewed = false;
+    if (record?.cleanup?.phase === 'removed') { validateRecord(); record = undefined; renewed = true; }
     if (record) {
       validateRecord();
       if (!record.artifacts && !record.consumerSha256 && fs.existsSync(path.join(consumer, 'node_modules'))) fail('COMPONENT_RECOVERY_REVIEW_REQUIRED', 'Consumption was interrupted before its owned inventory was recorded. Preserve the partial consumer and review it before retrying; unrecorded package edits cannot be safely overwritten.');
@@ -321,8 +352,8 @@ export async function preparePiComponents(target: string, scope: string, selecte
     if (record?.artifacts) return;
     if (!record) {
       prepareStateDirectory(consumer);
-      fs.writeFileSync(path.join(consumer, 'package.json'), manifestBytes, { mode: 0o600, flag: 'wx' });
-      fs.writeFileSync(path.join(consumer, lockName), lockBytes, { mode: 0o600, flag: 'wx' });
+      fs.writeFileSync(path.join(consumer, 'package.json'), manifestBytes, { mode: 0o600, flag: renewed ? 'w' : 'wx' });
+      fs.writeFileSync(path.join(consumer, lockName), lockBytes, { mode: 0o600, flag: renewed ? 'w' : 'wx' });
       record = { schemaVersion: 1, id, kind: 'components', host, root, consumer, manager: tool, packages: piRelease,
         planSha256: digest(lockBytes), manifestSha256: digest(manifestBytes), phase: 'consuming', references: {},
         owned: expectedOwned, borrowed: host.peers, createdAt: new Date().toISOString() };
@@ -331,7 +362,8 @@ export async function preparePiComponents(target: string, scope: string, selecte
     const result = execute(tool, tool.name === 'npm' ? ['ci', '--install-links=false', '--legacy-peer-deps', '--ignore-scripts', '--no-audit', '--no-fund']
       : ['install', '--frozen-lockfile', ...pnpmOptions], consumer);
     if (result.status !== 0 || result.error) {
-      record = { ...record, phase: 'consuming', consumerSha256: consumerFingerprint(consumer), failure: { code: (result.error as NodeJS.ErrnoException | undefined)?.code ?? 'PACKAGE_TOOL_FAILED', exit: result.status, signal: result.signal } };
+      record = { ...record, phase: 'consuming', owned: { ...record.owned, inventory: consumerInventory(consumer, yaml) },
+        consumerSha256: consumerFingerprint(consumer), failure: { code: (result.error as NodeJS.ErrnoException | undefined)?.code ?? 'PACKAGE_TOOL_FAILED', exit: result.status, signal: result.signal } };
       persistSetupRecord(recordFile, record);
       fail('COMPONENT_INSTALL_FAILED', `Component consumption failed (exit ${result.status ?? (result.error as NodeJS.ErrnoException | undefined)?.code}, signal ${result.signal ?? 'none'}). Owned partial components remain at ${root}; native registration did not run. Retry setup with the same exact target after resolving the package-tool failure.`);
     }
@@ -351,7 +383,8 @@ export async function preparePiComponents(target: string, scope: string, selecte
         integrity: resolution.integrity };
     }
     for (const [name, peer] of Object.entries(host.peers)) if (physicalPackage(adapter, name) !== peer.directory) fail('HOST_PEER_CONFLICT', 'The installed adapter resolves a different physical host peer. Installed components remain for review; native registration did not run.');
-    record = { ...record, phase: 'components-installed', artifacts, consumerSha256: consumerFingerprint(consumer), failure: undefined };
+    record = { ...record, phase: 'components-installed', artifacts, owned: { ...record.owned, inventory: consumerInventory(consumer, yaml) },
+      consumerSha256: consumerFingerprint(consumer), failure: undefined };
     persistSetupRecord(recordFile, record);
   }
   function registration(phase: 'registration-prepared' | 'configured', kind: ReferenceKind = 'setup-record') {
