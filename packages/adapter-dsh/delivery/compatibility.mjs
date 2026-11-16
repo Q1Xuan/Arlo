@@ -4,7 +4,8 @@ import { createRequire } from 'node:module';
 import { createHash } from 'node:crypto';
 import * as jsonlPersistence from '@deepseek-ai/dsh-session-persistence-jsonl';
 import { inspectDshEnvironment } from './environment.mjs';
-import { canonicalSha256, inspectDshDependencyClosure, inspectDshHostPreparation } from '@arlo/daemon/setup-dsh';
+import { canonicalSha256, inspectDshDependencyClosure, inspectDshHostPreparation, inspectDshInstallation,
+  dshBorrowedModules, inspectDshBoundCompositionDependencyClosure, inspectComponentResource, physicalPackage } from '@arlo/daemon/setup-dsh';
 
 const baseline = JSON.parse(fs.readFileSync(new URL('./reviewed-composition.json', import.meta.url), 'utf8'));
 const formalHostVersions = ['0.2.0-rc.2', '0.2.1-rc.2', '0.2.1-rc.5'];
@@ -19,7 +20,17 @@ const routingSha = manifest => sha(JSON.stringify(Object.fromEntries(entryFields
 export function inspectDshWebComposition(consumer, { experimental = false } = {}) {
   consumer = path.resolve(consumer);
   const require = createRequire(path.join(path.resolve(consumer), 'package.json'));
-  const hostPreparation = inspectDshHostPreparation(consumer, { experimental });
+  let deployment, bound;
+  try {
+    deployment = readJson(path.join(consumer, 'package.json')).arlo?.dshInstallation;
+    if (deployment) {
+      bound = inspectDshInstallation(deployment.selector);
+      // This is the user's explicit deployment choice saved at confirmation.
+      // It changes admission policy only; every actual identity gate still runs.
+      experimental ||= deployment.experimentalCompatibility === true;
+    }
+  } catch { /* a failed selected-installation check is added below */ }
+  const hostPreparation = inspectDshHostPreparation(consumer, { experimental, ...(deployment ? { installation: deployment.selector } : {}) });
   const checks = [...hostPreparation.checks];
   const packages = { ...hostPreparation.packages };
   const contracts = { ...hostPreparation.contracts };
@@ -36,10 +47,21 @@ export function inspectDshWebComposition(consumer, { experimental = false } = {}
   };
   const hostVersion = hostPreparation.hostVersion;
   let hostRequire;
-  try { hostRequire = createRequire(require.resolve('@deepseek-ai/dsh/package.json')); } catch { /* recorded by host preparation */ }
+  try { hostRequire = createRequire(bound ? path.join(bound.directory, 'package.json') : require.resolve('@deepseek-ai/dsh/package.json')); } catch { /* recorded by host preparation */ }
   const candidateProfiles = { '0.2.1-rc.2': './candidate-composition.json', '0.2.1-rc.5': './rc5-composition.json' };
   const reviewed = Object.hasOwn(candidateProfiles, hostVersion)
     ? readJson(new URL(candidateProfiles[hostVersion], import.meta.url)) : baseline;
+  if (deployment) check('DSH_INSTALLATION_IDENTITY_CONFLICT', 'durable-selected-host-binding', () => {
+    if (!bound || typeof deployment.experimentalCompatibility !== 'boolean' || !reviewed.companion
+      || deployment.materialSha256 !== hostPreparation.preparationMaterialSha256) return false;
+    const resource = inspectComponentResource(consumer);
+    const actual = dshBorrowedModules(bound, Object.keys(resource.borrowed));
+    if (JSON.stringify(resource.host) !== JSON.stringify(actual) || JSON.stringify(resource.host.selector) !== JSON.stringify(deployment.selector)) return false;
+    const adapterDirectory = path.dirname(require.resolve('@arlo/adapter-dsh'));
+    const adapterManifest = readJson(path.join(adapterDirectory, 'package.json'));
+    return Object.keys(adapterManifest.peerDependencies ?? {}).filter(name => name.startsWith('@deepseek-ai/')).every(name =>
+      resource.borrowed[name] && physicalPackage(adapterDirectory, name) === physicalPackage(bound.directory, name));
+  });
   for (const name of ['@deepseek-ai/cordis', '@deepseek-ai/dsh-agent', '@deepseek-ai/dsh-llm',
     '@deepseek-ai/dsh-tools', '@deepseek-ai/dsh-api-session-controller', '@deepseek-ai/dsh-session-persistence-jsonl']) {
     check('DSH_MODULE_IDENTITY_MISMATCH', name, () => {
@@ -62,13 +84,15 @@ export function inspectDshWebComposition(consumer, { experimental = false } = {}
     }
   }
   check('DSH_DEPENDENCY_IDENTITY_MISMATCH', 'complete-installed-dependency-closure', () => {
-    const { manifestRouting, ...closure } = inspectDshDependencyClosure(consumer, hostRequire);
+    const { manifestRouting, ...closure } = bound ? inspectDshBoundCompositionDependencyClosure(consumer, bound)
+      : inspectDshDependencyClosure(consumer, hostRequire);
     dependencyClosure = closure;
     // Known frozen selectors/dependency declarations remain mandatory in an
     // experiment too. A coherently changed version uses an unlisted profile;
     // optional packages absent on this platform need no invented manifest.
+    const expected = { ...reviewed.dependencyManifests, ...(bound ? reviewed.companion?.dependencyManifests : {}) };
     runtimeIdentityVerified = !!reviewed.dependencyManifests && Object.entries(manifestRouting).every(([id, digest]) =>
-      !Object.hasOwn(reviewed.dependencyManifests, id) || reviewed.dependencyManifests[id] === digest);
+      !Object.hasOwn(expected, id) || expected[id] === digest);
     return runtimeIdentityVerified;
   });
   const reviewedClosure = dependencyClosure?.lockSha256 === reviewed.dependencyClosureSha256;

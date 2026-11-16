@@ -8,4 +8,4 @@ export interface DshHostPreparationReport {
   guidance: string;
   [key: string]: unknown;
 }
-export function inspectDshHostPreparation(consumer: string, options?: { experimental?: boolean }): DshHostPreparationReport;
+export function inspectDshHostPreparation(consumer: string, options?: { experimental?: boolean; installation?: import('./installed-host.mjs').DshInstallationSelector }): DshHostPreparationReport;

@@ -1459,5 +1459,12 @@
     "@modelcontextprotocol/client@2.0.0": "8d76cab8a9ba02b0000e8d0d81c5d60a9d74c1aa27d32ae529e84be1dd9f50da",
     "@modelcontextprotocol/core@2.0.0": "b7db5529585ec20931f8f4156a9a4ae94fdfaecb716dd5d6e8272a94e203fd3d",
     "@arlo/daemon@0.1.0": "0644f4d6eadebc1d78a71d5468fab77b6acd881e30cd6e859bb4671c3871566a"
+  },
+  "companion": {
+    "hostVersion": "0.2.1-rc.5",
+    "dependencyManifests": {
+      "@arlo/adapter-dsh@0.1.0": "2c4cd4073e74479b979f66f8dc88e0a05b30516583904d394e0f2a06de067adb"
+    },
+    "scope": "Exact compiled companion manifest; original executable, native contract, peer, browser and complete closure gates remain required. Ordinary dependency profiles still require explicit experimental selection."
   }
 }

@@ -36,5 +36,21 @@ export function prepareCandidateAdapter(directory, recipe) {
       if (name === '@deepseek-ai/schemastery') manifest[section][name] = '3.18.5';
     }
   }
+  if (version === '0.2.1-rc.5') {
+    // The rc.5 companion borrows the selected Host's actual modules. A native
+    // dependency here would resolve a second Cordis/DSH peer graph in pnpm.
+    for (const [name, requirement] of Object.entries(manifest.dependencies)) {
+      if (!name.startsWith('@deepseek-ai/')) continue;
+      manifest.peerDependencies[name] = requirement;
+      delete manifest.dependencies[name];
+    }
+    for (const name of ['dsh-session', 'dsh-client-ui-primitives', 'dsh-client-ui-slots']) {
+      manifest.peerDependencies[`@deepseek-ai/${name}`] = version;
+    }
+    // Optional metadata prevents package tools from acquiring another Host.
+    // Installation and live composition gates still require physical sharing.
+    manifest.peerDependenciesMeta = Object.fromEntries(Object.keys(manifest.peerDependencies)
+      .map(name => [name, { optional: true }]));
+  }
   fs.writeFileSync(manifestFile, JSON.stringify(manifest, null, 2) + '\n');
 }

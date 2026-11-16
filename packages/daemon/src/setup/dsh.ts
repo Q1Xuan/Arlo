@@ -5,13 +5,20 @@ import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
+import { stdin } from 'node:process';
 import { assertConfigurationFile, persistSetupRecord, recordedPackageDirectory, setupTransaction } from './transaction.ts';
 import { assertSafeStatePath, enforceWindowsAcl, verifyWindowsAcl, ArloError } from '@arlo/sdk';
 import { inspectDshHostPreparation, type DshHostPreparationReport } from '../../setup-dsh/host-preparation.mjs';
+import { planDshInstallation, inspectDshPreparationRecovery, dshKnownAdapterNames } from './dsh-installation.ts';
+import { SetupError, type SetupOperationFailure } from './errors.ts';
+import { askSetup } from './pi-discovery.ts';
 
 type Options = Record<string, string | boolean>;
 type RecordState = { schemaVersion: 1; kind: 'dsh'; target: string; adapter: string; profile: string; home: string;
-  owned: boolean; phase: 'prepared' | 'configured' | 'removing' | 'removed'; dependency?: string; rowSha256?: string; manager: 'npm' | 'pnpm'; createdAt: string };
+  owned: boolean; phase: 'prepared' | 'configured' | 'removing' | 'removed'; dependency?: string; rowSha256?: string; manager: 'npm' | 'pnpm'; createdAt: string;
+  installation?: import('../../setup-dsh/installed-host.mjs').DshInstallationSelector;
+  preparation?: { id: string; directory: string }; components?: { id: string; directory: string };
+  experimentalCompatibility?: boolean; failure?: SetupOperationFailure };
 class DshSetupError extends Error {
   readonly code: string;
   readonly nextStep: string;
@@ -63,7 +70,11 @@ function readRecord(file: string, target: string, adapter: string, profile: stri
     || record.profile !== profile || record.home !== home || typeof record.owned !== 'boolean'
     || !['prepared', 'configured', 'removing', 'removed'].includes(record.phase) || !['npm', 'pnpm'].includes(record.manager)
     || typeof record.createdAt !== 'string' || !Number.isFinite(Date.parse(record.createdAt)) || record.owned && typeof record.dependency !== 'string'
-    || record.rowSha256 !== undefined && (typeof record.rowSha256 !== 'string' || !/^[a-f0-9]{64}$/.test(record.rowSha256))) {
+    || record.rowSha256 !== undefined && (typeof record.rowSha256 !== 'string' || !/^[a-f0-9]{64}$/.test(record.rowSha256))
+    || record.failure !== undefined && (!record.failure || !['HOST_PACKAGE_OPERATION_FAILED', 'REGISTRATION_INCOMPLETE'].includes(record.failure.code)
+      || record.failure.exit !== null && !Number.isInteger(record.failure.exit)
+      || record.failure.signal !== null && typeof record.failure.signal !== 'string'
+      || !['native-install', 'native-remove'].includes(record.failure.operation))) {
     return fail('SETUP_OWNERSHIP_CONFLICT', 'The private record does not prove ownership of this exact target/profile. Preserve it and review the selected profile; no configuration changed.');
   }
   return record;
@@ -86,16 +97,16 @@ function packageManager(profile: string, manifest: any, consumer: string, npm: s
   }
   const name = declared?.startsWith('pnpm@') || hasPnpm ? 'pnpm' : 'npm';
   if (declared?.startsWith('npm@') && hasPnpm || declared?.startsWith('pnpm@') && hasNpm) return fail('PACKAGE_MANAGER_CONFLICT', 'The selected profile manager and lockfile disagree; preserve them and resolve the conflict first.');
-  if (name === 'npm') return { name, executable: process.execPath, args: [npm] };
+  if (name === 'npm') return { name, executable: process.execPath, args: [npm, '--global=false', `--prefix=${profile}`] };
   const hostManager = json(path.join(consumer, 'package.json')).packageManager;
   const version = (declared ?? hostManager)?.match(/^pnpm@(\d+\.\d+\.\d+)(?:\+sha(?:224|256|512)\.[a-f0-9]+)?$/)?.[1];
   if (!version) return fail('PACKAGE_MANAGER_CONFLICT', 'A pnpm profile requires its own or its prepared installation\'s exact declared pnpm version; setup will not guess a developer toolchain.');
   const local = path.join(path.dirname(process.execPath), 'node_modules/pnpm/bin/pnpm.cjs');
   if (fs.existsSync(local)) {
     const installed = json(path.resolve(local, '../../package.json')).version;
-    if (installed === version) return { name, executable: process.execPath, args: [local], version };
+    if (installed === version) return { name, executable: process.execPath, args: [local, '--global=false', `--dir=${profile}`], version };
   }
-  return { name, executable: process.execPath, args: [npm, 'exec', '--yes', '--ignore-scripts', `--package=pnpm@${version}`, '--', 'pnpm'], version };
+  return { name, executable: process.execPath, args: [npm, '--global=false', `--prefix=${profile}`, 'exec', '--yes', '--ignore-scripts', `--package=pnpm@${version}`, '--', 'pnpm', '--global=false', `--dir=${profile}`], version };
 }
 function validatePackagePlan(profileDir: string, adapter: string, manager: ReturnType<typeof packageManager>, hostRequire: NodeJS.Require, remove: boolean): void {
   const planFiles = ['package.json', 'package-lock.json', 'pnpm-lock.yaml'];
@@ -124,8 +135,9 @@ function validatePackagePlan(profileDir: string, adapter: string, manager: Retur
     enforceWindowsAcl(stage, true);
     if (process.platform !== 'win32') fs.chmodSync(stage, 0o700);
     try {
-      fs.cpSync(profileDir, path.join(stage, 'profile'), { recursive: true, dereference: true });
       const planned = path.join(stage, 'profile');
+      fs.mkdirSync(planned);
+      for (const file of planFiles) if (beforeFiles[file] !== undefined) fs.writeFileSync(path.join(planned, file), beforeFiles[file], { mode: 0o600 });
       // pnpm remove has no lockfile-only mode. Plan that removal through a
       // manifest change in this private copy followed by its standard solver.
       if (remove) {
@@ -137,7 +149,9 @@ function validatePackagePlan(profileDir: string, adapter: string, manager: Retur
         fs.writeFileSync(stagedFile, JSON.stringify(staged));
       }
       const args = remove ? ['install'] : ['add', `link:${adapter}`];
-      const result = spawnSync(manager.executable, [...manager.args, ...args, '--lockfile-only', '--ignore-scripts'],
+      const stagedArgs = manager.args.map(argument => argument === `--dir=${profileDir}` ? `--dir=${planned}`
+        : argument === `--prefix=${profileDir}` ? `--prefix=${planned}` : argument);
+      const result = spawnSync(manager.executable, [...stagedArgs, ...args, '--lockfile-only', '--ignore-scripts', '--ignore-workspace'],
         { cwd: planned, encoding: 'utf8', windowsHide: true, timeout: 120_000, maxBuffer: 1024 * 1024 });
       if (result.status !== 0 || result.error) {
         const reason = `${result.stdout ?? ''}${result.stderr ?? ''}`.match(/ERR_PNPM_[A-Z_]+/)?.[0] ?? 'PACKAGE_TOOL_FAILED';
@@ -179,8 +193,9 @@ function nativeOperation(target: string, home: string, profile: string, adapter:
     'plugin', '--profile', profile, ...action, ...flags], { cwd: path.join(home, 'profiles', profile),
     env: { ...process.env, DSH_HOME: home, DSH_TELEMETRY_DISABLED: '1' }, encoding: 'utf8', windowsHide: true,
     timeout: 120_000, maxBuffer: 1024 * 1024 });
-  if (result.status !== 0 || result.error) return fail('HOST_PACKAGE_OPERATION_FAILED',
-    `The selected DSH profile ${remove ? 'remove' : 'install'} operation failed (exit ${result.status ?? (result.error as NodeJS.ErrnoException | undefined)?.code ?? 'unknown'}). Inspect that profile's private native package-manager log and setup record; no success was recorded.`);
+  if (result.status !== 0 || result.error) throw new SetupError('HOST_PACKAGE_OPERATION_FAILED',
+    `The selected DSH profile ${remove ? 'remove' : 'install'} operation failed (exit ${result.status ?? (result.error as NodeJS.ErrnoException | undefined)?.code ?? 'unknown'}, signal ${result.signal ?? 'none'}). Inspect that profile's private native package-manager log and setup record; no success was recorded.`,
+    { code: 'HOST_PACKAGE_OPERATION_FAILED', exit: result.status, signal: result.signal, operation: remove ? 'native-remove' : 'native-install' });
   return { exit: result.status, signal: result.signal };
 }
 function summary(report: any): object | undefined {
@@ -209,6 +224,8 @@ function removeOwnedLink(link: string, adapter: string): void {
 export async function runDshSetupCli(command: string, options: Options): Promise<number> {
   let hostPreparation: DshHostPreparationReport | undefined;
   let release: (() => Promise<void>) | undefined;
+  let installation: Awaited<ReturnType<typeof planDshInstallation>> | undefined;
+  let scopeRecord: { file: string; value: RecordState } | undefined;
   const output = (value: object) => console.log(JSON.stringify(value, null, 2));
   try {
     const profile = options['--profile'] as string;
@@ -222,27 +239,103 @@ export async function runDshSetupCli(command: string, options: Options): Promise
     if (fs.lstatSync(profileDir).isSymbolicLink() || (process.platform === 'win32' ? actualProfile.toLowerCase() !== profileDir.toLowerCase() : actualProfile !== profileDir)) fail('PROFILE_TARGET_CONFLICT', 'The selected profile or its parent is redirected. Select its owning DSH home and real profile; setup does not follow ambiguous profile targets.');
     const file = path.join(profileDir, 'package.json');
     const recordFile = path.join(profileDir, 'arlo-setup', 'dsh.json');
+    const checkpoint = (value: RecordState) => { writeRecord(recordFile, value); scopeRecord = { file: recordFile, value }; };
+    const recordFingerprint = () => fs.existsSync(recordFile) ? createHash('sha256').update(fs.readFileSync(recordFile)).digest('hex') : 'missing';
+    const initialRecordFingerprint = recordFingerprint();
     const initial = profileManifest(file);
     let current = initial;
-    const target = directory(options['--target'] as string, 'HOST_NOT_FOUND', 'Select the exact existing DSH package directory with --target; no host is downloaded.');
+    const selectedTarget = options['--target'] as string;
+    if (!selectedTarget) fail('HOST_NOT_FOUND', 'Select the exact existing DSH package directory with --target; no host is downloaded.');
+    const hasManualAdapter = dshKnownAdapterNames.some(name => ({ ...initial.dependencies, ...initial.optionalDependencies, ...initial.devDependencies })[name] !== undefined
+      || initial.dsh?.profile?.bundles?.includes(name));
+    if (!options['--adapter'] && !fs.existsSync(recordFile) && !hasManualAdapter
+      && (command === 'setup-status' || command === 'setup' && !fs.existsSync(selectedTarget))) {
+      const recovery = inspectDshPreparationRecovery(selectedTarget);
+      if (recovery) {
+        output({ host: 'dsh', scope: 'profile', profile, profileDir, home, ...recovery,
+          phase: 'recovery-required', registration: { state: 'unobserved', ownership: 'not-recorded' },
+          transaction: 'none', runtime: 'unobserved', communication: 'unobserved',
+          ...(command === 'setup' ? { error: 'DSH_PREPARATION_RECOVERY_REQUIRED' } : {}) });
+        return command === 'setup-status' ? 0 : 1;
+      }
+    }
+    let target = directory(options['--target'] as string, 'HOST_NOT_FOUND', 'Select the exact existing DSH package directory with --target; no host is downloaded.');
+    let adapterSelection = options['--adapter'] as string | undefined;
+    let retainedAutomatic: RecordState | undefined;
+    if (!adapterSelection && fs.existsSync(recordFile)) {
+      try { retainedAutomatic = json(recordFile); } catch { fail('SETUP_RECORD_UNREADABLE', 'Preserve and repair the private native setup record before selecting its retained adapter.'); }
+      if (!retainedAutomatic?.installation || !retainedAutomatic.components || !retainedAutomatic.preparation
+        || retainedAutomatic.kind !== 'dsh' || retainedAutomatic.schemaVersion !== 1 || retainedAutomatic.profile !== profile
+        || retainedAutomatic.home !== home || retainedAutomatic.target !== retainedAutomatic.installation.packageDirectory
+        || typeof retainedAutomatic.experimentalCompatibility !== 'boolean') fail('SETUP_OWNERSHIP_CONFLICT', 'The retained native record cannot identify an automatic installation. Preserve it and select its exact original adapter with --adapter.');
+    }
+    const automatic = !adapterSelection && (command === 'setup' || !!retainedAutomatic);
+    let experimental = options['--experimental'] === true || retainedAutomatic?.experimentalCompatibility === true;
+    if (automatic) {
+      const dependencies = { ...initial.dependencies, ...initial.optionalDependencies, ...initial.devDependencies };
+      if (!retainedAutomatic && dshKnownAdapterNames.some(name => dependencies[name] !== undefined || initial.dsh?.profile?.bundles?.includes(name))) {
+        fail('DUPLICATE_ADAPTER_CONFLICT', 'This existing profile already declares Arlo. Preserve its manual registration and select that exact compiled adapter before acquiring another release.');
+      }
+      installation = await planDshInstallation(target, profileDir, options['--npm-cli'] as string, experimental, command === 'setup-status' ? 'inspect' : 'install');
+      if (retainedAutomatic && (JSON.stringify(retainedAutomatic.installation) !== JSON.stringify(installation.initial.selector)
+        || retainedAutomatic.adapter !== recordedPackageDirectory(installation.components.adapter) || retainedAutomatic.components?.id !== installation.components.id
+        || retainedAutomatic.preparation?.id !== installation.preparationId)) fail('SETUP_OWNERSHIP_CONFLICT', 'The selected native owner differs from the retained automatic resource. Preserve both installations and select the exact original target.');
+      if (command === 'setup' && !retainedAutomatic) {
+        const staged = await installation.components.preflight();
+        const profileManager = packageManager(profileDir, current, installation.initial.owner, npmCli(options['--npm-cli'] as string));
+        const preflightRequire = createRequire(path.join(installation.initial.directory, 'package.json'));
+        validatePackagePlan(profileDir, staged.adapter, profileManager, preflightRequire, false);
+      const preview = { host: 'dsh', target: installation.host, scope: 'profile', profile, profileDir, home,
+        adapter: { directory: installation.components.adapter }, preparation: installation.summary(), components: installation.components.state(),
+        registration: { manager: profileManager.name, dependency: `file:${installation.components.adapter}`, bundle: '@arlo/adapter-dsh', state: 'validated' },
+        phase: 'preview', configured: false, runtime: 'unobserved', communication: 'unobserved',
+        changes: ['Prepare this exact existing DSH installation using the bundled version-specific repairs and its own standard package manager.',
+          'Add only the missing reviewed browser packages; retain unrelated dependencies and package/patch records.',
+          'Consume the exact coordinated Arlo release in the durable component resource and borrow the selected physical host modules.',
+          'Register this durable adapter through the selected existing native DSH profile and checkpoint each owned phase.'],
+        nextStep: 'Verify the selected installation, repairs, components and existing profile, then repeat with --apply. Start or reload this same profile normally afterward.' };
+      if (options['--apply']) console.error(JSON.stringify(preview, null, 2)); else output(preview);
+      if (!options['--apply']) {
+        if (!stdin.isTTY || options['--json']) return 0;
+        const answer = await askSetup('Apply this installation preparation and selected native profile registration? [y/N]: ');
+        if (!answer || !['y', 'yes'].includes(answer.toLowerCase())) { output({ phase: 'cancelled', nextStep: 'Cancelled. No changes applied.' }); return 0; }
+        options['--apply'] = true;
+      }
+      await installation.acquire();
+      release = await setupTransaction(path.dirname(recordFile));
+      current = profileManifest(file);
+      if (JSON.stringify(current) !== JSON.stringify(initial) || recordFingerprint() !== initialRecordFingerprint) fail('PACKAGE_PLAN_STALE', 'The selected profile or setup ownership record changed after its installation was planned. Preserve those edits and preview the same selection again.');
+      }
+      if (command === 'setup' && options['--apply']) {
+        hostPreparation = await installation.apply();
+        await installation.components.acquire();
+        await installation.components.consume();
+      }
+      adapterSelection = installation.components.adapter;
+      target = installation.host.directory;
+    }
     let host;
     try { host = json(path.join(target, 'package.json')); } catch { fail('HOST_UNREADABLE', 'Select a readable existing DSH package directory.'); }
     if (host.name !== '@deepseek-ai/dsh') fail('HOST_UNSUPPORTED', 'Select the exact prepared DSH host package; no similarly named installation is changed.');
     const consumer = installationDirectory(target);
-    hostPreparation = inspectDshHostPreparation(consumer, { experimental: options['--experimental'] === true });
+    const hostInspection = { experimental, ...(installation ? { installation: installation.initial.selector } : {}) };
+    hostPreparation = inspectDshHostPreparation(consumer, hostInspection);
     if (!hostPreparation.ready) fail(hostPreparation.reason, hostPreparation.guidance);
     if (!['0.2.0-rc.2', '0.2.1-rc.2', '0.2.1-rc.5'].includes(host.version)) fail('HOST_UNSUPPORTED', 'First-release setup supports only existing reviewed DSH compositions; prepare a listed host rather than automatically modifying an experimental installation.');
-    if (command !== 'setup-status' && options['--apply'] && (fs.existsSync(recordFile) || command === 'setup' && !initial.dsh?.profile?.bundles?.includes('@arlo/adapter-dsh'))) {
+    if (!release && command !== 'setup-status' && options['--apply'] && (fs.existsSync(recordFile) || command === 'setup' && !initial.dsh?.profile?.bundles?.includes('@arlo/adapter-dsh'))) {
       release = await setupTransaction(path.dirname(recordFile));
       current = profileManifest(file);
     }
-    if (!options['--adapter']) fail('ADAPTER_NOT_FOUND', 'Select the exact recorded adapter path with --adapter.');
-    const adapter = command !== 'setup' ? recordedPackageDirectory(options['--adapter'] as string)
-      : directory(options['--adapter'] as string, 'ADAPTER_NOT_FOUND', 'Consume the delivered compiled private Arlo packages beside this prepared host, then select the adapter with --adapter. Do not run a generic npm install over the host\'s patched dependency tree.');
+    if (!adapterSelection) fail('ADAPTER_NOT_FOUND', 'Select the exact recorded adapter path with --adapter.');
+    const adapter = command !== 'setup' ? recordedPackageDirectory(adapterSelection)
+      : directory(adapterSelection, 'ADAPTER_NOT_FOUND', 'Consume the delivered compiled private Arlo packages beside this prepared host, then select the adapter with --adapter. Do not run a generic npm install over the host\'s patched dependency tree.');
     const missingAdapter = !fs.existsSync(adapter);
-    const record = readRecord(recordFile, target, adapter, profile, home);
+    const scopeTarget = installation?.initial.selector.packageDirectory ?? target;
+    const record = readRecord(recordFile, scopeTarget, adapter, profile, home);
+    if (record) scopeRecord = { file: recordFile, value: record };
     if (missingAdapter && !record) fail('ADAPTER_NOT_FOUND', 'Consume the compiled private Arlo packages for this prepared host before setup. To revoke a lost component, select the exact adapter path retained by your private setup record.');
-    const require = createRequire(path.join(consumer, 'package.json'));
+    const componentConsumer = installation?.components.state().consumer ?? consumer;
+    const require = createRequire(path.join(componentConsumer, 'package.json'));
     let manifest: any = {}, adapterEntry: string;
     let delivery: any, composition: any;
     if (!missingAdapter) {
@@ -253,7 +346,7 @@ export async function runDshSetupCli(command: string, options: Options): Promise
       fail('ADAPTER_IDENTITY_CONFLICT', 'The selected adapter must be the exact compiled package resolved by this prepared installation; preserve competing packages and select one reviewed product.');
     }
     delivery = await import(pathToFileURL(require.resolve('@arlo/adapter-dsh/delivery')).href);
-    composition = delivery.inspectDshWebComposition(consumer, { experimental: options['--experimental'] === true });
+    composition = delivery.inspectDshWebComposition(componentConsumer, { experimental });
     if (!composition.ready) fail(composition.reason, composition.guidance);
     }
     const hostRequire = createRequire(path.join(target, 'package.json'));
@@ -283,12 +376,15 @@ export async function runDshSetupCli(command: string, options: Options): Promise
       || !current.dsh?.profile?.bundles?.includes('@arlo/adapter-dsh')
       || !missingAdapter && record?.rowSha256 !== undefined && record.rowSha256 !== contactDigest(loaded.rows));
     const manager = packageManager(profileDir, current, consumer, npmCli(options['--npm-cli'] as string));
+    const resources = () => installation ? { preparation: installation.summary(), components: installation.components.state() } : {};
     const report = { host: 'dsh', target: { directory: target, version: host.version, consumer },
       adapter: { directory: adapter, version: manifest.version }, scope: 'profile', profile, profileDir, home,
       cliRuntime: { executable: process.execPath, version: process.versions.node },
       packageManager: { name: manager.name, executable: manager.executable, version: manager.version, acquisition: manager.args.includes('exec') ? 'standard-npm-exec' : 'installed-tool' },
       hostPreparation: summary(hostPreparation), composition: summary(composition), packages: missingAdapter ? 'missing' : 'installed', configured,
       transaction: record?.phase ?? 'none',
+      ...(record?.failure ? { failure: record.failure } : {}),
+      ...resources(),
       ownership: drifted ? 'conflict' : activeOwnership && configured ? 'arlo' : configured ? 'preexisting' : 'none',
       environment: process.versions.node === '24.13.1' ? 'baseline-cli-runtime' : 'unverified-cli-runtime',
       runtime: 'unobserved', communication: 'unobserved',
@@ -302,8 +398,8 @@ export async function runDshSetupCli(command: string, options: Options): Promise
       if (activeOwnership && record && !declaration && !current.dsh?.profile?.bundles?.includes('@arlo/adapter-dsh')) {
         if (!options['--apply']) { output({ ...report, phase: 'preview', changes: ['Finish the pending owned removal and remove only its remaining local link.'], nextStep: 'Repeat with --apply, then reload the profile normally.' }); return 0; }
         removeOwnedLink(link, adapter);
-        writeRecord(recordFile, { ...record, phase: 'removed', owned: false });
-        output({ ...report, configured: false, ownership: 'none', transaction: 'removed', phase: 'removed-pending-reload', nextStep: 'The pending removal is complete. Reload this profile normally; user edits, other clients and shared packages remain.' }); return 0;
+        checkpoint({ ...record, phase: 'removed', owned: false, failure: undefined });
+        output({ ...report, failure: undefined, configured: false, ownership: 'none', transaction: 'removed', phase: 'removed-pending-reload', nextStep: 'The pending removal is complete. Reload this profile normally; user edits, other clients and shared packages remain.' }); return 0;
       }
       if (!record?.owned || !['configured', 'removing'].includes(record.phase) || !configured) {
         output({ ...report, phase: configured ? 'preexisting-preserved' : 'already-removed', nextStep: 'No owned profile registration was removed. Consumed packages, other profiles, history and shared Daemon are preserved.' }); return 0;
@@ -311,44 +407,66 @@ export async function runDshSetupCli(command: string, options: Options): Promise
       if (declaration !== record.dependency || !current.dsh?.profile?.bundles?.includes('@arlo/adapter-dsh')) fail('CONFIGURATION_CHANGED', 'The owned dependency or bundle changed after setup. Preserve your changes and review that entry through DSH before removal.');
       if (!options['--apply']) { output({ ...report, phase: 'preview', changes: ['Remove only the owned local profile dependency and its native bundle through DSH.'], nextStep: 'Repeat with --apply, then reload this profile normally.' }); return 0; }
       validatePackagePlan(profileDir, adapter, manager, hostRequire, true);
-      writeRecord(recordFile, { ...record, phase: 'removing' });
+      checkpoint({ ...record, phase: 'removing', failure: undefined });
       const operation = nativeOperation(target, home, profile, adapter, manager, true);
       const removed = profileManifest(file);
       if (removed.dependencies?.['@arlo/adapter-dsh'] || removed.dsh?.profile?.bundles?.includes('@arlo/adapter-dsh')) {
-        fail('REGISTRATION_INCOMPLETE', 'The native package manager retained a Arlo declaration. Review the private record and current profile; no removal success was recorded.');
+        throw new SetupError('REGISTRATION_INCOMPLETE', 'The native package manager retained an Arlo declaration. Review the private record and current profile; no removal success was recorded.',
+          { code: 'REGISTRATION_INCOMPLETE', ...operation, operation: 'native-remove' });
       }
       // npm can leave an extraneous local link after removing its declaration.
       // Remove that single owned link only; the shared compiled package is untouched.
       removeOwnedLink(link, adapter);
-      writeRecord(recordFile, { ...record, phase: 'removed', owned: false });
-      output({ ...report, configured: false, ownership: 'none', transaction: 'removed', phase: 'removed-pending-reload', operation, nextStep: 'Reload the selected profile normally. Shared packages, other profiles, histories, root identities, allowance records and Daemon remain.' }); return 0;
+      checkpoint({ ...record, phase: 'removed', owned: false, failure: undefined });
+      output({ ...report, failure: undefined, configured: false, ownership: 'none', transaction: 'removed', phase: 'removed-pending-reload', operation, nextStep: 'Reload the selected profile normally. Shared packages, other profiles, histories, root identities, allowance records and Daemon remain.' }); return 0;
     }
     if (record?.phase === 'removing') fail('RECOVERY_REVIEW_REQUIRED', 'Finish the pending uninstall with the same exact target/profile before requesting a new setup.');
     if (configured) { output({ ...report, phase: 'already-configured-pending-reload', nextStep: report.hostRuntime.nextStep }); return 0; }
     if (!options['--apply']) { output({ ...report, phase: 'preview', changes: ['Use the selected DSH native profile manager to link the compiled installed adapter.', 'Enable its shipped bundle/client through the native profile mechanism and write a private ownership record.'], nextStep: 'Verify the exact target/profile and repeat with --apply; then start or reload the profile normally.' }); return 0; }
     validatePackagePlan(profileDir, adapter, manager, hostRequire, false);
-    const prepared: RecordState = { schemaVersion: 1, kind: 'dsh', target, adapter, profile, home, owned: false,
-      phase: 'prepared', manager: manager.name, createdAt: new Date().toISOString() };
-    writeRecord(recordFile, prepared);
+    const prepared: RecordState = { schemaVersion: 1, kind: 'dsh', target: scopeTarget, adapter, profile, home, owned: false,
+      phase: 'prepared', manager: manager.name, createdAt: new Date().toISOString(), ...(installation ? {
+        installation: installation.initial.selector, preparation: { id: installation.preparationId, directory: installation.root },
+        components: { id: installation.components.id, directory: installation.components.root }, experimentalCompatibility: experimental } : {}) };
+    if (installation) { installation.components.registration('registration-prepared'); installation.registration('prepared'); }
+    checkpoint(prepared);
     const operation = nativeOperation(target, home, profile, adapter, manager, false);
     const after = profileManifest(file);
     const loadedAfter = loadProfile();
-    if (fs.realpathSync(link) !== adapter || loadedAfter.rows.length !== 1 || loadedAfter.rows[0].disabled
-      || !after.dsh?.profile?.bundles?.includes('@arlo/adapter-dsh')) fail('REGISTRATION_INCOMPLETE', 'Native registration did not load one intended bundle; the prepared record is retained for safe review and retry.');
-    const hostAfter = inspectDshHostPreparation(consumer, { experimental: options['--experimental'] === true });
+    if (!fs.existsSync(link) || recordedPackageDirectory(link) !== adapter || loadedAfter.rows.length !== 1 || loadedAfter.rows[0].disabled
+      || !after.dsh?.profile?.bundles?.includes('@arlo/adapter-dsh')) throw new SetupError('REGISTRATION_INCOMPLETE', 'Native registration did not load one intended bundle; the prepared record is retained for safe review and retry.',
+        { code: 'REGISTRATION_INCOMPLETE', ...operation, operation: 'native-install' });
+    const hostAfter = inspectDshHostPreparation(consumer, hostInspection);
     if (!hostAfter.ready || hostAfter.dependencyClosure?.installedIdentitySha256 !== hostPreparation.dependencyClosure?.installedIdentitySha256
       || hostAfter.dependencyClosure?.lockSha256 !== hostPreparation.dependencyClosure?.lockSha256) {
       fail('HOST_DEPENDENCY_CHANGED', 'The selected host changed during profile setup. Preserve the prepared record and inspect the host; setup does not repair or replace its dependencies.');
     }
-    const post = delivery.inspectDshWebComposition(consumer, { experimental: options['--experimental'] === true });
+    const post = delivery.inspectDshWebComposition(componentConsumer, { experimental });
     if (!post.ready) fail(post.reason, post.guidance);
-    writeRecord(recordFile, { ...prepared, phase: 'configured', owned: true, dependency: after.dependencies?.['@arlo/adapter-dsh'], rowSha256: contactDigest(loadedAfter.rows) });
-    output({ ...report, configured: true, ownership: 'arlo', transaction: 'configured', phase: 'configured-pending-start-or-reload', operation, nextStep: report.hostRuntime.nextStep }); return 0;
+    checkpoint({ ...prepared, phase: 'configured', owned: true, dependency: after.dependencies?.['@arlo/adapter-dsh'], rowSha256: contactDigest(loadedAfter.rows) });
+    if (installation) { installation.components.registration('configured'); installation.registration('configured'); }
+    output({ ...report, ...resources(), failure: undefined, configured: true, ownership: 'arlo', transaction: 'configured', phase: 'configured-pending-start-or-reload', operation, nextStep: report.hostRuntime.nextStep }); return 0;
   } catch (error) {
+    const failure = error instanceof SetupError ? error.failure : undefined;
+    const failureRecording: string[] = [];
+    if (failure && scopeRecord && release) {
+      const expected = scopeRecord.value;
+      try {
+        const retained = readRecord(scopeRecord.file, expected.target, expected.adapter, expected.profile, expected.home);
+        if (JSON.stringify(retained) !== JSON.stringify(expected)) fail('SETUP_OWNERSHIP_CONFLICT', 'The native setup record changed during registration. Preserve its current contents before recovery.');
+        const failed = { ...expected, failure };
+        writeRecord(scopeRecord.file, failed);
+        scopeRecord.value = failed;
+      } catch { failureRecording.push('native-profile'); }
+      try { installation?.components.recordFailure(failure); } catch { failureRecording.push('components'); }
+    }
     const unsafe = error instanceof ArloError && ['UNSAFE_LOCATION', 'INSECURE_PERMISSIONS', 'INVALID_OWNERSHIP'].includes(error.code);
-    output({ error: unsafe ? 'UNSAFE_SETUP_RECORD' : error instanceof DshSetupError ? error.code : error instanceof Error && ['SETUP_BUSY', 'CONFIGURATION_TARGET_CONFLICT'].includes(error.message) ? error.message : 'SETUP_FAILED', hostPreparation: summary(hostPreparation),
+    output({ error: unsafe ? 'UNSAFE_SETUP_RECORD' : error instanceof DshSetupError || error instanceof SetupError ? error.code : error instanceof Error && ['SETUP_BUSY', 'CONFIGURATION_TARGET_CONFLICT'].includes(error.message) ? error.message : 'SETUP_FAILED', hostPreparation: summary(hostPreparation),
+      ...(scopeRecord ? { transaction: scopeRecord.value.phase } : {}), ...(failure ? { failure } : {}),
+      ...(failureRecording.length ? { failureRecording: { unavailable: failureRecording } } : {}),
+      ...(installation ? { preparation: installation.summary(), components: installation.components.state() } : {}),
       nextStep: unsafe ? 'Use a private, current-user-owned DSH home/profile. Setup does not change unrelated directory permissions.'
-        : error instanceof DshSetupError ? error.nextStep : 'No success was recorded. Inspect the selected private record and native profile logs; never restore an entire old configuration snapshot.' });
+        : error instanceof DshSetupError || error instanceof SetupError ? error.nextStep : 'No success was recorded. Inspect the selected private record and native profile logs; never restore an entire old configuration snapshot.' });
     return 1;
-  } finally { await release?.(); }
+  } finally { await release?.(); await installation?.close(); }
 }

@@ -96,7 +96,12 @@ node PI_PREFIX/node_modules/@arlo/daemon/bin/arlo.js setup --host pi --target PI
 
 ### 接入 DSH Web
 
-使用已有冻结配方构建完整组合：
+编译版 CLI 可以自动准备正常已有的 DSH 0.2.1-rc.5 本地安装，其归属须由本地 npm 锁或
+标准隔离布局的 pnpm 记录核实。选择准确安装和一份现有 profile，核对具体修补、组件和
+原生登记计划后确认；原有启动入口、模型设置和历史保留。直接命令、实验组合选择及
+支持的安装边界见 [DSH 接入与恢复](packages/daemon/setup-dsh/README.md)。
+
+维护者也可以使用已有冻结配方构建完整组合：
 
 ```sh
 pnpm run build --out .artifacts/core
@@ -114,8 +119,8 @@ node .artifacts/dsh-rc5/consumer/node_modules/@arlo/daemon/bin/arlo.js setup --h
 ```
 
 核对预览，在同一命令末尾增加 `--apply`，再通过已准备的 DSH 安装正常启动或重载该 profile。
-接入复用宿主原生 profile 包管理器，不创建 profile、不替换模型设置，也不自动改造任意普通
-DSH 安装；完整组合缺项时会停止并给出诊断。
+接入复用宿主原生 profile 包管理器，保留现有模型设置和历史；这条已准备宿主的路径在
+完整组合缺项时会停止并给出诊断。
 
 ## 第一次通信
 

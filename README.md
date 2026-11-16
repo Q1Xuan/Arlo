@@ -111,7 +111,14 @@ Do not register a second copy of the adapter on the same root.
 
 ### Connect DSH Web
 
-Build a complete DSH composition using the included frozen recipe:
+The compiled CLI can prepare an ordinary existing DSH 0.2.1-rc.5 installation
+under a locked local npm or standard isolated pnpm owner. Select the installation
+and one existing profile, review the exact repairs and component plan, then
+confirm. Its native launcher, model settings and history are retained. See
+[DSH setup and recovery](packages/daemon/setup-dsh/README.md) for direct commands,
+experimental composition selection and the supported installation boundaries.
+
+For a maintained frozen composition, build with the included recipe:
 
 ```sh
 pnpm run build --out .artifacts/core
@@ -132,8 +139,8 @@ node .artifacts/dsh-rc5/consumer/node_modules/@arlo/daemon/bin/arlo.js setup --h
 
 Review the preview, repeat with `--apply`, and start or reload that profile using
 the prepared DSH installation. Setup uses the host's native profile package
-manager. It does not create a profile, replace your model settings or patch an
-arbitrary DSH installation. Missing composition requirements stop setup with diagnostics.
+manager and preserves the existing profile's model settings and history. Missing
+composition requirements stop this prepared-host path with diagnostics.
 
 ## First exchange
 

@@ -51,6 +51,12 @@
         "name": "@arlo/adapter-pi",
         "version": "0.1.0"
       }
+    },
+    "dshAdapters": {
+      "0.2.1-rc.5": {
+        "name": "@arlo/adapter-dsh",
+        "version": "0.1.0"
+      }
     }
   }
 }
