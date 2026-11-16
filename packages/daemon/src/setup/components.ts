@@ -114,9 +114,9 @@ export function inspectPiInstallation(selected: string): HostInstallation {
     // Global npm metadata is read using the installed standard tool. No
     // command in this module mutates the original prefix or global packages.
     const npm = npmCli();
-    const root = spawnSync(process.execPath, [npm, 'root', '-g'], { encoding: 'utf8', timeout: 15_000, windowsHide: true });
-    const list = spawnSync(process.execPath, [npm, 'ls', '-g', '--depth=0', '--json', '--long'], { encoding: 'utf8', timeout: 15_000, windowsHide: true });
-    const prefix = spawnSync(process.execPath, [npm, 'prefix', '-g'], { encoding: 'utf8', timeout: 15_000, windowsHide: true });
+    const root = spawnSync(process.execPath, [npm, '--offline', '--update-notifier=false', 'root', '-g'], { encoding: 'utf8', timeout: 15_000, windowsHide: true });
+    const list = spawnSync(process.execPath, [npm, '--offline', '--update-notifier=false', 'ls', '-g', '--depth=0', '--json', '--long'], { encoding: 'utf8', timeout: 15_000, windowsHide: true });
+    const prefix = spawnSync(process.execPath, [npm, '--offline', '--update-notifier=false', 'prefix', '-g'], { encoding: 'utf8', timeout: 15_000, windowsHide: true });
     let installed;
     try { installed = JSON.parse(list.stdout).dependencies?.[piPeers[0]]; } catch { /* bounded rejection */ }
     if (root.status !== 0 || prefix.status !== 0 || !installed?.path || fs.realpathSync(installed.path) !== directory ||

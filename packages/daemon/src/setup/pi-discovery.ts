@@ -51,9 +51,11 @@ export function discoverInstalledHosts<Host extends { directory: string }>(packa
   const add = (value: unknown, provenance: string) => { if (typeof value === 'string') hints.push({ value, provenance }); };
   try {
     const npm = npmCli(selectedNpm);
-    const root = spawnSync(process.execPath, [npm, 'root', '-g'], { encoding: 'utf8', timeout: 15_000, windowsHide: true });
+    // Installed metadata is local. Even npm's background update check must
+    // remain disabled while a user is only choosing an existing host.
+    const root = spawnSync(process.execPath, [npm, '--offline', '--update-notifier=false', 'root', '-g'], { encoding: 'utf8', timeout: 15_000, windowsHide: true });
     if (root.status === 0) add(path.join(root.stdout.trim(), packageName), 'npm global root');
-    const list = spawnSync(process.execPath, [npm, 'ls', '-g', '--depth=0', '--json', '--long'], { encoding: 'utf8', timeout: 15_000, windowsHide: true });
+    const list = spawnSync(process.execPath, [npm, '--offline', '--update-notifier=false', 'ls', '-g', '--depth=0', '--json', '--long'], { encoding: 'utf8', timeout: 15_000, windowsHide: true });
     try { add(JSON.parse(list.stdout).dependencies?.[packageName]?.path, 'npm global list'); } catch { /* absent global list */ }
   } catch { /* Discovery can still use PATH, local resolution and manual location. */ }
   const pathRoots = (process.env.PATH ?? '').split(path.delimiter).filter(Boolean);
