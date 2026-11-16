@@ -10,6 +10,8 @@ docs/compatibility/issue-18-evidence/*.yaml linguist-generated=true
 
 # Unified-diff context starts with a space before upstream indentation.
 patches/*.patch text eol=lf -whitespace
+packages/daemon/setup-dsh/preparation-material/** text eol=lf
+packages/daemon/setup-dsh/preparation-material/**/*.patch -whitespace
 docs/compatibility/issue-37-evidence/*.json linguist-generated=true
 docs/compatibility/issue-37-evidence/*.log linguist-generated=true
 docs/compatibility/issue-38-evidence/*.json linguist-generated=true

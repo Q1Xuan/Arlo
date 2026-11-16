@@ -167,7 +167,7 @@ try {
         fs.cpSync(file === 'LICENSE' ? path.join(repo, 'LICENSE') : path.join(build, 'packages', name, file), path.join(target, file), { recursive: true });
       }
       writeJson(path.join(target, 'package.json'), { ...manifest, exports, files: ['src', 'bin', ...resourceFiles], devDependencies: undefined,
-        ...(name === 'daemon' ? { arlo: { components: Object.fromEntries(['sdk', 'adapterSdk', 'daemon', 'piAdapter'].map((role, index) => {
+        ...(name === 'daemon' ? { arlo: { ...manifest.arlo, components: Object.fromEntries(['sdk', 'adapterSdk', 'daemon', 'piAdapter'].map((role, index) => {
           const pkg = index < 3 ? manifests[index] : json(path.join(repo, 'packages/adapter-pi/package.json'));
           return [role, { name: pkg.name, version: pkg.version }];
         })) } } : {}),

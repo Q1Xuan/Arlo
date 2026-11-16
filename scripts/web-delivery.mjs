@@ -34,6 +34,9 @@ const hostVersion = option('--host-version', legacyCandidate ?? '0.2.0-rc.2');
 assert.ok(['0.2.0-rc.2', '0.2.1-rc.2', '0.2.1-rc.5'].includes(hostVersion), 'No reviewed installation profile for this DSH version');
 assert.ok(legacyCandidate === undefined || legacyCandidate === hostVersion, 'Conflicting DSH version selectors');
 const candidate = ['0.2.1-rc.2', '0.2.1-rc.5'].includes(hostVersion) ? hostVersion : undefined;
+const companion = args.includes('--companion');
+if (companion) args.splice(args.indexOf('--companion'), 1);
+assert.ok(!companion || hostVersion === '0.2.1-rc.5', '--companion requires --host-version 0.2.1-rc.5');
 const pnpmVersion = root.packageManager.split('@')[1];
 const corepackHome = process.env.COREPACK_HOME ?? (process.platform === 'win32'
   ? path.join(process.env.LOCALAPPDATA, 'node/corepack') : path.join(os.homedir(), '.cache/node/corepack'));
@@ -47,13 +50,16 @@ const offlineCache = offlineCacheInput === undefined ? undefined : path.resolve(
 if (offlineCache) assert.ok(fs.statSync(offlineCache).isDirectory(), '--offline-cache must name an existing pnpm metadata cache');
 const updateLock = args.includes('--update-lock');
 if (updateLock) args.splice(args.indexOf('--update-lock'), 1);
+assert.ok(!companion || !updateLock, 'Companion archives do not resolve or update a complete Web consumer lock');
 assert.ok(command === 'build' && !args.length,
-  'Usage: web-delivery.mjs build [--out DIR] [--core CORE_BUNDLE] [--pnpm CLI.js] [--store DIR] [--offline-cache DIR] [--update-lock] [--host-version 0.2.0-rc.2|0.2.1-rc.2|0.2.1-rc.5]');
+  'Usage: web-delivery.mjs build [--out DIR] [--core CORE_BUNDLE] [--pnpm CLI.js] [--store DIR] [--offline-cache DIR] [--update-lock] [--host-version 0.2.0-rc.2|0.2.1-rc.2|0.2.1-rc.5] [--companion (rc.5 archives only)]');
 assert.equal(process.version, `v${root.engines.node}`);
 assert.ok(!fs.existsSync(bundle), 'Output exists; choose a new directory to retain previous evidence');
 const recipe = candidate && readJson(path.join(repo, 'web/candidates', candidate, 'package.json'));
 const seed = path.join(repo, candidate ? `web/candidates/${candidate}/complete-lock.yaml` : 'web/consumer-lock.yaml');
-assert.ok(updateLock || fs.existsSync(seed), 'A reviewed Web lock is required; use --update-lock to deliberately resolve it');
+assert.ok(companion || updateLock || fs.existsSync(seed), 'A reviewed Web lock is required; use --update-lock to deliberately resolve it');
+const sourceFiles = [...(candidate ? ['scripts/dsh-candidate-adapter.mjs', ...['package.json', 'pnpm-lock.yaml', 'complete-lock.yaml', 'contact-display.cjs', ...fs.readdirSync(path.join(repo, 'web/candidates', candidate, 'patches')).map(file => `patches/${file}`)].map(file => `web/candidates/${candidate}/${file}`)] : []), 'scripts/web-delivery.mjs', 'scripts/private-build.mjs',
+  'delivery/runtime-installation.mjs', 'web/verify-installation.mjs', 'package.json', 'pnpm-lock.yaml', 'web/consumer-lock.yaml'];
 
 function run(argv, cwd, env, log) {
   const result = spawnSync(process.execPath, argv, {
@@ -103,6 +109,7 @@ for (const [file, digest] of Object.entries(coreManifest.sourceFiles)) {
   if (file.startsWith('packages/')) assert.equal(sha(fs.readFileSync(path.join(repo, file))), digest, `Stale core package source: ${file}`);
 }
 const localDependencies = {};
+let companionAdapter;
 for (const name of privateRuntimePackages) {
   const manifest = readJson(path.join(repo, `packages/${name}/package.json`));
   const archive = `arlo-${name}-${manifest.version}.tgz`;
@@ -113,12 +120,43 @@ for (const name of privateRuntimePackages) {
     fs.mkdirSync(staging);
     const unpack = spawnSync('tar', ['-xzf', path.join(bundle, archive), '-C', staging], { encoding: 'utf8' });
     assert.equal(unpack.status, 0, unpack.stderr);
-    if (candidate) prepareCandidateAdapter(path.join(staging, 'package'), path.join(repo, 'web/candidates', candidate));
+    if (candidate) prepareCandidateAdapter(path.join(staging, 'package'), path.join(repo, 'web/candidates', candidate), { companion });
+    if (companion) companionAdapter = path.join(staging, 'package');
     bindDshEnvironmentEvidence(path.join(staging, 'package'));
     run([pnpm, 'pack', '--pack-destination', bundle], path.join(staging, 'package'), env,
       path.join(dirs.logs, 'candidate-adapter-pack.log'));
   }
   localDependencies[manifest.name] = `file:../${archive}`;
+}
+if (companion) {
+  const reviewed = readJson(path.join(repo, 'packages/adapter-dsh/delivery/rc5-composition.json'));
+  const adapter = readJson(path.join(companionAdapter, 'package.json'));
+  assert.equal(reviewed.companion.hostVersion, hostVersion);
+  assert.ok(Object.keys(adapter.dependencies).every(name => !name.startsWith('@deepseek-ai/')),
+    'A companion must borrow native modules rather than acquire a second Host graph');
+  assert.ok(Object.keys(adapter.peerDependencies).every(name => adapter.peerDependenciesMeta?.[name]?.optional === true),
+    'Companion peer metadata must prevent automatic native Host acquisition');
+  const routing = Object.fromEntries(['type', 'main', 'module', 'exports', 'imports', 'browser', 'bin', 'dsh']
+    .filter(field => field in adapter).map(field => [field, adapter[field]]));
+  assert.equal(sha(JSON.stringify(routing)), reviewed.adapter.routingSha256, 'Companion entry routing differs from the reviewed adapter');
+  for (const [file, digest] of Object.entries(reviewed.adapter.files)) {
+    assert.equal(sha(fs.readFileSync(path.join(companionAdapter, file))), digest, `Companion executable differs: ${file}`);
+  }
+  writeJson(path.join(bundle, 'manifest.json'), {
+    schemaVersion: 1, hostVersion, role: 'installed-host-companion', private: true, createdAt: new Date().toISOString(),
+    node: process.version, pnpm: pnpmVersion, platform: process.platform, resources,
+    coreManifestSha256: sha(fs.readFileSync(path.join(core, 'manifest.json'))),
+    packageChecks: { entryRouting: 'passed', reviewedAdapterFiles: Object.keys(reviewed.adapter.files).length, nativeDependencies: 'borrowed-peers' },
+    sourceFiles: {
+      ...Object.fromEntries(Object.entries(coreManifest.sourceFiles).filter(([file]) => file.startsWith('packages/'))),
+      ...Object.fromEntries(sourceFiles.map(file => [file, sha(fs.readFileSync(path.join(repo, file)))])),
+    },
+    files: Object.fromEntries(Object.values(localDependencies).map(value => value.slice('file:../'.length))
+      .map(file => [file, sha(fs.readFileSync(path.join(bundle, file)))])),
+    scope: 'Private compiled companion archives for an existing native DSH installation; actual installation and runtime acceptance are recorded separately.',
+  });
+  console.log(`Built private DSH companion archives: ${bundle}\nBuild logs: ${dirs.logs}`);
+  process.exit(0);
 }
 const consumer = path.join(bundle, 'consumer');
 fs.mkdirSync(consumer);
@@ -200,8 +238,6 @@ const { nativeBinding, runtime } = JSON.parse(run([path.join(consumer, 'web/veri
   consumer, env, path.join(dirs.logs, 'native-import.log')));
 const installedVersions = Object.fromEntries(Object.keys(manifest.dependencies).map(name => [name,
   readJson(path.join(consumer, 'node_modules', name, 'package.json')).version]));
-const sourceFiles = [...(candidate ? ['scripts/dsh-candidate-adapter.mjs', ...['package.json', 'pnpm-lock.yaml', 'complete-lock.yaml', 'contact-display.cjs', ...fs.readdirSync(path.join(repo, 'web/candidates', candidate, 'patches')).map(file => `patches/${file}`)].map(file => `web/candidates/${candidate}/${file}`)] : []), 'scripts/web-delivery.mjs', 'scripts/private-build.mjs',
-  'delivery/runtime-installation.mjs', 'web/verify-installation.mjs', 'package.json', 'pnpm-lock.yaml', 'web/consumer-lock.yaml'];
 const playwrightRequire = createRequire(consumerRequire.resolve('playwright/package.json'));
 const browserRequirements = readJson(path.join(path.dirname(playwrightRequire.resolve('playwright-core/package.json')), 'browsers.json'));
 writeJson(path.join(bundle, 'manifest.json'), {

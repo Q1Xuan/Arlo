@@ -72,10 +72,14 @@ Automatic component cleanup is verified on Linux x64. Windows retains the compon
 resource when native process origin cannot be verified, including after a state-dir
 change; its complete lifecycle verification remains pending.
 
-DSH registration additionally requires an existing prepared host and an explicit
-`--profile NAME`, with `--dsh-home DIR` when needed. Setup previews changes before
-`--apply`. DSH uninstall currently removes owned native registration; complete owned
-component cleanup is a separate lifecycle step.
+DSH setup can automatically prepare an ordinary existing 0.2.1-rc.5 installation
+under its locked local npm or standard isolated pnpm owner. Select the exact host
+and one existing profile in a terminal, or supply `--target`, `--profile NAME` and
+`--dsh-home DIR`. Review the repairs, components and native profile registration
+before confirmation or `--apply`. The original launcher, model settings and history
+remain usable. See [DSH setup](setup-dsh/README.md) for supported boundaries,
+experimental composition selection, status and recovery. `--adapter DIR` retains
+the prepared-host path. Complete owned cleanup is a separate DSH lifecycle step.
 
 `status` and `doctor` observe the shared Daemon. `setup-status` observes persistent
 host configuration. Configuration does not prove that a host has loaded an adapter

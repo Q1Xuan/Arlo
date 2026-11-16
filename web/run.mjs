@@ -7,12 +7,18 @@ import { createRequire } from 'node:module';
 import { createHash } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
-import ts from 'typescript';
 
 const repo = path.resolve(import.meta.dirname, '..');
 const args = process.argv.slice(2);
 const option = (name, fallback) => args.includes(name) ? args[args.indexOf(name) + 1] : fallback;
 const consumer = path.resolve(option('--consumer', '.artifacts/issue36-web/consumer'));
+const testTools = path.resolve(option('--test-tools', consumer));
+const selectedHost = path.resolve(option('--selected-host', path.join(consumer, 'node_modules/@deepseek-ai/dsh')));
+const nativeLauncher = option('--native-launcher');
+const existingProfile = option('--existing-profile');
+const existingHome = option('--existing-dsh-home');
+const profileName = existingProfile ?? 'web';
+const retainAccess = args.includes('--retain-access');
 const output = path.resolve(option('--output', `.scratch/web-${process.platform}.json`));
 const fixtureSource = path.resolve(option('--fixture', path.join(consumer, 'web/fixture.mjs')));
 const configuredModel = args.includes('--new-session-model') ? JSON.parse(option('--new-session-model')) : undefined;
@@ -35,6 +41,11 @@ const appIcons = option('--app-icons');
 assert.ok(appIcons === undefined || ['extracted', 'missing'].includes(appIcons), '--app-icons must be extracted or missing');
 if (appIcons) assert.equal(process.platform, 'linux', 'The controlled desktop-icon scenarios require Linux');
 const require = createRequire(path.join(consumer, 'package.json'));
+const toolsRequire = createRequire(path.join(testTools, 'package.json'));
+const ts = toolsRequire('typescript');
+assert.equal(fs.realpathSync(path.join(selectedHost, 'package.json')),
+  fs.realpathSync(require.resolve('@deepseek-ai/dsh/package.json')), 'The native launcher must use the selected companion Host identity');
+if (existingProfile) assert.ok(existingHome && cliSetup, 'An existing-profile acceptance observes an already CLI-installed native access');
 // Load the same delivered SDK as the Host, including on runtimes that cannot
 // execute the repository's TypeScript sources.
 const { enforceWindowsAcl } = await import(pathToFileURL(require.resolve('@arlo/sdk')).href);
@@ -42,7 +53,7 @@ if (process.env.ARLO_PI_EXPECTED_NODE) assert.equal(process.version, process.env
   'Web acceptance driver Node differs from the selected candidate; this is a probe configuration failure');
 const installedDelivery = await import(pathToFileURL(require.resolve('@arlo/adapter-dsh/delivery')).href);
 const composition = installedDelivery.requireDshWebComposition(consumer, { experimental: experimentalCompatibility });
-const { chromium } = require('playwright');
+const { chromium } = toolsRequire('playwright');
 const clientEntry = require.resolve('@arlo/adapter-dsh/client');
 const clientBytes = fs.readFileSync(clientEntry);
 const clientSource = ts.createSourceFile(clientEntry, clientBytes.toString('utf8'), ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
@@ -63,10 +74,11 @@ function inspectClient(node) {
 }
 inspectClient(clientSource);
 assert.deepEqual(forbiddenClientSyntax, [], 'The installed browser entry must have no runtime imports, Node globals or direct transport');
-const scratch = fs.mkdtempSync(path.join(os.homedir(), 'arlo-web-38-'));
+const scratch = fs.mkdtempSync(path.join(path.resolve(option('--scratch-parent', os.homedir())), 'arlo-web-38-'));
 enforceWindowsAcl(scratch, true);
 if (process.platform !== 'win32') fs.chmodSync(scratch, 0o700);
 const dirs = Object.fromEntries(['home', 'config', 'local', 'temp', 'project', 'state', 'logs'].map(name => {
+  if (name === 'home' && existingHome) return [name, fs.realpathSync(existingHome)];
   const dir = path.join(scratch, name);
   fs.mkdirSync(dir, { mode: 0o700 });
   return [name, dir];
@@ -78,7 +90,8 @@ fs.mkdirSync(fixtureDirectory);
 const fixtureModule = path.join(fixtureDirectory, 'fixture.mjs');
 fs.copyFileSync(fixtureSource, fixtureModule);
 fs.symlinkSync(path.join(consumer, 'node_modules'), path.join(fixtureDirectory, 'node_modules'), process.platform === 'win32' ? 'junction' : 'dir');
-const profile = path.join(dirs.home, 'profiles', 'web');
+const profile = path.join(dirs.home, 'profiles', profileName);
+if (!existingProfile) {
 fs.mkdirSync(profile, { recursive: true, mode: 0o700 });
 enforceWindowsAcl(profile, true);
 if (process.platform !== 'win32') fs.chmodSync(path.dirname(profile), 0o700);
@@ -87,15 +100,18 @@ fs.writeFileSync(path.join(profile, 'package.json'), JSON.stringify({
   ...(cliSetup ? { custom: { preserve: true } } : { dependencies: { '@arlo/adapter-dsh': '0.1.0' } }),
   dsh: { profile: { bundles: ['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-web-app'] } },
 }, null, 2));
+}
 const link = path.join(profile, 'node_modules', '@arlo', 'adapter-dsh');
 if (!cliSetup) {
   fs.mkdirSync(path.dirname(link), { recursive: true });
   fs.symlinkSync(path.join(consumer, 'node_modules', '@arlo', 'adapter-dsh'), link, process.platform === 'win32' ? 'junction' : 'dir');
 }
-fs.writeFileSync(path.join(profile, 'cordis.patch.yml'), '[]\n');
+if (!existingProfile) fs.writeFileSync(path.join(profile, 'cordis.patch.yml'), '[]\n');
+else assert.equal(fs.realpathSync(link), fs.realpathSync(path.join(consumer, 'node_modules/@arlo/adapter-dsh')),
+  'The runner preserves and loads the exact native CLI registration');
 const runSetup = (command, expectedExit = 0) => {
-  const argv = [setupCli, command, '--host', 'dsh', '--target', path.join(consumer, 'node_modules/@deepseek-ai/dsh'),
-    '--adapter', path.join(consumer, 'node_modules/@arlo/adapter-dsh'), '--profile', 'web', '--dsh-home', dirs.home,
+  const argv = [setupCli, command, '--host', 'dsh', '--target', selectedHost,
+    ...(existingProfile ? [] : ['--adapter', path.join(consumer, 'node_modules/@arlo/adapter-dsh')]), '--profile', profileName, '--dsh-home', dirs.home,
     '--json', ...(command === 'setup-status' ? [] : ['--apply'])];
   const result = spawnSync(process.execPath, argv, { encoding: 'utf8', timeout: 180_000, windowsHide: true });
   const entry = { argv, exitCode: result.status, signal: result.signal, report: JSON.parse(result.stdout), stderr: result.stderr };
@@ -114,7 +130,7 @@ if (cliSetup) {
     const profileFile = path.join(profile, 'package.json'); const current = JSON.parse(fs.readFileSync(profileFile, 'utf8'));
     current.custom.afterFailedSetup = true; fs.writeFileSync(profileFile, JSON.stringify(current));
   }
-  assert.equal(runSetup('setup').phase, 'configured-pending-start-or-reload');
+  assert.equal(runSetup('setup').phase, existingProfile ? 'already-configured-pending-reload' : 'configured-pending-start-or-reload');
   assert.equal(runSetup('setup').phase, 'already-configured-pending-reload');
   assert.equal(runSetup('setup-status').runtime, 'unobserved');
 }
@@ -146,7 +162,7 @@ Object.assign(env, {
   DSH_HOME: dirs.home, DSH_TELEMETRY_DISABLED: '1', PSExecutionPolicyPreference: 'Bypass',
   ARLO_WEB_FIXTURE_REPORT: reportFile, ARLO_LOW_LEVEL_NETWORK_FILE: networkFile,
   ...(cliSetup && crossHost ? { ARLO_WEB_WORKSPACE_DIR: piRig.directory } : {}),
-  NODE_OPTIONS: `--import=${pathToFileURL(path.join(consumer, 'probes/isolation.mjs')).href}`,
+  NODE_OPTIONS: `--import=${pathToFileURL(path.resolve(option('--isolation', path.join(consumer, 'probes/isolation.mjs')))).href}`,
 });
 let appIconFixture;
 if (appIcons) {
@@ -173,14 +189,16 @@ const report = {
   modelFault,
   node: process.version, osRelease: os.release(), scratch,
   composition,
-  bundleManifestSha256: createHash('sha256').update(fs.readFileSync(path.join(consumer, '../manifest.json'))).digest('hex'),
+  selectedHost, profile, nativeLauncher: nativeLauncher ?? null, testTools, retainedAccess: retainAccess,
+  ...(existingProfile ? { componentRecordSha256: createHash('sha256').update(fs.readFileSync(path.join(consumer, '../components.json'))).digest('hex') }
+    : { bundleManifestSha256: createHash('sha256').update(fs.readFileSync(path.join(consumer, '../manifest.json'))).digest('hex') }),
   runnerSha256: createHash('sha256').update(fs.readFileSync(import.meta.filename)).digest('hex'),
   fixtureSha256: createHash('sha256').update(fs.readFileSync(fixtureSource)).digest('hex'),
   fixtureSource: args.includes('--fixture') ? fixtureSource : 'installed-consumer',
   checks: [], browserErrors: [], browserConsole: [], browserConsoleDetails: [], failedHttpRequests: [], externalBrowserRequests: [],
 };
-const child = spawn(process.execPath, [path.join(consumer, 'node_modules/@deepseek-ai/dsh/lib/bin.js'),
-  'web', '--patch', overlay, '--no-open', '--host', '127.0.0.1', '--port', '0'],
+const child = spawn(nativeLauncher ?? process.execPath, [...(nativeLauncher ? [] : [path.join(selectedHost, 'lib/bin.js')]),
+  '--profile', profileName, '--patch', overlay, '--no-open', '--host', '127.0.0.1', '--port', '0'],
 { cwd: dirs.project, env, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
 let boot = '';
 child.stdout.on('data', chunk => { boot += chunk; });
@@ -259,7 +277,7 @@ try {
   browser = await chromium.launch({ headless: true, ...(process.env.ARLO_BROWSER_EXECUTABLE
     ? { executablePath: process.env.ARLO_BROWSER_EXECUTABLE } : {}) });
   report.browser = {
-    version: browser.version(), playwrightVersion: require('playwright/package.json').version, headless: true,
+    version: browser.version(), playwrightVersion: toolsRequire('playwright/package.json').version, headless: true,
   };
   const context = await browser.newContext({ locale: 'en-US', viewport: { width: 1440, height: 1000 } });
   await context.route('**/*', route => {
@@ -1514,7 +1532,7 @@ try {
   }
   for (let attempt = 0; child.exitCode === null && attempt < 100; attempt++) await delay(100);
   report.hostExit = child.exitCode;
-  if (cliSetup && child.exitCode === 0) {
+  if (cliSetup && !retainAccess && child.exitCode === 0) {
     try {
       const current = JSON.parse(fs.readFileSync(path.join(profile, 'package.json'), 'utf8'));
       const userPatch = fs.readFileSync(path.join(profile, 'cordis.patch.yml'), 'utf8');

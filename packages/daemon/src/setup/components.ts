@@ -26,7 +26,12 @@ const digest = (value: string | Buffer): string => createHash('sha256').update(v
 const fingerprint = (file: string): string => fs.existsSync(file) ? digest(fs.readFileSync(file)) : 'missing';
 type Identity = { directory: string; version: string; manifestSha256: string };
 export type HostInstallation = { directory: string; version: string; bin: string; owner: string;
-  manager: 'npm' | 'pnpm'; managerVersion?: string; peers: Record<string, Identity>; evidence: Record<string, string> };
+  manager: 'npm' | 'pnpm'; managerVersion?: string; storeDirectory?: string; peers: Record<string, Identity>; evidence: Record<string, string>;
+  family?: 'pi' | 'dsh'; selector?: import('../../setup-dsh/installed-host.mjs').DshInstallationSelector };
+export type ComponentBinding = { host: HostInstallation; target: string; packages: Record<string, string>; adapterName: string;
+  recheck: () => HostInstallation; resourceId?: string;
+  deployment?: { materialSha256: string; experimentalCompatibility: boolean };
+  yaml?: { parse: (source: string) => any; stringify: (value: any) => string } };
 type Tool = { name: 'npm' | 'pnpm'; version: string; args: string[] };
 type ReferenceKind = 'setup-record' | 'preexisting-declaration';
 export type ResourceRecord = { schemaVersion: 1; id: string; kind: 'components'; host: HostInstallation;
@@ -109,9 +114,9 @@ export function inspectPiInstallation(selected: string): HostInstallation {
     // Global npm metadata is read using the installed standard tool. No
     // command in this module mutates the original prefix or global packages.
     const npm = npmCli();
-    const root = spawnSync(process.execPath, [npm, 'root', '-g'], { encoding: 'utf8', timeout: 15_000, windowsHide: true });
-    const list = spawnSync(process.execPath, [npm, 'ls', '-g', '--depth=0', '--json', '--long'], { encoding: 'utf8', timeout: 15_000, windowsHide: true });
-    const prefix = spawnSync(process.execPath, [npm, 'prefix', '-g'], { encoding: 'utf8', timeout: 15_000, windowsHide: true });
+    const root = spawnSync(process.execPath, [npm, '--offline', '--update-notifier=false', 'root', '-g'], { encoding: 'utf8', timeout: 15_000, windowsHide: true });
+    const list = spawnSync(process.execPath, [npm, '--offline', '--update-notifier=false', 'ls', '-g', '--depth=0', '--json', '--long'], { encoding: 'utf8', timeout: 15_000, windowsHide: true });
+    const prefix = spawnSync(process.execPath, [npm, '--offline', '--update-notifier=false', 'prefix', '-g'], { encoding: 'utf8', timeout: 15_000, windowsHide: true });
     let installed;
     try { installed = JSON.parse(list.stdout).dependencies?.[piPeers[0]]; } catch { /* bounded rejection */ }
     if (root.status !== 0 || prefix.status !== 0 || !installed?.path || fs.realpathSync(installed.path) !== directory ||
@@ -172,6 +177,29 @@ export function componentDataDirectory(): string {
   return path.join(path.resolve(data), 'arlo');
 }
 
+/** Loaded adapters verify the durable consumer that owns their code. This
+ * reads the same acquisition record without acquiring tools or changing state. */
+export function inspectComponentResource(consumer: string) {
+  consumer = fs.realpathSync(consumer);
+  const root = path.dirname(consumer);
+  const record = privateRecord(path.join(root, 'components.json'));
+  if (!record || record.schemaVersion !== 1 || record.kind !== 'components' || record.root !== root || record.consumer !== consumer
+    || !/^[a-f0-9]{64}$/.test(record.id) || path.basename(root) !== record.id
+    || !['components-installed', 'registration-prepared', 'configured'].includes(record.phase) || !record.artifacts
+    || !record.consumerSha256 || consumerFingerprint(consumer) !== record.consumerSha256
+    || fingerprint(path.join(consumer, 'package.json')) !== record.manifestSha256
+    || fingerprint(path.join(consumer, record.manager.name === 'npm' ? 'package-lock.json' : 'pnpm-lock.yaml')) !== record.planSha256
+    || Object.keys(record.packages ?? {}).sort().join(',') !== Object.keys(record.artifacts).sort().join(',')) {
+    fail('COMPONENT_OWNERSHIP_CONFLICT', 'The loaded companion does not match its durable exact acquisition inventory. Preserve its record and review this installation.');
+  }
+  for (const [name, artifact] of Object.entries(record.artifacts)) {
+    const directory = physicalPackage(consumer, name);
+    if (directory !== artifact.directory || !directory.startsWith(consumer + path.sep) || artifact.version !== record.packages[name]
+      || artifactFingerprint(directory) !== artifact.sha256) fail('COMPONENT_OWNERSHIP_CONFLICT', 'A loaded component differs from the exact acquired batch. Preserve it for review.');
+  }
+  return record;
+}
+
 /** A standard package consumer bound to borrowed physical host identities.
  * Registration and future host preparation remain separate operations. */
 export async function preparePiComponents(target: string, scope: string, selectedNpm?: string, mode: 'install' | 'inspect' = 'install') {
@@ -180,6 +208,20 @@ export async function preparePiComponents(target: string, scope: string, selecte
     fail('COMPONENT_CATALOG_UNAVAILABLE', 'Obtain the coordinated compiled CLI release with its exact component catalog. No package was acquired.');
   }
   const host = inspectPiInstallation(target);
+  const parser = host.manager === 'pnpm' ? createRequire(path.join(host.directory, 'package.json'))('yaml') : undefined;
+  return prepareHostComponents({ host, target, packages: piRelease, adapterName: piComponentNames.piAdapter,
+    recheck: () => inspectPiInstallation(target), yaml: parser }, scope, selectedNpm, mode);
+}
+
+/** Consume one coordinated release against an already verified existing host.
+ * The caller contributes its native selector and lock parser; acquisition,
+ * physical borrowing, immutable plans and ownership remain shared. */
+export async function prepareHostComponents(binding: ComponentBinding, scope: string, selectedNpm?: string, mode: 'install' | 'inspect' = 'install') {
+  const { host, target, packages: release, adapterName } = binding;
+  const peerNames = Object.keys(host.peers);
+  if (Object.keys(release).length !== 4 || !Object.hasOwn(release, adapterName) || !peerNames.length
+    || Object.values(release).some(version => !/^\d+\.\d+\.\d+(?:-[a-zA-Z0-9.-]+)?$/.test(version))
+    || binding.resourceId !== undefined && !/^[a-f0-9]{64}$/.test(binding.resourceId)) fail('COMPONENT_CATALOG_UNAVAILABLE', 'The selected coordinated compiled release and verified host binding are unavailable. No component was acquired.');
   const npm = npmCli(selectedNpm);
   const npmVersion = spawnSync(process.execPath, [npm, '--version'], { encoding: 'utf8', timeout: 15_000 }).stdout.trim();
   const tool: Tool = host.manager === 'npm' ? { name: 'npm', version: npmVersion, args: [npm] }
@@ -189,28 +231,31 @@ export async function preparePiComponents(target: string, scope: string, selecte
     if (version.status !== 0 || version.stdout.trim() !== tool.version) fail('PACKAGE_TOOL_MISSING', 'The exact owner pnpm tool could not be obtained through standard npm exec. Check npm registry/tool availability; no host was changed.');
   }
   const lockName = tool.name === 'npm' ? 'package-lock.json' : 'pnpm-lock.yaml';
-  const yaml = tool.name === 'pnpm' ? createRequire(path.join(host.directory, 'package.json'))('yaml') : undefined;
-  const pnpmOptions = ['--ignore-scripts', '--ignore-workspace', '--config.auto-install-peers=false', '--strict-peer-dependencies'];
-  const id = digest(JSON.stringify({ target: host.directory, peers: host.peers, packages: piRelease, manager: host.manager }));
+  const yaml = binding.yaml;
+  if (tool.name === 'pnpm' && (!yaml || typeof yaml.parse !== 'function' || typeof yaml.stringify !== 'function')) fail('PACKAGE_MANAGER_CONFLICT', 'The verified host binding does not provide its installed native lock parser. No target changed.');
+  const pnpmOptions = ['--ignore-scripts', '--ignore-workspace', '--config.auto-install-peers=false', '--strict-peer-dependencies',
+    ...(host.storeDirectory ? [`--store-dir=${host.storeDirectory}`] : [])];
+  const id = binding.resourceId ?? digest(JSON.stringify({ target: host.directory, peers: host.peers, packages: release, manager: host.manager }));
   const root = path.join(componentDataDirectory(), 'installations', id);
   const cliRoot = fileURLToPath(new URL('../../', import.meta.url));
   const fromCli = path.relative(cliRoot, root);
   if (root.split(path.sep).includes('_npx') || !fromCli.startsWith('..') && !path.isAbsolute(fromCli)) fail('UNSAFE_COMPONENT_LOCATION', 'Use a durable current-user data home outside the compiled CLI and npx cache before retrying.');
   const consumer = path.join(root, 'consumer');
-  const adapter = path.join(consumer, 'node_modules', piComponentNames.piAdapter);
+  const adapter = path.join(consumer, 'node_modules', adapterName);
   const recordFile = path.join(root, 'components.json');
   const manifest = { name: `arlo-components-${id.slice(0, 16)}`, private: true, type: 'module',
     ...(tool.name === 'pnpm' ? { packageManager: `pnpm@${tool.version}` } : {}),
-    dependencies: { ...piRelease, ...Object.fromEntries(Object.entries(host.peers).map(([name, peer]) => [name, `${tool.name === 'npm' ? 'file' : 'link'}:${peer.directory}`])) } };
+    ...(host.family === 'dsh' ? { arlo: { dshInstallation: { selector: host.selector, ...binding.deployment } } } : {}),
+    dependencies: { ...release, ...Object.fromEntries(Object.entries(host.peers).map(([name, peer]) => [name, `${tool.name === 'npm' ? 'file' : 'link'}:${peer.directory}`])) } };
   const manifestBytes = JSON.stringify(manifest, null, 2) + '\n';
-  const expectedOwned = { files: ['consumer/package.json', `consumer/${lockName}`], packageEntries: Object.keys(piRelease),
-    peerLinks: piPeers.map(name => `consumer/node_modules/${name}`) };
+  const expectedOwned = { files: ['consumer/package.json', `consumer/${lockName}`], packageEntries: Object.keys(release),
+    peerLinks: peerNames.map(name => `consumer/node_modules/${name}`) };
   let record = privateRecord(recordFile);
   const recordedFilesMissing = () => !record?.cleanup && !!record?.artifacts && Object.values(record.artifacts)
     .some(entry => typeof entry.directory === 'string' && !fs.existsSync(entry.directory));
   function validateRecord() {
     if (!record || record.schemaVersion !== 1 || record.kind !== 'components' || record.id !== id || record.root !== root || record.consumer !== consumer
-      || JSON.stringify(record.host) !== JSON.stringify(host) || JSON.stringify(record.packages) !== JSON.stringify(piRelease)
+      || JSON.stringify(record.host) !== JSON.stringify(host) || JSON.stringify(record.packages) !== JSON.stringify(release)
       || record.manager?.name !== tool.name || record.manager.version !== tool.version
       || !['consuming', 'components-installed', 'registration-prepared', 'configured'].includes(record.phase)
       || !record.references || typeof record.references !== 'object' || Array.isArray(record.references)
@@ -228,7 +273,7 @@ export async function preparePiComponents(target: string, scope: string, selecte
         || ![record.cleanup.consumerSha256, record.cleanup.manifestSha256, record.cleanup.planSha256].every(value => /^[a-f0-9]{64}$/.test(value))
         || fingerprint(path.join(consumer, 'package.json')) !== record.cleanup.manifestSha256
         || fingerprint(path.join(consumer, lockName)) !== record.cleanup.planSha256 || consumerFingerprint(consumer) !== record.cleanup.consumerSha256
-        || Object.keys(piRelease).some(name => fs.existsSync(path.join(consumer, 'node_modules', name)) || json(path.join(consumer, 'package.json')).dependencies?.[name])
+        || Object.keys(release).some(name => fs.existsSync(path.join(consumer, 'node_modules', name)) || json(path.join(consumer, 'package.json')).dependencies?.[name])
         || Object.values(record.artifacts ?? {}).some(entry => fs.existsSync(entry.directory))) {
         fail('COMPONENT_OWNERSHIP_CONFLICT', 'The completed cleanup record does not prove an unchanged retired consumer. Preserve later edits and review before reinstalling.');
       }
@@ -254,10 +299,10 @@ export async function preparePiComponents(target: string, scope: string, selecte
     if (record.consumerSha256 !== undefined && (!/^[a-f0-9]{64}$/.test(record.consumerSha256) ||
       !(mode === 'inspect' && recordedFilesMissing()) && consumerFingerprint(consumer) !== record.consumerSha256)) fail('COMPONENT_OWNERSHIP_CONFLICT', 'Owned component or transitive files changed after the recorded phase. Preserve those edits and review before retrying.');
     if (record.artifacts && !record.consumerSha256) fail('COMPONENT_OWNERSHIP_CONFLICT', 'The installed component record lacks a verifiable owned consumer inventory. Preserve it for review.');
-    if (record.artifacts && (Object.keys(record.artifacts).length !== Object.keys(piRelease).length ||
-      Object.keys(piRelease).some(name => !record?.artifacts?.[name]))) fail('COMPONENT_OWNERSHIP_CONFLICT', 'The component record does not enumerate the exact installed batch. Preserve it for review.');
+    if (record.artifacts && (Object.keys(record.artifacts).length !== Object.keys(release).length ||
+      Object.keys(release).some(name => !record?.artifacts?.[name]))) fail('COMPONENT_OWNERSHIP_CONFLICT', 'The component record does not enumerate the exact installed batch. Preserve it for review.');
     if (record.artifacts) for (const [name, entry] of Object.entries(record.artifacts)) {
-      if (entry.version !== piRelease[name] || typeof entry.directory !== 'string' || !entry.directory.startsWith(consumer + path.sep) ||
+      if (entry.version !== release[name] || typeof entry.directory !== 'string' || !entry.directory.startsWith(consumer + path.sep) ||
         !/^[a-f0-9]{64}$/.test(entry.sha256) || typeof entry.integrity !== 'string' || typeof entry.resolved !== 'string') fail('COMPONENT_OWNERSHIP_CONFLICT', 'An artifact record cannot prove an owned component inside this consumer. Preserve the resource for review.');
       if (mode === 'inspect' && !fs.existsSync(entry.directory)) continue;
       const actual = physicalPackage(adapter, name);
@@ -277,13 +322,16 @@ export async function preparePiComponents(target: string, scope: string, selecte
       const result = execute(tool, tool.name === 'npm'
         ? ['install', '--package-lock-only', '--install-links=false', '--legacy-peer-deps', '--ignore-scripts', '--no-audit', '--no-fund']
         : ['install', '--lockfile-only', ...pnpmOptions], stage);
-      if (result.status !== 0 || result.error) fail('COMPONENT_PLAN_FAILED', `The exact coordinated batch could not be planned by npm (exit ${result.status ?? (result.error as NodeJS.ErrnoException | undefined)?.code}, signal ${result.signal ?? 'none'}). Check the standard registry configuration and release availability; nothing was installed in the durable target.`);
+      if (result.status !== 0 || result.error) {
+        const reason = `${result.stdout ?? ''}${result.stderr ?? ''}`.match(/ERR_PNPM_[A-Z_]+|npm error code [A-Z_]+/)?.[0] ?? 'PACKAGE_TOOL_FAILED';
+        fail('COMPONENT_PLAN_FAILED', `The exact coordinated batch could not be planned by ${tool.name} (${reason}, exit ${result.status ?? (result.error as NodeJS.ErrnoException | undefined)?.code}, signal ${result.signal ?? 'none'}). Check the standard registry configuration and release availability; nothing was installed in the durable target.`);
+      }
       // External-folder lock entries use paths relative to their consumer.
       // Rebase those paths when moving the planned lock to the durable root.
-      const lock = tool.name === 'npm' ? json(path.join(stage, lockName)) : yaml.parse(fs.readFileSync(path.join(stage, lockName), 'utf8'));
+      const lock = tool.name === 'npm' ? json(path.join(stage, lockName)) : yaml!.parse(fs.readFileSync(path.join(stage, lockName), 'utf8'));
       if (tool.name === 'pnpm') {
         const dependencies = lock.importers?.['.']?.dependencies;
-        for (const [name, version] of Object.entries(piRelease)) {
+        for (const [name, version] of Object.entries(release)) {
           const entry = dependencies?.[name];
           const packageEntry = lock.packages?.[`${name}@${version}`];
           if (entry?.specifier !== version || entry.version.split('(')[0] !== version || !packageEntry?.resolution?.integrity) fail('COMPONENT_PLAN_CONFLICT', 'The pnpm plan does not contain the exact coordinated registry batch. No durable target changed.');
@@ -295,10 +343,10 @@ export async function preparePiComponents(target: string, scope: string, selecte
           entry.version = `link:${path.relative(consumer, peer.directory).replaceAll(path.sep, '/')}`;
         }
         if (Object.keys(lock.packages ?? {}).some(name => name.startsWith('@earendil-works/') || name.startsWith('@deepseek-ai/') ||
-          componentName(name) && !Object.keys(piRelease).some(allowed => name === `${allowed}@${piRelease[allowed as keyof typeof piRelease]}`))) {
+          componentName(name) && !Object.keys(release).some(allowed => name === `${allowed}@${release[allowed as keyof typeof release]}`))) {
           fail('COMPONENT_PLAN_CONFLICT', 'The pnpm plan acquires another host or uncoordinated component. No target changed.');
         }
-        lockBytes = yaml.stringify(lock);
+        lockBytes = yaml!.stringify(lock);
       } else {
       const rebased: Record<string, any> = {};
       for (const [name, value] of Object.entries(lock.packages) as [string, any][]) {
@@ -307,7 +355,7 @@ export async function preparePiComponents(target: string, scope: string, selecte
         rebased[key] = value;
       }
       lock.packages = rebased;
-      for (const [name, version] of Object.entries(piRelease)) {
+      for (const [name, version] of Object.entries(release)) {
         const entry = lock.packages[`node_modules/${name}`];
         if (!entry || entry.version !== version || entry.link || typeof entry.integrity !== 'string' || !/^https?:/.test(entry.resolved ?? '')) fail('COMPONENT_PLAN_CONFLICT', 'The package plan does not contain the exact four compiled registry components. No durable target was changed.');
       }
@@ -319,7 +367,7 @@ export async function preparePiComponents(target: string, scope: string, selecte
         if (!key.startsWith('node_modules/')) continue;
         const name = key.split('node_modules/').at(-1)!;
         if ((name.startsWith('@earendil-works/') || name.startsWith('@deepseek-ai/') || componentName(name)) &&
-          ![...Object.keys(piRelease), ...piPeers].some(allowed => key === `node_modules/${allowed}`)) fail('COMPONENT_PLAN_CONFLICT', 'The dependency plan includes another host or uncoordinated Arlo package. Preserve the selected host and resolve the release dependencies.');
+          ![...Object.keys(release), ...peerNames].some(allowed => key === `node_modules/${allowed}`)) fail('COMPONENT_PLAN_CONFLICT', 'The dependency plan includes another host or uncoordinated Arlo package. Preserve the selected host and resolve the release dependencies.');
       }
       lockBytes = JSON.stringify(lock, null, 2) + '\n';
       }
@@ -328,10 +376,10 @@ export async function preparePiComponents(target: string, scope: string, selecte
   const state = () => ({ id, directory: root, consumer, manager: { name: tool.name, version: tool.version },
     state: record?.cleanup?.phase === 'removed' ? 'removed' : record?.cleanup?.phase === 'removing' ? 'partial' : record?.artifacts ? Object.values(record.artifacts).every(entry => fs.existsSync(entry.directory)) ? 'installed' : 'missing'
       : record ? 'partial' : mode === 'inspect' ? 'missing' : 'planned', transaction: record?.cleanup?.phase ?? record?.phase ?? 'none',
-    packages: piRelease, borrowed: host.peers, references: Object.keys(record?.references ?? {}),
+    packages: release, borrowed: host.peers, references: Object.keys(record?.references ?? {}),
     ...(recordedFilesMissing() ? { inventory: 'review-required' } : {}) });
   const recheck = () => {
-    if (JSON.stringify(inspectPiInstallation(target)) !== JSON.stringify(host)) fail('PACKAGE_PLAN_STALE', 'The selected host, physical peers or installation metadata changed after planning. Preserve the current installation and retry.');
+    if (JSON.stringify(binding.recheck()) !== JSON.stringify(host)) fail('PACKAGE_PLAN_STALE', 'The selected host, physical peers or installation metadata changed after planning. Preserve the current installation and retry.');
   };
   let resourceRelease: (() => Promise<void>) | undefined;
   async function acquire() {
@@ -354,7 +402,7 @@ export async function preparePiComponents(target: string, scope: string, selecte
       prepareStateDirectory(consumer);
       fs.writeFileSync(path.join(consumer, 'package.json'), manifestBytes, { mode: 0o600, flag: renewed ? 'w' : 'wx' });
       fs.writeFileSync(path.join(consumer, lockName), lockBytes, { mode: 0o600, flag: renewed ? 'w' : 'wx' });
-      record = { schemaVersion: 1, id, kind: 'components', host, root, consumer, manager: tool, packages: piRelease,
+      record = { schemaVersion: 1, id, kind: 'components', host, root, consumer, manager: tool, packages: release,
         planSha256: digest(lockBytes), manifestSha256: digest(manifestBytes), phase: 'consuming', references: {},
         owned: expectedOwned, borrowed: host.peers, createdAt: new Date().toISOString() };
     }
@@ -368,24 +416,54 @@ export async function preparePiComponents(target: string, scope: string, selecte
       fail('COMPONENT_INSTALL_FAILED', `Component consumption failed (exit ${result.status ?? (result.error as NodeJS.ErrnoException | undefined)?.code}, signal ${result.signal ?? 'none'}). Owned partial components remain at ${root}; native registration did not run. Retry setup with the same exact target after resolving the package-tool failure.`);
     }
     recheck();
+    const artifacts = verifyBatch(consumer);
+    record = { ...record, phase: 'components-installed', artifacts, owned: { ...record.owned, inventory: consumerInventory(consumer, yaml) },
+      consumerSha256: consumerFingerprint(consumer), failure: undefined };
+    persistSetupRecord(recordFile, record);
+  }
+  function verifyBatch(directory: string) {
     const artifacts: NonNullable<ResourceRecord['artifacts']> = {};
-    const lock = tool.name === 'npm' ? json(path.join(consumer, lockName)) : yaml.parse(fs.readFileSync(path.join(consumer, lockName), 'utf8'));
-    for (const [name, version] of Object.entries(piRelease)) {
-      const actual = physicalPackage(adapter, name);
+    const lock = tool.name === 'npm' ? json(path.join(directory, lockName)) : yaml!.parse(fs.readFileSync(path.join(directory, lockName), 'utf8'));
+    const installedAdapter = physicalPackage(directory, adapterName);
+    for (const [name, version] of Object.entries(release)) {
+      const actual = physicalPackage(installedAdapter, name);
       const entry = json(path.join(actual, 'package.json'));
       const exported = entry.exports?.['.'];
       const compiled = typeof exported === 'string' ? exported : exported?.default;
-      if (entry.name !== name || entry.version !== version || !compiled?.endsWith('.js') || !fs.existsSync(path.join(actual, compiled)) ||
-        !actual.startsWith(consumer + path.sep)) fail('DEPENDENCY_IDENTITY_MISMATCH', `Installed ${name} is not the approved compiled component in the owned consumer. Registration did not run.`);
-      for (const [sibling, expected] of Object.entries(entry.dependencies ?? {})) if (componentName(sibling) && piRelease[sibling] !== expected) fail('DEPENDENCY_IDENTITY_MISMATCH', 'Installed Arlo siblings are not the coordinated exact batch. Registration did not run.');
+      const entryFile = typeof compiled === 'string' ? path.resolve(actual, compiled) : '';
+      if (entry.name !== name || entry.version !== version || !/\.(?:[cm]?js)$/.test(entryFile) || !entryFile.startsWith(actual + path.sep)
+        || !fs.existsSync(entryFile) || !fs.realpathSync(entryFile).startsWith(actual + path.sep) || !fs.statSync(entryFile).isFile()
+        || !actual.startsWith(directory + path.sep)) fail('DEPENDENCY_IDENTITY_MISMATCH', `Installed ${name} is not the approved compiled component in the owned consumer. Registration did not run.`);
+      for (const [sibling, expected] of Object.entries(entry.dependencies ?? {})) if (componentName(sibling) && release[sibling] !== expected) fail('DEPENDENCY_IDENTITY_MISMATCH', 'Installed Arlo siblings are not the coordinated exact batch. Registration did not run.');
       const resolution = tool.name === 'npm' ? lock.packages[`node_modules/${name}`] : lock.packages[`${name}@${version}`].resolution;
       artifacts[name] = { directory: actual, version, sha256: artifactFingerprint(actual), resolved: resolution.resolved ?? resolution.tarball ?? `${name}@${version}`,
         integrity: resolution.integrity };
     }
-    for (const [name, peer] of Object.entries(host.peers)) if (physicalPackage(adapter, name) !== peer.directory) fail('HOST_PEER_CONFLICT', 'The installed adapter resolves a different physical host peer. Installed components remain for review; native registration did not run.');
-    record = { ...record, phase: 'components-installed', artifacts, owned: { ...record.owned, inventory: consumerInventory(consumer, yaml) },
-      consumerSha256: consumerFingerprint(consumer), failure: undefined };
-    persistSetupRecord(recordFile, record);
+    for (const [name, peer] of Object.entries(host.peers)) if (physicalPackage(installedAdapter, name) !== peer.directory) fail('HOST_PEER_CONFLICT', 'The installed adapter resolves a different physical host peer. Installed components remain for review; native registration did not run.');
+    return artifacts;
+  }
+  async function preflight() {
+    recheck();
+    if (record?.artifacts) return { adapter, consumer };
+    const lock = tool.name === 'npm' ? JSON.parse(lockBytes) : yaml!.parse(lockBytes);
+    if (tool.name === 'pnpm') {
+      for (const [name, peer] of Object.entries(host.peers)) lock.importers['.'].dependencies[name].version =
+        `link:${path.relative(stage, peer.directory).replaceAll(path.sep, '/')}`;
+    } else {
+      lock.packages = Object.fromEntries(Object.entries(lock.packages).map(([name, value]: [string, any]) => {
+        const key = name && !name.startsWith('node_modules/') ? path.relative(stage, path.resolve(consumer, name)).replaceAll(path.sep, '/') : name;
+        if (value.link) value.resolved = path.relative(stage, path.resolve(consumer, value.resolved)).replaceAll(path.sep, '/');
+        return [key, value];
+      }));
+    }
+    fs.writeFileSync(path.join(stage, 'package.json'), manifestBytes, { mode: 0o600 });
+    fs.writeFileSync(path.join(stage, lockName), tool.name === 'npm' ? JSON.stringify(lock, null, 2) + '\n' : yaml!.stringify(lock), { mode: 0o600 });
+    const result = execute(tool, tool.name === 'npm' ? ['ci', '--install-links=false', '--legacy-peer-deps', '--ignore-scripts', '--no-audit', '--no-fund']
+      : ['install', '--frozen-lockfile', ...pnpmOptions], stage);
+    if (result.status !== 0 || result.error) fail('COMPONENT_PREFLIGHT_FAILED', `The exact compiled ${tool.name} batch could not be acquired for native profile validation (exit ${result.status ?? (result.error as NodeJS.ErrnoException | undefined)?.code}, signal ${result.signal ?? 'none'}). No host or profile changed.`);
+    verifyBatch(stage);
+    recheck();
+    return { adapter: path.join(stage, 'node_modules', adapterName), consumer: stage };
   }
   function registration(phase: 'registration-prepared' | 'configured', kind: ReferenceKind = 'setup-record') {
     if (!record?.artifacts) fail('COMPONENT_OWNERSHIP_CONFLICT', 'Installed component ownership is unavailable; native registration cannot be recorded as complete.');
@@ -395,7 +473,7 @@ export async function preparePiComponents(target: string, scope: string, selecte
   function recordFailure(failure: SetupOperationFailure) {
     if (record) { record = { ...record, failure }; persistSetupRecord(recordFile, record); }
   }
-  return { host, adapter, root, id, state, recheck, acquire, consume, registration, recordFailure,
+  return { host, adapter, root, id, state, recheck, acquire, consume, preflight, registration, recordFailure,
     close: async () => { fs.rmSync(stage, { recursive: true, force: true }); await resourceRelease?.(); } };
 }
 

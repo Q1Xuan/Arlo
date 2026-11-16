@@ -5,6 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 import { once } from 'node:events';
+import { createServer } from 'node:http';
 import { createCliProcessFixture } from './fixtures/cli-process.mjs';
 
 const cli = process.env.ARLO_CLI_ENTRY ?? fileURLToPath(new URL('../packages/daemon/bin/arlo.js', import.meta.url));
@@ -59,6 +60,37 @@ test('menu setup and uninstall describe registration scope and reject a missing 
     assert.deepEqual(fs.readdirSync(context.directory).filter(name => name !== '.npm'), ['settings.json']);
     assert.equal(fs.readFileSync(path.join(context.directory, 'settings.json'), 'utf8'), '{"theme":"dark","packages":["other-plugin"]}');
   } finally { context.close(); }
+});
+
+test('read-only menu host discovery never queries the package registry, including npm update checks', {
+  timeout: 20_000, skip: process.platform === 'win32',
+}, async () => {
+  const context = createCliProcessFixture('arlo-cli-menu-registry-');
+  const requests = [];
+  const registry = createServer((request, response) => {
+    requests.push(request.url);
+    response.setHeader('content-type', 'application/json');
+    response.end(JSON.stringify({ name: 'npm', version: '999.0.0' }));
+  });
+  await new Promise(resolve => registry.listen(0, '127.0.0.1', resolve));
+  try {
+    Object.assign(context.env, { npm_config_registry: `http://127.0.0.1:${registry.address().port}`,
+      npm_config_update_notifier: 'true' });
+    const child = spawn('python3', [terminalDriver, JSON.stringify([process.execPath, cli]), JSON.stringify([
+      ['Choose an action', '1\n'], ['Host to connect', 'pi\n'],
+      ['Exact installed host', `${path.join(context.directory, 'missing')}\n`],
+    ])], { cwd: context.directory, env: context.env, stdio: ['ignore', 'pipe', 'pipe'], timeout: 15_000 });
+    let output = '';
+    child.stdout.on('data', chunk => { output += chunk; });
+    child.stderr.on('data', chunk => { output += chunk; });
+    const [code] = await once(child, 'close');
+    assert.equal(code, 1, output);
+    assert.match(output, /HOST_NOT_FOUND/);
+    assert.deepEqual(requests, [], 'Reading installed host metadata must not contact a registry');
+  } finally {
+    await new Promise(resolve => registry.close(resolve));
+    context.close();
+  }
 });
 
 test('menu cancellation also handles terminal EOF and interrupt without creating state', {

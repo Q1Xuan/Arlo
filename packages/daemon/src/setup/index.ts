@@ -73,16 +73,24 @@ export async function runSetupCli(command: string, args: string[]): Promise<numb
       const host = await askSetup('Host to connect (pi/dsh, 0 to cancel): ');
       if (!host || ['0', 'q', 'cancel'].includes(host)) { output({ phase: 'cancelled', nextStep: 'Cancelled. No changes applied.' }); return 0; }
       options['--host'] = host;
-      if (host === 'dsh') {
-        const target = await askSetup('Exact installed host package directory: ');
-        const adapter = target ? await askSetup('Installed compiled Arlo adapter package directory: ') : undefined;
-        const profile = adapter ? await askSetup('Existing DSH profile name: ') : undefined;
-        if (!target || !adapter || !profile) { output({ phase: 'cancelled', nextStep: 'Cancelled. No changes applied.' }); return 0; }
-        options['--target'] ??= target; options['--adapter'] ??= adapter; options['--profile'] ??= profile;
-      }
     }
-    if (options['--host'] === 'dsh' && !options['--profile']) fail('PROFILE_SELECTION_REQUIRED', 'Select one existing DSH profile explicitly with --profile NAME; no profile is initialized or enabled automatically.');
     if (options['--host'] === 'dsh') {
+      const interactive = stdin.isTTY && !options['--json'];
+      const home = path.resolve(options['--dsh-home'] as string ?? process.env.DSH_HOME ?? path.join(os.homedir(), '.dsh'));
+      if (!options['--target']) {
+        if (!interactive) fail('HOST_SELECTION_REQUIRED', 'Noninteractive DSH setup requires an explicit --target DSH_PACKAGE_DIR and --profile NAME; no host or profile was guessed.');
+        const { selectDsh } = await import('./dsh-discovery.ts');
+        const target = await selectDsh(home, options['--npm-cli'] as string);
+        if (!target) { output({ phase: 'cancelled', nextStep: 'Cancelled. No changes applied.' }); return 0; }
+        options['--target'] = target;
+      }
+      if (!options['--profile']) {
+        if (!interactive) fail('PROFILE_SELECTION_REQUIRED', 'Select one existing DSH profile explicitly with --profile NAME; no profile is initialized or enabled automatically.');
+        const { selectDshProfile } = await import('./dsh-discovery.ts');
+        const selected = await selectDshProfile(home);
+        if (!selected) { output({ phase: 'cancelled', nextStep: 'Cancelled. No changes applied.' }); return 0; }
+        options['--profile'] = selected.profile; options['--dsh-home'] = selected.home;
+      }
       const { runDshSetupCli } = await import('./dsh.ts');
       return runDshSetupCli(command, options);
     }

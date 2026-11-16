@@ -2,7 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 import { createHash } from 'node:crypto';
-import { inspectDshHostDependencyClosure } from './dependency-closure.mjs';
+import { inspectDshHostDependencyClosure, inspectDshBoundHostDependencyClosure } from './dependency-closure.mjs';
+import { inspectDshInstallation } from './installed-host.mjs';
 
 const reviewedHosts = JSON.parse(fs.readFileSync(new URL('./reviewed-hosts.json', import.meta.url), 'utf8'));
 const baseline = reviewedHosts['0.2.0-rc.2'];
@@ -22,9 +23,11 @@ const resourceFiles = (directory, prefix = '') => fs.readdirSync(directory, { wi
   }).sort();
 
 /** The actual installed files, never a caller's version or capability declaration. */
-export function inspectDshHostPreparation(consumer, { experimental = false } = {}) {
+export function inspectDshHostPreparation(consumer, { experimental = false, installation } = {}) {
   consumer = path.resolve(consumer);
-  const require = createRequire(path.join(path.resolve(consumer), 'package.json'));
+  let bound;
+  try { if (installation) bound = inspectDshInstallation(installation); } catch { /* bounded failed check below */ }
+  const require = createRequire(path.join(bound?.owner ?? consumer, 'package.json'));
   const checks = [];
   const packages = {};
   const contracts = {};
@@ -45,19 +48,30 @@ export function inspectDshHostPreparation(consumer, { experimental = false } = {
   let hostVersion;
   let reviewed = baseline;
   check('DSH_LOCK_MISSING', 'independent-consumer-lock', () => {
-    const lock = fs.readFileSync(path.join(consumer, 'pnpm-lock.yaml'));
+    if (installation && !bound) return false;
+    const lock = fs.readFileSync(path.join(bound?.owner ?? consumer, bound?.selector.lockFile ?? 'pnpm-lock.yaml'));
     lockSha256 = sha(lock);
+    if (bound) return true; // Its native lock/importer and physical route were inspected above.
     const importers = lock.toString('utf8').match(/^importers:\r?\n([\s\S]*?)(?=^\S)/m)?.[1];
     return importers !== undefined && [...importers.matchAll(/^  (\S[^\r\n]*):\r?$/gm)]
       .map(match => match[1]).join(',') === '.';
   });
   check('DSH_HOST_MISSING', '@deepseek-ai/dsh', () => {
-    const manifest = require.resolve('@deepseek-ai/dsh/package.json');
+    const manifest = bound ? path.join(bound.directory, 'package.json') : require.resolve('@deepseek-ai/dsh/package.json');
     hostRequire = createRequire(manifest);
     hostVersion = readJson(manifest).version;
     return typeof hostVersion === 'string';
   });
   if (Object.hasOwn(reviewedHosts, hostVersion)) reviewed = reviewedHosts[hostVersion];
+  let preparationMaterialSha256;
+  if (bound) check('DSH_MATERIAL_INVALID', 'exact-native-preparation-material', () => {
+    const bytes = fs.readFileSync(new URL(`./preparation-material/${hostVersion}/material.json`, import.meta.url));
+    const material = JSON.parse(bytes);
+    preparationMaterialSha256 = sha(bytes);
+    return material.schemaVersion === 1 && material.hostVersion === hostVersion
+      && material.repairs.length === Object.keys(reviewed.patches).length
+      && material.repairs.every(repair => reviewed.patches[repair.patch] === repair.sha256);
+  });
   for (const [name, file, signature] of [
     ['dsh-api-session-controller', 'lib/types/types.d.ts', 'interface SessionCreateOptions'],
     ['dsh-client-ui-conversation', 'lib/types/client/service.d.ts', 'registerSubmitPreparation('],
@@ -94,15 +108,25 @@ export function inspectDshHostPreparation(consumer, { experimental = false } = {
     }
   }
   check('DSH_PATCH_MISMATCH', 'complete-patch-set', () => {
-    patchDeclarations = readJson(path.join(consumer, 'package.json')).pnpm?.patchedDependencies;
-    return patchDeclarations && Object.keys(patchDeclarations).length === Object.keys(reviewed.patches).length;
+    patchDeclarations = readJson(path.join(bound?.owner ?? consumer, 'package.json')).pnpm?.patchedDependencies;
+    if (bound?.manager === 'npm') return fs.existsSync(new URL(`./preparation-material/${hostVersion}/material.json`, import.meta.url));
+    return patchDeclarations && (bound ? Object.keys(patchDeclarations).length >= Object.keys(reviewed.patches).length
+      : Object.keys(patchDeclarations).length === Object.keys(reviewed.patches).length);
   });
   for (const [name, digest] of Object.entries(reviewed.patches)) {
     check('DSH_PATCH_MISMATCH', name, () => {
-      const manifest = readJson(path.join(consumer, 'package.json'));
+      if (bound?.manager === 'npm') {
+        // npm has no native patch declaration. Its surgical preparation uses
+        // these same bundled exact recipes; reviewed actual postimages above
+        // remain mandatory and are never inferred from a user record.
+        const actual = sha(fs.readFileSync(new URL(`./preparation-material/${hostVersion}/${name}`, import.meta.url)));
+        patches[name] = actual;
+        return actual === digest;
+      }
+      const manifest = readJson(path.join(bound?.owner ?? consumer, 'package.json'));
       const declared = manifest.pnpm?.patchedDependencies?.[`@deepseek-ai/${name.slice(0, -6)}`];
       if (typeof declared !== 'string') return false;
-      const actual = sha(fs.readFileSync(path.resolve(consumer, declared)));
+      const actual = sha(fs.readFileSync(path.resolve(bound?.owner ?? consumer, declared)));
       patches[name] = actual;
       return actual === digest;
     });
@@ -130,7 +154,8 @@ export function inspectDshHostPreparation(consumer, { experimental = false } = {
     check('DSH_EXPERIMENTAL_REQUIRED', 'host-support-policy', () => false);
   }
   check('DSH_DEPENDENCY_IDENTITY_MISMATCH', 'complete-installed-host-dependency-closure', () => {
-    const { manifestRouting, ...closure } = inspectDshHostDependencyClosure(consumer, hostRequire);
+    const inspected = bound ? inspectDshBoundHostDependencyClosure(bound) : inspectDshHostDependencyClosure(consumer, hostRequire);
+    const { manifestRouting, installedDirectories, ...closure } = inspected;
     dependencyClosure = closure;
     // Known frozen selectors/dependency declarations remain mandatory in an
     // experiment too. A coherently changed version uses an unlisted profile;
@@ -157,6 +182,8 @@ export function inspectDshHostPreparation(consumer, { experimental = false } = {
     runtimeIdentityVerified,
     combination: sha(JSON.stringify({ packages, contracts, frontend, patchDeclarations, patches, lockSha256 })),
     lockSha256,
+    ...(preparationMaterialSha256 ? { preparationMaterialSha256 } : {}),
+    ...(bound ? { selectedInstallation: bound } : {}),
     packages, contracts, patches, frontend: frontend ?? null, dependencyClosure, checks,
     reason: failures[0]?.code ?? (experimental ? 'DSH_EXPERIMENTAL_COMBINATION' : 'DSH_REVIEWED_COMBINATION'),
     guidance: failures[0]?.code === 'DSH_EXPERIMENTAL_REQUIRED'

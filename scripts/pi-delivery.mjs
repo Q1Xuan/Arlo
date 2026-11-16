@@ -230,7 +230,7 @@ try {
       fs.cpSync(file === 'LICENSE' ? path.join(repo, 'LICENSE') : path.join(build, 'packages', name, file), path.join(target, file), { recursive: true });
     }
     writeJson(path.join(target, 'package.json'), { ...manifest, exports, files: ['src', 'bin', 'README.md', ...resourceFiles], devDependencies: undefined,
-      ...(name === 'daemon' ? { arlo: { components: Object.fromEntries(['sdk', 'adapterSdk', 'daemon', 'piAdapter'].map((role, index) =>
+      ...(name === 'daemon' ? { arlo: { ...manifest.arlo, components: Object.fromEntries(['sdk', 'adapterSdk', 'daemon', 'piAdapter'].map((role, index) =>
         [role, { name: manifests[index].name, version: manifests[index].version }])) } } : {}),
       private: releaseCandidate ? false : manifest.private, ...(releaseCandidate ? { publishConfig: { access: 'public' } } : {}),
       ...(manifest.pi ? { pi: { ...manifest.pi, extensions: manifest.pi.extensions.map(file => file.replace(/\.ts$/, '.js')) } } : {}),
