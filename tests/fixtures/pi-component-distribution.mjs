@@ -50,6 +50,11 @@ export async function commandProcess(executable, args, context, extra = {}, time
     const cache = path.join(env.XDG_CACHE_HOME ?? context.directory, 'pnpm');
     if (!fs.existsSync(cache)) fs.cpSync(process.env.ARLO_CLI_PUBLIC_PNPM_CACHE, cache, { recursive: true });
   }
+  if (process.env.ARLO_CLI_PUBLIC_PNPM_STORE) {
+    const store = path.join(env.XDG_DATA_HOME ?? context.directory, 'pnpm/store');
+    if (!fs.existsSync(store)) fs.cpSync(process.env.ARLO_CLI_PUBLIC_PNPM_STORE, store, { recursive: true });
+    env.npm_config_store_dir ??= store;
+  }
   const child = spawn(executable, args, { cwd: context.directory, env });
   let stdout = '', stderr = '';
   child.stdout.on('data', bytes => { stdout += bytes; });
