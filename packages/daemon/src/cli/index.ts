@@ -37,7 +37,7 @@ export async function runCli(args: string[] = process.argv.slice(2)): Promise<nu
       return 0;
     }
     if (command === 'setup') console.log('Setup finds an existing host, previews coordinated component installation and registers native user access after confirmation.');
-    if (command === 'uninstall') console.log('Uninstall removes the owned host registration. Installed components remain managed by their package manager.');
+    if (command === 'uninstall') console.log('Uninstall removes the owned host registration and cleans matching unshared components through their recorded package manager after confirmation.');
     args = [command, ...args];
   }
   if (['setup', 'setup-status', 'uninstall'].includes(args[0])) return runSetupCli(args[0], args.slice(1));

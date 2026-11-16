@@ -43,7 +43,7 @@ scopes can share a verified component resource.
 Confirmed setup also records a verified manual declaration's shared use of an
 existing owned resource, while preserving the manual native registration unowned.
 
-`setup-status` reports missing, partial or installed components separately from
+`setup-status` reports missing, partial, installed or removed components separately from
 the native configuration. Failed consumption leaves an owned partial resource
 for a same-target retry. A native registration failure can leave installed
 components; an ambiguous declaration or later component edit requires review.
@@ -52,9 +52,29 @@ snapshots. Keep the original settings and private records when resolving a confl
 If recorded component files disappear, disk status names the missing components
 and setup preserves the remaining consumer for review instead of overwriting it.
 
+Pi uninstall previews the exact owned user declaration and companion cleanup.
+After confirmation it runs native `pi remove`, then removes only matching unshared
+coordinated packages and owned borrowed-peer link/dependency slots through the
+recorded npm or pnpm scope. The host and borrowed physical peers remain intact.
+Manual registrations and separately installed components retain their ownership.
+Reload or restart Pi normally to unload the revoked adapter.
+
+Other recorded integrations, project or manual sharing, later component edits and
+ambiguous ownership retain the component resource with an explanation. A running
+or unverified shared Daemon also retains it; uninstall never terminates the Daemon
+or its clients. After normal shutdown or idle exit, retry the same uninstall.
+Failed package removal and interruption preserve the exact owned cleanup stage;
+retry changes only matching entries. A failed consumption before native registration
+can be located and cleaned with the same Pi target. An adapter removed manually
+does not prevent revoking its unchanged owned native declaration. History, models,
+project settings, root identities and sending allowances remain preserved.
+Automatic component cleanup is verified on Linux x64. Windows retains the component
+resource when native process origin cannot be verified, including after a state-dir
+change; its complete lifecycle verification remains pending.
+
 DSH registration additionally requires an existing prepared host and an explicit
 `--profile NAME`, with `--dsh-home DIR` when needed. Setup previews changes before
-`--apply`. Uninstall currently removes owned native registration; complete owned
+`--apply`. DSH uninstall currently removes owned native registration; complete owned
 component cleanup is a separate lifecycle step.
 
 `status` and `doctor` observe the shared Daemon. `setup-status` observes persistent

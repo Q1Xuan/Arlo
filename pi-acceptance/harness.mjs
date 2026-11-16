@@ -248,7 +248,7 @@ export async function nativeScenario(label, options = {}) {
     });
     return srv;
   };
-  try { await daemon.start(); }
+  try { if (!options.sharedDaemon) await daemon.start(); }
   catch (error) { crypto.randomUUID = randomUUID; throw error; }
   finally { https.createServer = createServer; }
   const peers = [];
@@ -440,7 +440,7 @@ export async function nativeScenario(label, options = {}) {
     }
     server.closeAllConnections();
     await new Promise(resolve => server.close(resolve));
-    await daemon.stop();
+    if (!options.sharedDaemon) await daemon.stop();
     fs.writeFileSync(path.join(directory, 'result.json'), JSON.stringify({
       node: process.version, platform: process.platform, pi: piVersion,
       installation: installation ? { consumer: installation.consumer, entries } : undefined,

@@ -1,6 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { createPiAdapter } from 'ARLO_PI_ADAPTER_MODULE';
+// Native setup loads its own extension from Pi's package registration. Keep
+// this observer usable after /reload revokes that registration and its files.
+const { createPiAdapter } = process.env.ARLO_PI_SETUP_MODE === '1' ? {} : await import('ARLO_PI_ADAPTER_MODULE');
 
 // Acceptance observations use public Pi events. All business tools and input
 // ownership are provided by the installed adapter, not this fixture.
