@@ -103,3 +103,19 @@ an entire package tree or profile with a prior snapshot.
 `--adapter DIR` retains the existing path for registering a verified preinstalled
 compiled adapter in a prepared composition. Complete removal of shared components
 and owned preparation changes is handled by the DSH cleanup lifecycle.
+
+## Build private companion archives
+
+Maintainers can pack the compiled components for ordinary-host setup from a
+verified core build:
+
+```sh
+pnpm run build --out .artifacts/core
+pnpm run build:web --host-version 0.2.1-rc.5 --companion --core .artifacts/core --out .artifacts/dsh-rc5-companion
+```
+
+This mode produces archives and source receipts. The CLI validates and binds their
+exact native peers to the selected existing installation during setup. Installation,
+original-launcher Host/Web acceptance and public availability require their own
+evidence. The default Web build continues to prepare the historical complete
+composition with its reviewed dependency closure.

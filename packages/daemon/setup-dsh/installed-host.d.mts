@@ -10,4 +10,5 @@ export interface DshInstalledHost {
 }
 export function inspectDshInstallation(selected: string | DshInstallationSelector): DshInstalledHost;
 export function dshBorrowedModules(host: DshInstalledHost, names: string[], allowMissing?: boolean): DshInstalledHost;
+export function dshNativeLockParser(host: DshInstalledHost): { parse: (source: string) => any; stringify: (value: any) => string } | undefined;
 export function installedPackage(require: NodeJS.Require, name: string, owner: string): { directory: string; version: string; manifestSha256: string } | null;

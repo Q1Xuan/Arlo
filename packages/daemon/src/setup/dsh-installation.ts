@@ -9,7 +9,7 @@ import { componentDataDirectory, npmCli, prepareHostComponents } from './compone
 import { fail, SetupError } from './errors.ts';
 import { assertConfigurationFile, persistSetupRecord, setupTransaction } from './transaction.ts';
 import { inspectDshHostPreparation } from '../../setup-dsh/host-preparation.mjs';
-import { inspectDshInstallation, installedPackage, dshBorrowedModules, type DshInstalledHost } from '../../setup-dsh/installed-host.mjs';
+import { inspectDshInstallation, installedPackage, dshBorrowedModules, dshNativeLockParser, type DshInstalledHost } from '../../setup-dsh/installed-host.mjs';
 import { canonicalSha256, inspectDshBoundHostDependencyClosure } from '../../setup-dsh/dependency-closure.mjs';
 import { sha256, fileSha256, packageInventory, readExactPatch, applyExactHunks, replaceOwnedFile } from '../../setup-dsh/exact-patch.mjs';
 
@@ -310,7 +310,7 @@ export async function planDshInstallation(target: string, profileDir: string, se
         ...(manager.name === 'pnpm' ? [`--dir=${cwd}`, '--global=false', `--store-dir=${initial.storeDirectory}`] : [])],
       { cwd, env: process.env, encoding: 'utf8', windowsHide: true, timeout: 240_000, maxBuffer: 4 * 1024 * 1024 });
     stage = fs.mkdtempSync(path.join(os.tmpdir(), 'arlo-dsh-preparation-plan-')); enforceWindowsAcl(stage, true);
-    const yaml = require('js-yaml');
+    const yaml = dshNativeLockParser(initial);
     const lockFile = path.join(initial.owner, initial.selector.lockFile);
     const beforeLock = fs.readFileSync(lockFile, 'utf8');
     const newPatches: string[] = [];
@@ -347,11 +347,11 @@ export async function planDshInstallation(target: string, profileDir: string, se
     let affected = new Set<string>();
     if (unchanged) lockBytes = beforeLock;
     else if (manager.name === 'pnpm') {
-      const planned = yaml.load(fs.readFileSync(path.join(stage, initial.selector.lockFile), 'utf8'));
+      const planned = yaml!.parse(fs.readFileSync(path.join(stage, initial.selector.lockFile), 'utf8'));
       for (const [selector, record] of Object.entries(planned.patchedDependencies ?? {}) as [string, any][]) record.path = plannedManifest.pnpm.patchedDependencies[selector];
       const ownedPatches = record?.ownerKeys.filter(entry => entry.path[0] === 'pnpm' && entry.path[1] === 'patchedDependencies').map(entry => entry.path[2]) ?? [];
-      affected = unchangedPnpmGraph(yaml.load(beforeLock), planned, added, [...newPatches, ...ownedPatches]);
-      lockBytes = yaml.dump(planned, { lineWidth: -1, noRefs: true });
+      affected = unchangedPnpmGraph(yaml!.parse(beforeLock), planned, added, [...newPatches, ...ownedPatches]);
+      lockBytes = yaml!.stringify(planned);
     } else {
       const original = JSON.parse(beforeLock), planned = json(path.join(stage, initial.selector.lockFile));
       for (const [key, record] of Object.entries(original.packages)) if (key && canonicalSha256(record) !== canonicalSha256(planned.packages[key])) fail('DSH_PACKAGE_PLAN_CONFLICT', 'The native npm plan would change an existing locked dependency. Its versions and unrelated declarations were preserved.');
@@ -371,7 +371,7 @@ export async function planDshInstallation(target: string, profileDir: string, se
     const bindingFor = (current: DshInstalledHost, allowMissing: boolean) => ({ host: current, target: initial.selector.packageDirectory, ...batch, resourceId,
       deployment: { materialSha256, experimentalCompatibility: experimental },
       recheck: () => dshBorrowedModules(inspectDshInstallation(initial.selector), dshBorrowedNames, allowMissing),
-      yaml: { parse: yaml.load, stringify: (value: any) => yaml.dump(value, { lineWidth: -1, noRefs: true }) } });
+      yaml });
     components = await prepareHostComponents(bindingFor(host, true), profileDir, selectedNpm, mode);
     const summary = () => ({ state: repairs.every((repair: any) => repair.state === 'prepared') && !added.length ? 'prepared' : 'planned',
       id: preparationId, directory: root, materialSha256, selector: initial.selector, manager: { name: manager.name, version: manager.version },

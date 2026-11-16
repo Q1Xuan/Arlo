@@ -112,6 +112,10 @@ Web 构建器会在 `.artifacts/dsh-rc5/consumer` 准备匹配的宿主、Arlo �
 使用这份已准备的宿主安装，配合你已配置好的 DSH profile。不要把 Pi 的 npm 安装命令套用到
 这份 pnpm 管理的完整组合。
 
+维护者可增加 `--companion` 并选择另一输出目录，打包借用所选已有宿主模块的组件。
+此模式生成归档和来源记录；原生接入与 Host/Web 验收另行核验。默认 Web 配方仍保留
+已审阅的完整依赖闭包。
+
 将 `DSH_HOME`、`PROFILE` 替换为要接入的现有 DSH 配置目录和 profile：
 
 ```sh

@@ -3,9 +3,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 /** Compose the verified display rule into the real adapter's owned browser lifetime. */
-export function prepareCandidateAdapter(directory, recipe) {
+export function prepareCandidateAdapter(directory, recipe, { companion = false } = {}) {
   const version = JSON.parse(fs.readFileSync(path.join(recipe, 'package.json'), 'utf8')).dependencies['@deepseek-ai/dsh'];
   assert.ok(['0.2.1-rc.2', '0.2.1-rc.5'].includes(version), 'Use an exact reviewed candidate recipe');
+  assert.ok(typeof companion === 'boolean' && (!companion || version === '0.2.1-rc.5'),
+    'Installed-host companion packaging requires the reviewed rc.5 recipe');
   const replace = (source, from, to) => {
     assert.equal(source.split(from).length, 2, 'Candidate client recipe must match exactly once');
     return source.replace(from, to);
@@ -36,7 +38,7 @@ export function prepareCandidateAdapter(directory, recipe) {
       if (name === '@deepseek-ai/schemastery') manifest[section][name] = '3.18.5';
     }
   }
-  if (version === '0.2.1-rc.5') {
+  if (companion) {
     // The rc.5 companion borrows the selected Host's actual modules. A native
     // dependency here would resolve a second Cordis/DSH peer graph in pnpm.
     for (const [name, requirement] of Object.entries(manifest.dependencies)) {

@@ -20,6 +20,25 @@ export function installedPackage(require, name, owner) {
   return null;
 }
 
+function nativeLockParser(directory, owner) {
+  const hostRequire = createRequire(path.join(directory, 'package.json'));
+  const identity = installedPackage(hostRequire, 'js-yaml', owner);
+  if (!identity || typeof json(path.join(directory, 'package.json')).dependencies?.['js-yaml'] !== 'string') {
+    reject('PACKAGE_MANAGER_CONFLICT', 'The selected DSH owner cannot provide its declared installed native lock parser. No package or profile changed.');
+  }
+  const yaml = hostRequire('js-yaml');
+  if (typeof yaml.load !== 'function' || typeof yaml.dump !== 'function') {
+    reject('PACKAGE_MANAGER_CONFLICT', 'The selected DSH native lock parser has an invalid public interface. Preserve its installation before setup.');
+  }
+  return { parse: source => yaml.load(source), stringify: value => yaml.dump(value, { lineWidth: -1, noRefs: true }) };
+}
+
+/** Bind the parser owned by the selected native installation. npm uses JSON
+ * locks and never needs to load a host YAML dependency into the generic CLI. */
+export function dshNativeLockParser(host) {
+  return host.manager === 'pnpm' ? nativeLockParser(host.directory, host.owner) : undefined;
+}
+
 /** Identify the existing owner without requiring Arlo's prepared contracts.
  * A logical route survives pnpm's changed patch/peer physical snapshots. */
 export function inspectDshInstallation(selected) {
@@ -52,15 +71,14 @@ export function inspectDshInstallation(selected) {
   const pnpm = fs.existsSync(modulesFile) || fs.existsSync(pnpmFile);
   if (pnpm && npmFile || declared !== undefined && !/^(npm|pnpm)@\d+\.\d+\.\d+(?:\+sha(?:224|256|512)\.[a-f0-9]+)?$/.test(declared)
     || declared?.startsWith('npm@') && pnpm || declared?.startsWith('pnpm@') && npmFile) reject('PACKAGE_MANAGER_CONFLICT', 'The selected DSH owner has conflicting package-manager declarations or locks. Preserve them and reconcile through that owner.');
-  const hostRequire = createRequire(path.join(directory, 'package.json'));
   let managerVersion, storeDirectory, lock, lockFile;
   if (pnpm) {
     if (!fs.existsSync(pnpmFile) || !fs.existsSync(modulesFile)) reject('PACKAGE_MANAGER_CONFLICT', 'The selected pnpm owner needs both its actual lock and installed module metadata.');
-    const yaml = hostRequire('js-yaml');
-    const modules = yaml.load(fs.readFileSync(modulesFile, 'utf8'));
+    const yaml = nativeLockParser(directory, owner);
+    const modules = yaml.parse(fs.readFileSync(modulesFile, 'utf8'));
     managerVersion = modules.packageManager?.match(/^pnpm@(\d+\.\d+\.\d+)$/)?.[1];
     if (!managerVersion || declared && declared.split('@')[1].split('+')[0] !== managerVersion) reject('PACKAGE_MANAGER_CONFLICT', 'The exact installed pnpm tool and owner declaration disagree. Setup does not guess another manager.');
-    lock = yaml.load(fs.readFileSync(pnpmFile, 'utf8'));
+    lock = yaml.parse(fs.readFileSync(pnpmFile, 'utf8'));
     if (modules.nodeLinker !== 'isolated' || modules.virtualStoreDir !== '.pnpm' || modules.layoutVersion !== 5
       || fs.existsSync(path.join(owner, 'pnpm-workspace.yaml')) || Object.keys(lock.importers ?? {}).join(',') !== '.'
       || !['9', '9.0'].includes(String(lock.lockfileVersion))) reject('DSH_INSTALLATION_LAYOUT_UNSUPPORTED', 'Automatic DSH preparation supports a single local pnpm v9 importer, isolated nodeLinker and the standard .pnpm virtual store. This workspace/custom layout is preserved.');

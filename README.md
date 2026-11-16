@@ -130,6 +130,11 @@ Arlo packages, lock, patches and browser resources. Use that prepared host
 installation with a DSH profile you have configured. Do not apply the Pi npm
 installation command to this pnpm-managed composition.
 
+For ordinary-host setup, maintainers can add `--companion` and choose a separate
+output directory to pack the components that borrow the selected host's modules.
+That mode writes archives and source receipts; native setup and Host/Web acceptance
+are checked separately. The default Web recipe retains the full reviewed closure.
+
 Replace `DSH_HOME` and `PROFILE` with the existing DSH configuration directory
 and profile you intend to use:
 
